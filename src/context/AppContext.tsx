@@ -36,11 +36,17 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
     }
     const storedData = JSON.parse(serializedState);
 
-    // Special handling for events to parse Date objects
+    // Special handling for events and inquiries to parse Date objects
     if (key === "appEvents" && Array.isArray(storedData)) {
       return storedData.map(event => ({
         ...event,
         eventDate: new Date(event.eventDate),
+      })) as T;
+    }
+    if (key === "appInquiries" && Array.isArray(storedData)) {
+      return storedData.map(inquiry => ({
+        ...inquiry,
+        inquiryDate: new Date(inquiry.inquiryDate),
       })) as T;
     }
     return storedData;
@@ -57,11 +63,17 @@ const saveStateToLocalStorage = <T,>(key: string, state: T) => {
   }
   try {
     let stateToStore = state;
-    // Special handling for events to stringify Date objects
+    // Special handling for events and inquiries to stringify Date objects
     if (key === "appEvents" && Array.isArray(state)) {
       stateToStore = state.map(event => ({
         ...event,
         eventDate: event.eventDate.toISOString(),
+      })) as T;
+    }
+    if (key === "appInquiries" && Array.isArray(state)) {
+      stateToStore = state.map(inquiry => ({
+        ...inquiry,
+        inquiryDate: inquiry.inquiryDate.toISOString(),
       })) as T;
     }
     const serializedState = JSON.stringify(stateToStore);
@@ -118,6 +130,8 @@ const initialInquiries: Inquiry[] = [
     addressOfEvent: "123 Party Lane",
     capacity: 500,
     budget: 8000,
+    inquiryDate: new Date("2024-10-26"), // Example date
+    inquiryTime: "19:00", // Example time
     stageBuild: "Base Stage",
     power: "None",
     gates: true,
@@ -287,13 +301,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 newEventTasks.push({ id: `event-task-default-${Date.now()}`, name: "Event Logistics", completed: false });
             }
 
+            // Combine inquiry date and time to create the eventDate
+            const [hours, minutes] = inq.inquiryTime.split(':').map(Number);
+            const eventDateTime = new Date(inq.inquiryDate);
+            eventDateTime.setHours(hours, minutes, 0, 0);
+
             const newEvent: Event = {
                 id: `event-${Date.now()}`,
                 clientId: inq.clientId, // Link to client using the stored clientId
                 fraternity: inq.fraternity,
                 school: inq.school,
                 eventName: `${inq.fraternity} - ${inq.school} Event`, // Default event name
-                eventDate: new Date(), // Placeholder, could be added to form later
+                eventDate: eventDateTime, // Use the combined date and time
                 addressOfEvent: inq.addressOfEvent,
                 capacity: inq.capacity,
                 budget: inq.budget,

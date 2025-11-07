@@ -17,8 +17,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 import { Inquiry } from "@/types/app";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPhoneNumber, cn } from "@/lib/utils";
 
 const formSchema = z.object({
   school: z.string().min(2, { message: "School name must be at least 2 characters." }),
@@ -28,6 +32,8 @@ const formSchema = z.object({
   addressOfEvent: z.string().min(5, { message: "Address must be at least 5 characters." }),
   capacity: z.coerce.number().min(1, { message: "Capacity must be at least 1." }),
   budget: z.coerce.number().min(0, { message: "Budget cannot be negative." }),
+  inquiryDate: z.date({ required_error: "An inquiry date is required." }), // Added date field
+  inquiryTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, { message: "Time must be in HH:MM format." }), // Added time field
   stageBuild: z.enum(["None", "Base Stage", "Totem Stage", "SL 100", "SL 75", "SL260", "Custom Rig"]),
   power: z.enum(["None", "Gas Generators", "20kW Diesel", "36kW", "Provided"]),
   gates: z.boolean().default(false),
@@ -56,6 +62,8 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
       addressOfEvent: inquiry.addressOfEvent,
       capacity: inquiry.capacity,
       budget: inquiry.budget,
+      inquiryDate: inquiry.inquiryDate, // Set default value from inquiry
+      inquiryTime: inquiry.inquiryTime, // Set default value from inquiry
       stageBuild: inquiry.stageBuild,
       power: inquiry.power,
       gates: inquiry.gates,
@@ -192,6 +200,60 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
             </FormItem>
           )}
         />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="inquiryDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Inquiry Date</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full pl-3 text-left font-normal bg-input text-foreground border-border",
+                          !field.value && "text-muted-foreground"
+                        )}
+                      >
+                        {field.value ? (
+                          format(field.value, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-popover text-popover-foreground border-border" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      disabled={(date) => date < new Date("1900-01-01")}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="inquiryTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Inquiry Time</FormLabel>
+                <FormControl>
+                  <Input type="time" {...field} className="bg-input text-foreground border-border" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -342,7 +404,7 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
             )}
           />
         </div>
-        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Add Inquiry</Button>
+        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</Button>
       </form>
     </Form>
   );

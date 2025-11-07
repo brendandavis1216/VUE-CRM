@@ -26,6 +26,8 @@ interface Inquiry {
   addressOfEvent: string;
   capacity: number;
   budget: number;
+  inquiryDate: Date; // Added inquiry date
+  inquiryTime: string; // Added inquiry time (e.g., "18:00")
   stageBuild: "None" | "Base Stage" | "Totem Stage" | "SL 100" | "SL 75" | "SL260" | "Custom Rig";
   power: "None" | "Gas Generators" | "20kW Diesel" | "36kW" | "Provided";
   gates: boolean;

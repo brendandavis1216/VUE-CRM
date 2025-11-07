@@ -21,6 +21,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Inquiry } from "@/types/app"; // Import Inquiry type
+import { format } from "date-fns";
 
 const InquiriesPage = () => {
   const { inquiries, addInquiry, updateInquiryTask, updateInquiry } = useAppContext();
@@ -55,7 +56,9 @@ const InquiriesPage = () => {
         inquiry.school.toLowerCase().includes(lowerCaseSearchTerm) ||
         inquiry.fraternity.toLowerCase().includes(lowerCaseSearchTerm) ||
         inquiry.mainContact.toLowerCase().includes(lowerCaseSearchTerm) ||
-        inquiry.addressOfEvent.toLowerCase().includes(lowerCaseSearchTerm)
+        inquiry.addressOfEvent.toLowerCase().includes(lowerCaseSearchTerm) ||
+        format(inquiry.inquiryDate, "PPP").toLowerCase().includes(lowerCaseSearchTerm) || // Search by formatted date
+        inquiry.inquiryTime.toLowerCase().includes(lowerCaseSearchTerm) // Search by time
     );
   }, [inquiries, searchTerm]);
 
@@ -125,6 +128,8 @@ const InquiriesPage = () => {
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
                     <p className="text-sm text-muted-foreground">{inquiry.mainContact} ({inquiry.phoneNumber})</p>
+                    <p className="text-sm"><strong>Date:</strong> {format(inquiry.inquiryDate, "PPP")}</p>
+                    <p className="text-sm"><strong>Time:</strong> {inquiry.inquiryTime}</p>
                     <p className="text-sm"><strong>Event Address:</strong> {inquiry.addressOfEvent}</p>
                     <p className="text-sm"><strong>Capacity:</strong> {inquiry.capacity}</p>
                     <p className="text-sm"><strong>Budget:</strong> ${inquiry.budget.toLocaleString()}</p>
@@ -134,6 +139,8 @@ const InquiriesPage = () => {
                       {inquiry.gates && <Badge variant="secondary">Gates Provided</Badge>}
                       {inquiry.security && <Badge variant="secondary">Security Provided</Badge>}
                       {inquiry.co2Tanks > 0 && <Badge variant="secondary">{inquiry.co2Tanks} CO2 Tanks</Badge>} {/* Display CO2 Tanks */}
+                      {inquiry.cdjs > 0 && <Badge variant="secondary">{inquiry.cdjs} CDJs</Badge>}
+                      {inquiry.audio !== "QSC Rig" && <Badge variant="secondary">{inquiry.audio} Audio</Badge>}
                     </div>
 
                     <div className="space-y-2 mt-4">
