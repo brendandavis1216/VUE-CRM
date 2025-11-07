@@ -21,7 +21,7 @@ const STATUS_COLORS: Record<EventStatus, string> = {
 
 // Custom DayContent component to render dots for events
 const EventDayContent: React.FC<DayContentProps> = (props) => {
-  const { date, displayMonth } = props;
+  const { date, displayMonth, children } = props; // Destructure children here
   const { events } = useAppContext();
 
   const dayEvents = events.filter((event) =>
@@ -33,9 +33,7 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
 
   return (
     <div className="relative">
-      <span className={cn("block text-center", !isSameDay(date, displayMonth) && "text-muted-foreground opacity-50")}>
-        {format(date, "d")}
-      </span>
+      {children} {/* Render the original day content (including the day number and click handler) */}
       {uniqueStatuses.length > 0 && (
         <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-0.5">
           {uniqueStatuses.map((status, index) => (
@@ -92,7 +90,7 @@ const CalendarPage = () => {
               row: "flex w-full mt-2",
               cell: "h-12 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
               day: cn(
-                "h-9 w-9 p-0 font-normal aria-selected:opacity-100 text-white rounded-md", // Added rounded-md here
+                "h-9 w-9 p-0 font-normal aria-selected:opacity-100 text-white rounded-md",
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
               ),
               day_range_end: "day-range-end",
@@ -146,7 +144,7 @@ const CalendarPage = () => {
                 <p><strong>Fraternity:</strong> {event.fraternity}</p>
                 <p><strong>School:</strong> {event.school}</p>
                 <p><strong>Address:</strong> {event.addressOfEvent}</p>
-                <p><strong>Time:</strong> {format(event.eventDate, "p")}</p> {/* Display time */}
+                <p><strong>Time:</strong> {format(event.eventDate, "p")}</p>
                 <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
                 {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
               </CardContent>
