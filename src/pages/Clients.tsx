@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Users, Pencil, ChevronDown } from "lucide-react"; // Import ChevronDown
+import { Pencil, ChevronDown } from "lucide-react"; // Removed Users import
 import { useAppContext } from "@/context/AppContext";
 import {
   Accordion,
@@ -45,7 +45,7 @@ const ClientsPage = () => {
                 <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline [&>svg]:hidden group">
                   <CardTitle className="text-lg font-medium text-card-foreground">{client.fraternity} - {client.school}</CardTitle>
                   <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-muted-foreground" />
+                    {/* Removed Users icon */}
                     <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                   </div>
                 </AccordionTrigger>
