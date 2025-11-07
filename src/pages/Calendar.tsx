@@ -19,12 +19,16 @@ const getCalendarItemColor = (item: CalendarItem): string => {
   if ('inquiryDate' in item) { // It's an Inquiry
     return "bg-red-500"; // Red: Inquired
   } else { // It's an Event
-    // "Paid" status is now determined by event.status === "Completed"
+    const finalPaymentTask = item.tasks.find(task => task.name === "Final Payment Received");
+
+    if (finalPaymentTask?.completed) {
+      return "bg-green-500"; // Green: Event Paid
+    }
     if (item.status === "Completed") {
-      return "bg-green-500"; // Green: Event Paid (and Completed)
+      return "bg-blue-500"; // Blue: Event Completed
     }
     if (item.status === "Cancelled") {
-      return "bg-gray-500"; // Gray: Event Cancelled
+      return "bg-gray-500"; // Gray: Event Cancelled (new color)
     }
     // Default for Pending/Confirmed events that are not yet paid
     return "bg-yellow-500"; // Yellow: Event in Progress
@@ -36,11 +40,15 @@ const getCalendarItemTitle = (item: CalendarItem): string => {
   if ('inquiryDate' in item) {
     return `Inquiry: ${item.fraternity} - ${item.school}`;
   } else {
+    const finalPaymentTask = item.tasks.find(task => task.name === "Final Payment Received");
+    if (finalPaymentTask?.completed) {
+      return `Event: ${item.eventName} - ${item.fraternity} (Paid)`;
+    }
     if (item.status === "Completed") {
-      return `Event: ${item.eventName} - ${item.fraternity} (Paid & Completed)`;
+      return `Event: ${item.eventName} - ${item.fraternity} (Completed)`;
     }
     if (item.status === "Cancelled") {
-      return `Event: ${item.eventName} - ${item.fraternity} (Cancelled)`;
+      return `Event: ${item.eventName} - ${item.fraternity} (Cancelled)`; // Keep tooltip accurate
     }
     return `Event: ${item.eventName} - ${item.fraternity} (In Progress)`;
   }
@@ -49,8 +57,8 @@ const getCalendarItemTitle = (item: CalendarItem): string => {
 // Priority for day cell background color (higher index = higher priority for display)
 const COLOR_PRIORITY: Record<string, number> = {
   "bg-red-500": 4,    // Inquiries
-  "bg-green-500": 3,  // Event Paid (Completed)
-  "bg-blue-500": 2,   // (Blue was for 'Event Completed' before, now green covers paid/completed)
+  "bg-green-500": 3,  // Event Paid
+  "bg-blue-500": 2,   // Event Completed
   "bg-yellow-500": 1, // Event in Progress
   "bg-gray-500": 0,   // Event Cancelled, Fallback
 };
@@ -59,8 +67,9 @@ const COLOR_PRIORITY: Record<string, number> = {
 const LEGEND_COLORS = {
   "Inquiry": "bg-red-500",
   "Event (In Progress)": "bg-yellow-500",
-  "Event (Paid & Completed)": "bg-green-500", // Updated legend entry
-  "Event (Cancelled)": "bg-gray-500",
+  "Event (Paid)": "bg-green-500",
+  "Event (Completed)": "bg-blue-500",
+  "Event (Cancelled)": "bg-gray-500", // New legend entry for cancelled events
 };
 
 
