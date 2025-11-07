@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { format, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks, eachDayOfInterval, isBefore, isAfter } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react"; // Import navigation icons
+import { format, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks, eachDayOfInterval, getMonth, getYear, setMonth, setYear, startOfMonth } from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button"; // Import Button for navigation
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select components
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -98,17 +99,71 @@ const CalendarPage = () => {
 
   const goToPreviousWeek = () => {
     setCurrentWeekStart((prev) => subWeeks(prev, 1));
-    // toast.info(`Navigating to previous week.`); // Removed toast
   };
 
   const goToNextWeek = () => {
     setCurrentWeekStart((prev) => addWeeks(prev, 1));
-    // toast.info(`Navigating to next week.`); // Removed toast
   };
+
+  const handleMonthChange = (value: string) => {
+    const newMonth = parseInt(value, 10);
+    const currentYear = getYear(currentWeekStart);
+    const newDate = startOfMonth(setMonth(new Date(currentYear, 0, 1), newMonth));
+    setCurrentWeekStart(startOfWeek(newDate, { weekStartsOn: 1 }));
+  };
+
+  const handleYearChange = (value: string) => {
+    const newYear = parseInt(value, 10);
+    const currentMonth = getMonth(currentWeekStart);
+    const newDate = startOfMonth(setYear(new Date(0, currentMonth, 1), newYear));
+    setCurrentWeekStart(startOfWeek(newDate, { weekStartsOn: 1 }));
+  };
+
+  const currentMonth = getMonth(currentWeekStart);
+  const currentYear = getYear(currentWeekStart);
+
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: i.toString(),
+    label: format(setMonth(new Date(), i), 'MMMM'),
+  }));
+
+  const years = Array.from({ length: 11 }, (_, i) => {
+    const year = new Date().getFullYear() - 5 + i;
+    return { value: year.toString(), label: year.toString() };
+  });
 
   return (
     <div className="p-4 space-y-4">
       <h1 className="text-3xl font-bold text-white text-center mb-4">Event Calendar</h1>
+
+      {/* Month and Year Selectors */}
+      <div className="flex justify-center gap-4 mb-4">
+        <Select value={currentMonth.toString()} onValueChange={handleMonthChange}>
+          <SelectTrigger className="w-[180px] bg-input text-foreground border-border">
+            <SelectValue placeholder="Select Month" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover text-popover-foreground border-border">
+            {months.map((month) => (
+              <SelectItem key={month.value} value={month.value}>
+                {month.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={currentYear.toString()} onValueChange={handleYearChange}>
+          <SelectTrigger className="w-[120px] bg-input text-foreground border-border">
+            <SelectValue placeholder="Select Year" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover text-popover-foreground border-border">
+            {years.map((year) => (
+              <SelectItem key={year.value} value={year.value}>
+                {year.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Week Navigation */}
       <Card className="bg-card text-card-foreground border-border p-4 mb-4">
