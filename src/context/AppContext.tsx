@@ -39,27 +39,30 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
     // Special handling for events and inquiries to parse Date objects
     if (key === "appEvents" && Array.isArray(storedData)) {
       return storedData.map(event => {
+        let currentEvent = { ...event }; // Start with a shallow copy
+
         let date: Date;
-        if (typeof event.eventDate === 'string') {
-          date = new Date(event.eventDate);
+        if (typeof currentEvent.eventDate === 'string') {
+          date = new Date(currentEvent.eventDate);
         } else {
           date = new Date(); // Default if not a string
         }
         if (isNaN(date.getTime())) {
-          console.warn(`Invalid eventDate found for event ID ${event.id || 'unknown'}. Defaulting to current date.`);
-          event.eventDate = new Date();
+          console.warn(`Invalid eventDate found for event ID ${currentEvent.id || 'unknown'}. Defaulting to current date.`);
+          currentEvent.eventDate = new Date();
         } else {
-          event.eventDate = date;
+          currentEvent.eventDate = date;
         }
 
         // Ensure 'Final Payment Received' task exists for all events
-        if (!event.tasks.some(task => task.name === 'Final Payment Received')) {
-          event.tasks.push({ id: `event-task-final-payment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, name: "Final Payment Received", completed: false });
+        if (!currentEvent.tasks.some(task => task.name === 'Final Payment Received')) {
+          const newTasks = [...currentEvent.tasks, { id: `event-task-final-payment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, name: "Final Payment Received", completed: false }];
+          currentEvent.tasks = newTasks;
           // Recalculate progress after adding a task
-          const completedTasks = event.tasks.filter(task => task.completed).length;
-          event.progress = (completedTasks / event.tasks.length) * 100;
+          const completedTasks = currentEvent.tasks.filter(task => task.completed).length;
+          currentEvent.progress = (completedTasks / currentEvent.tasks.length) * 100;
         }
-        return event;
+        return currentEvent; // Return the (potentially modified) shallow copy
       }) as T;
     }
     if (key === "appInquiries" && Array.isArray(storedData)) {

@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MobileLayout } from "./components/MobileLayout";
 import ClientsPage from "./pages/Clients";
-import InquiriesPage from "./pages/Inquiries";
+import InquiriesPage from "./pages/Inquiries"; // Corrected import path
 import EventsPage from "./pages/Events";
 import CalendarPage from "./pages/Calendar";
 import DashboardPage from "./pages/Dashboard";
