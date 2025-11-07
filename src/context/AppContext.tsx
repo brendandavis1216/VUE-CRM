@@ -38,16 +38,22 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
 
     // Special handling for events and inquiries to parse Date objects
     if (key === "appEvents" && Array.isArray(storedData)) {
-      return storedData.map(event => ({
-        ...event,
-        eventDate: new Date(event.eventDate),
-      })) as T;
+      return storedData.map(event => {
+        const date = new Date(event.eventDate);
+        return {
+          ...event,
+          eventDate: isNaN(date.getTime()) ? new Date() : date, // Default to new Date() if invalid
+        };
+      }) as T;
     }
     if (key === "appInquiries" && Array.isArray(storedData)) {
-      return storedData.map(inquiry => ({
-        ...inquiry,
-        inquiryDate: new Date(inquiry.inquiryDate),
-      })) as T;
+      return storedData.map(inquiry => {
+        const date = new Date(inquiry.inquiryDate);
+        return {
+          ...inquiry,
+          inquiryDate: isNaN(date.getTime()) ? new Date() : date, // Default to new Date() if invalid
+        };
+      }) as T;
     }
     return storedData;
   } catch (error) {
