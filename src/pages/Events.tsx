@@ -88,7 +88,7 @@ const EventsPage = () => {
                           <Label
                             htmlFor={`final-payment-${event.id}`}
                             className={cn(
-                              "text-xs font-medium", // Changed text-sm to text-xs
+                              "text-xs font-medium",
                               finalPaymentTask.completed ? "line-through text-muted-foreground" : "text-white"
                             )}
                           >
@@ -122,21 +122,23 @@ const EventsPage = () => {
                     <div className="space-y-2 mt-4">
                       <h3 className="font-semibold text-white">Tasks:</h3>
                       <div className="grid grid-cols-1 gap-2 mt-2">
-                        {event.tasks.map((task) => (
-                          <div key={task.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`event-task-${event.id}-${task.id}`}
-                              checked={task.completed}
-                              onCheckedChange={() => updateEventTask(event.id, task.id)}
-                            />
-                            <Label
-                              htmlFor={`event-task-${event.id}-${task.id}`}
-                              className={cn(task.completed ? "line-through text-muted-foreground" : "text-white")}
-                            >
-                              {task.name}
-                            </Label>
-                          </div>
-                        ))}
+                        {event.tasks
+                          .filter(task => task.name !== "Paid(Full)") // Filter out Paid(Full) task
+                          .map((task) => (
+                            <div key={task.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`event-task-${event.id}-${task.id}`}
+                                checked={task.completed}
+                                onCheckedChange={() => updateEventTask(event.id, task.id)}
+                              />
+                              <Label
+                                htmlFor={`event-task-${event.id}-${task.id}`}
+                                className={cn(task.completed ? "line-through text-muted-foreground" : "text-white")}
+                              >
+                                {task.name}
+                              </Label>
+                            </div>
+                          ))}
                       </div>
                     </div>
                   </AccordionContent>
