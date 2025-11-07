@@ -31,10 +31,10 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
   const maxEventsToShow = 2; // Limit events shown directly in cell
 
   return (
-    <div className="relative h-full w-full p-1 overflow-hidden">
-      {/* Render the day number (children) absolutely positioned */}
-      <div className="absolute top-1 left-1 text-white text-xs font-medium z-10">{children}</div>
-      <div className="mt-6 space-y-0.5">
+    <div className="flex flex-col h-full w-full p-1 overflow-hidden">
+      {/* Render the day number (children) directly at the top */}
+      <div className="text-white text-xs font-medium">{children}</div>
+      <div className="flex-grow space-y-0.5 overflow-hidden mt-1"> {/* Added mt-1 for spacing */}
         {dayEvents.slice(0, maxEventsToShow).map((event) => (
           <div key={event.id} className="text-xs truncate text-white leading-tight">
             <span className="font-semibold">{event.eventName}</span> - {event.fraternity}
@@ -93,7 +93,7 @@ const CalendarPage = () => {
               cell: "h-24 text-center text-sm p-1 relative flex-1 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
               // The 'day' is the actual clickable button for the day, also needs relative for children positioning
               day: cn(
-                "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md text-white relative",
+                "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md text-white relative", // Keep relative here for potential future absolute children
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
               ),
               day_range_end: "day-range-end",
