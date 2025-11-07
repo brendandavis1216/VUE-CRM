@@ -13,6 +13,7 @@ const Login = () => {
       <p className="text-center text-white mb-6">Sign in to manage your events and clients.</p>
       <div className="w-full max-w-md space-y-6">
         <Auth
+          key="supabase-auth-ui" // Added key to force re-render
           supabaseClient={supabase}
           providers={[]}
           appearance={{
@@ -27,19 +28,20 @@ const Login = () => {
                   inputBackground: 'hsl(var(--secondary))', // Dark gray for input background
                   inputBorder: 'hsl(var(--border))', // Dark gray for input border
                   inputLabel: 'hsl(0 0% 100%)', // Explicitly set to pure white for label text
-                  inputText: 'hsl(var(--foreground))', // Pure white input text
-                  messageText: 'hsl(var(--destructive-foreground))', // Pure white text on red background
+                  inputText: 'hsl(0 0% 100%)', // Pure white input text
+                  messageText: 'hsl(0 0% 100%)', // Pure white for message text (e.g., error messages)
                   messageBackground: 'hsl(0 62.8% 30.6%)', // Red background
-                  anchorTextColor: 'hsl(var(--foreground))', // Pure white for links
-                  inputPlaceholder: 'hsl(var(--muted-foreground))', // Pure white for placeholder text
+                  anchorTextColor: 'hsl(0 0% 100%)', // Pure white for links
+                  inputPlaceholder: 'hsl(0 0% 100%)', // Pure white for placeholder text
                   dividerBackground: 'hsl(var(--border))', // Dark gray for dividers
-                  textColor: 'hsl(var(--foreground))', // Pure white for general text
+                  textColor: 'hsl(0 0% 100%)', // Pure white for general text, directly set
                 },
               },
             },
           }}
           theme="dark"
           redirectTo={window.location.origin + '/clients'}
+          className="supabase-auth-ui-custom-theme" // Add custom class here
         />
       </div>
       <MadeWithDyad />

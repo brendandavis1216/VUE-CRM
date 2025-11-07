@@ -100,3 +100,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom override for Supabase Auth UI labels */
+.supabase-auth-ui-custom-theme label {
+  color: hsl(0 0% 100%) !important; /* Force label text to white */
+}
