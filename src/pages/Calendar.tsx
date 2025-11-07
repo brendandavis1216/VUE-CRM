@@ -3,13 +3,14 @@
 import React, { useState, useMemo } from "react";
 import { format, isSameDay } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { DayPicker, DayContentProps } from "react-day-picker";
+import { DayPicker, DayContentProps, SelectSingleEventHandler } from "react-day-picker"; // Import SelectSingleEventHandler
 import "react-day-picker/dist/style.css";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Event, Inquiry, EventStatus } from "@/types/app";
+import { toast } from "sonner"; // Import toast for feedback
 
 // Define a union type for items that can appear on the calendar
 type CalendarItem = Inquiry | Event;
@@ -167,6 +168,14 @@ const CalendarPage = () => {
       : [];
   }, [allCalendarItems, selectedDate]);
 
+  // Custom handler for date selection to add toast feedback
+  const handleDateSelect: SelectSingleEventHandler = (date) => {
+    setSelectedDate(date);
+    if (date) {
+      toast.info(`Selected date: ${format(date, "PPP")}`);
+    }
+  };
+
   return (
     <div className="p-4 space-y-4">
       <h1 className="text-3xl font-bold text-white text-center mb-4">Event Calendar</h1>
@@ -176,7 +185,7 @@ const CalendarPage = () => {
           <DayPicker
             mode="single"
             selected={selectedDate}
-            onSelect={setSelectedDate}
+            onSelect={handleDateSelect} // Use the custom handler
             showOutsideDays
             className="p-3 w-full"
             modifiers={eventModifiers}
