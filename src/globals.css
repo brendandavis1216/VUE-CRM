@@ -53,38 +53,38 @@
 
   .dark {
     --background: 0 0% 0%; /* Changed to pure black */
-    --foreground: 210 40% 98%;
+    --foreground: 0 0% 100%; /* Changed to pure white */
 
     --card: 0 0% 0%; /* Changed to pure black */
-    --card-foreground: 210 40% 98%;
+    --card-foreground: 0 0% 100%; /* Changed to pure white */
 
     --popover: 0 0% 0%; /* Changed to pure black */
-    --popover-foreground: 210 40% 98%;
+    --popover-foreground: 0 0% 100%; /* Changed to pure white */
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 0% 100%; /* Changed to pure white for primary text/buttons */
+    --primary-foreground: 222.2 47.4% 11.2%; /* This is for text *on* primary buttons, should be dark */
 
     --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary-foreground: 0 0% 100%; /* Changed to pure white */
 
     --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted-foreground: 0 0% 100%; /* Changed to pure white */
 
     --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 0 0% 100%; /* Changed to pure white */
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%; /* Changed to pure white */
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
     --sidebar-background: 0 0% 0%; /* Changed to pure black */
-    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-foreground: 0 0% 100%; /* Changed to pure white */
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 0 0% 100%; /* Changed to pure white */
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
