@@ -67,7 +67,11 @@ const EventsPage = () => {
               <Card key={event.id} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={event.id} className="border-none">
                   <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
-                    <CardTitle className="text-lg font-medium">{event.eventName}</CardTitle>
+                    <CardTitle className="text-lg font-medium flex-shrink-0">{event.eventName}</CardTitle>
+                    <div className="flex items-center gap-2 flex-grow justify-end">
+                      <span className="text-sm font-medium text-white">{Math.round(event.progress)}%</span>
+                      <Progress value={event.progress} className="w-24 h-2" />
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
                     <CardContent className="text-sm space-y-3 p-0">
@@ -80,10 +84,7 @@ const EventsPage = () => {
                       {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
 
                       <div className="space-y-2 mt-4">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-white">Progress: {Math.round(event.progress)}%</h3>
-                          <Progress value={event.progress} className="w-24 h-2" />
-                        </div>
+                        <h3 className="font-semibold text-white">Tasks:</h3>
                         <div className="grid grid-cols-1 gap-2 mt-2">
                           {event.tasks.map((task) => (
                             <div key={task.id} className="flex items-center space-x-2">
