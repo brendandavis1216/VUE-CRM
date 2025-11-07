@@ -90,8 +90,9 @@ const InquiriesPage = () => {
                       <CardTitle className="text-lg font-medium text-card-foreground flex-shrink-0">
                         {inquiry.fraternity} - {inquiry.school}
                       </CardTitle>
-                      <div className="flex-grow flex justify-end"> {/* Added flex justify-end here */}
-                        <Progress value={inquiry.progress} className="w-1/2 h-2 ml-auto" /> {/* Changed w-full to w-1/2 and added ml-auto */}
+                      <div className="flex items-center gap-2 flex-grow justify-end"> {/* Added flex items-center and gap-2 */}
+                        <span className="text-sm font-medium text-muted-foreground">{Math.round(inquiry.progress)}%</span> {/* Percentage text */}
+                        <Progress value={inquiry.progress} className="w-1/2 h-2" />
                       </div>
                     </div>
                   </AccordionTrigger>
