@@ -8,17 +8,34 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
-import { Search } from "lucide-react";
+import { Search, Pencil } from "lucide-react"; // Import Pencil icon
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { EventEditForm } from "@/components/EventEditForm"; // Import EventEditForm
+import { Event } from "@/types/app"; // Import Event type
 
 const EventsPage = () => {
-  const { events, updateEventTask } = useAppContext();
+  const { events, updateEventTask, updateEvent } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false); // State for edit dialog
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null); // State for selected event to edit
+
+  const handleEditClick = (event: Event) => {
+    setSelectedEvent(event);
+    setIsEditEventDialogOpen(true);
+  };
+
+  const handleEventUpdate = (eventId: string, updatedValues: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => {
+    updateEvent(eventId, updatedValues);
+    setIsEditEventDialogOpen(false);
+    setSelectedEvent(null);
+  };
 
   const filteredAndSortedEvents = useMemo(() => {
     let currentEvents = [...events];
@@ -71,6 +88,18 @@ const EventsPage = () => {
                     <div className="flex items-center gap-2 flex-grow justify-end">
                       <span className="text-sm font-medium text-white">{Math.round(event.progress)}%</span>
                       <Progress value={event.progress} className="w-24 h-2" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion from toggling
+                          handleEditClick(event);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Edit Event</span>
+                      </Button>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
@@ -108,6 +137,21 @@ const EventsPage = () => {
             ))}
           </Accordion>
         </div>
+      )}
+
+      {selectedEvent && (
+        <Dialog open={isEditEventDialogOpen} onOpenChange={setIsEditEventDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+            <DialogHeader>
+              <DialogTitle className="text-white">Edit Event: {selectedEvent.eventName}</DialogTitle>
+            </DialogHeader>
+            <EventEditForm
+              event={selectedEvent}
+              onSubmit={handleEventUpdate}
+              onClose={() => setIsEditEventDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

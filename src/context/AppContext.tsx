@@ -14,6 +14,7 @@ interface AppContextType {
   updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
   addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
   updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void;
+  updateEvent: (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -327,6 +328,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   };
 
+  const updateEvent = (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => {
+    setEvents((prevEvents) =>
+      prevEvents.map((event) => {
+        if (event.id === eventId) {
+          // Preserve existing tasks, progress, clientId, fraternity, school
+          return { ...event, ...updatedEventData };
+        }
+        return event;
+      })
+    );
+    toast.success("Event updated successfully!");
+  };
+
   const updateEventTask = (eventId: string, taskId: string) => {
     setEvents((prevEvents) =>
       prevEvents.map((event) => {
@@ -384,6 +398,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateClient,
         addClient,
         updateInquiry,
+        updateEvent,
       }}
     >
       {children}
