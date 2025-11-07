@@ -26,10 +26,10 @@ const Login = () => {
                   defaultButtonBackgroundHover: 'hsl(var(--primary-foreground))', // White text for default button hover
                   inputBackground: 'hsl(var(--secondary))', // Dark gray for input background
                   inputBorder: 'hsl(var(--border))', // Dark gray for input border
-                  inputLabel: 'hsl(var(--foreground))', // Pure white label text
+                  inputLabel: 'hsl(0 0% 100%)', // Explicitly set to pure white for label text
                   inputText: 'hsl(var(--foreground))', // Pure white input text
                   messageText: 'hsl(var(--destructive-foreground))', // Pure white text on red background
-                  messageBackground: 'hsl(var(--destructive))', // Red background
+                  messageBackground: 'hsl(0 62.8% 30.6%)', // Red background
                   anchorTextColor: 'hsl(var(--foreground))', // Pure white for links
                   inputPlaceholder: 'hsl(var(--muted-foreground))', // Pure white for placeholder text
                   dividerBackground: 'hsl(var(--border))', // Dark gray for dividers
