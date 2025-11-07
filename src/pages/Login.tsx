@@ -27,7 +27,7 @@ const Login = () => {
                   inputBackground: 'hsl(0 0% 100%)', // White input background
                   inputBorder: 'hsl(var(--border))',
                   inputLabel: 'hsl(var(--foreground))', // Pure white label text
-                  inputText: 'hsl(var(--foreground))', // Changed to pure white input text
+                  inputText: 'hsl(var(--background))', // Changed to black input text for contrast
                   messageText: 'hsl(var(--destructive-foreground))',
                   messageBackground: 'hsl(var(--destructive))',
                   anchorTextColor: 'hsl(var(--primary))',
