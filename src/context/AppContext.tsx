@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { Client, Inquiry, Event, InquiryTask, EventTask } from "@/types/app";
+import { Client, Inquiry, Event, InquiryTask, EventTask, EventStatus } from "@/types/app";
 import { toast } from "sonner";
 
 interface AppContextType {
@@ -15,6 +15,7 @@ interface AppContextType {
   addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => void;
   updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void;
   updateEvent: (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => void;
+  updateEventStatus: (eventId: string, newStatus: EventStatus) => void; // New function
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -62,6 +63,12 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
           const completedTasks = currentEvent.tasks.filter(task => task.completed).length;
           currentEvent.progress = (completedTasks / currentEvent.tasks.length) * 100;
         }
+
+        // Ensure status exists, default to "Pending" if not present
+        if (!currentEvent.status) {
+          currentEvent.status = "Pending";
+        }
+
         return currentEvent; // Return the (potentially modified) shallow copy
       }) as T;
     }
@@ -352,6 +359,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 capacity: inq.capacity,
                 budget: inq.budget,
                 stageBuild: inq.stageBuild, // Transfer stageBuild directly to event
+                status: "Pending", // Default status for new events
                 tasks: newEventTasks,
                 progress: 0,
             };
@@ -393,6 +401,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       })
     );
     toast.success("Event updated successfully!");
+  };
+
+  const updateEventStatus = (eventId: string, newStatus: EventStatus) => {
+    setEvents((prevEvents) =>
+      prevEvents.map((event) =>
+        event.id === eventId ? { ...event, status: newStatus } : event
+      )
+    );
+    toast.success(`Event status updated to ${newStatus}!`);
   };
 
   const updateEventTask = (eventId: string, taskId: string) => {
@@ -454,6 +471,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addClient,
         updateInquiry,
         updateEvent,
+        updateEventStatus,
       }}
     >
       {children}

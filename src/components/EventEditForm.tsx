@@ -21,7 +21,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Event } from "@/types/app";
+import { Event, EventStatus } from "@/types/app";
 
 const formSchema = z.object({
   eventName: z.string().min(2, { message: "Event name must be at least 2 characters." }),
@@ -30,6 +30,7 @@ const formSchema = z.object({
   capacity: z.coerce.number().min(1, { message: "Capacity must be at least 1." }),
   budget: z.coerce.number().min(0, { message: "Budget cannot be negative." }),
   stageBuild: z.enum(["None", "Base Stage", "Totem Stage", "SL 100", "SL 75", "SL260", "Custom Rig"]),
+  status: z.enum(["Pending", "Confirmed", "Completed", "Cancelled"]), // New status field
 });
 
 type EventFormValues = z.infer<typeof formSchema>;
@@ -50,6 +51,7 @@ export const EventEditForm: React.FC<EventEditFormProps> = ({ event, onSubmit, o
       capacity: event.capacity,
       budget: event.budget,
       stageBuild: event.stageBuild,
+      status: event.status, // Set default status
     },
   });
 
@@ -172,6 +174,29 @@ export const EventEditForm: React.FC<EventEditFormProps> = ({ event, onSubmit, o
                   <SelectItem value="SL 75">SL 75</SelectItem>
                   <SelectItem value="SL260">SL260</SelectItem>
                   <SelectItem value="Custom Rig">Custom Rig</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+              <FormLabel className="block font-semibold text-black dark:text-white">Event Status</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="bg-input text-foreground border-border">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className="bg-popover text-popover-foreground border-border">
+                  <SelectItem value="Pending">Pending</SelectItem>
+                  <SelectItem value="Confirmed">Confirmed</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
