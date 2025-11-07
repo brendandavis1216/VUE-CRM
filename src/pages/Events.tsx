@@ -75,13 +75,11 @@ const EventsPage = () => {
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
                     <CardContent className="text-sm space-y-3 p-0">
-                      <p><strong>Fraternity:</strong> {event.fraternity}</p>
-                      <p><strong>School:</strong> {event.school}</p>
+                      {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
                       <p><strong>Date:</strong> {event.eventDate.toLocaleDateString()}</p>
                       <p><strong>Address:</strong> {event.addressOfEvent}</p>
                       <p><strong>Capacity:</strong> {event.capacity}</p>
                       <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
-                      {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
 
                       <div className="space-y-2 mt-4">
                         <h3 className="font-semibold text-white">Tasks:</h3>
