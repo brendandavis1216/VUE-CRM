@@ -25,7 +25,7 @@ interface Inquiry {
   capacity: number;
   budget: number;
   stageBuild: "None" | "Base Stage" | "Totem Stage" | "SL 100" | "SL 75" | "SL260" | "Custom Rig";
-  power: boolean;
+  power: "None" | "Gas Generators" | "20kW Diesel" | "36kW" | "Provided";
   gates: boolean;
   security: boolean;
   tasks: InquiryTask[];

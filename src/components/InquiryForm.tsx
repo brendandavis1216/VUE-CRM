@@ -26,7 +26,7 @@ const formSchema = z.object({
   capacity: z.coerce.number().min(1, { message: "Capacity must be at least 1." }),
   budget: z.coerce.number().min(0, { message: "Budget cannot be negative." }),
   stageBuild: z.enum(["None", "Base Stage", "Totem Stage", "SL 100", "SL 75", "SL260", "Custom Rig"]),
-  power: z.boolean().default(false),
+  power: z.enum(["None", "Gas Generators", "20kW Diesel", "36kW", "Provided"]),
   gates: z.boolean().default(false),
   security: z.boolean().default(false),
 });
@@ -47,8 +47,8 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
       addressOfEvent: "",
       capacity: 0,
       budget: 0,
-      stageBuild: "None", // Default to "None"
-      power: false,
+      stageBuild: "None",
+      power: "None", // Default to "None"
       gates: false,
       security: false,
     },
@@ -171,16 +171,23 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
             control={form.control}
             name="power"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="block font-semibold text-black dark:text-white">Power</FormLabel>
-                </div>
+              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                <FormLabel className="block font-semibold text-black dark:text-white">Power</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="bg-input text-foreground border-border">
+                      <SelectValue placeholder="Select power type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-popover text-popover-foreground border-border">
+                    <SelectItem value="None">None</SelectItem>
+                    <SelectItem value="Gas Generators">Gas Generators</SelectItem>
+                    <SelectItem value="20kW Diesel">20kW Diesel</SelectItem>
+                    <SelectItem value="36kW">36kW</SelectItem>
+                    <SelectItem value="Provided">Provided</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
               </FormItem>
             )}
           />
