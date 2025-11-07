@@ -25,13 +25,13 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
   const { events } = useAppContext();
 
   // Determine if it's an outside day to potentially dim the number
-  const isOutside = activeModifiers?.outside; // Safely access 'outside' using optional chaining
+  const isOutside = activeModifiers?.outside;
 
   const dayEvents = events.filter((event) =>
     isSameDay(event.eventDate, date)
   ).sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime()); // Sort by time
 
-  const maxEventsToShow = 2; // Limit events shown directly in cell
+  const maxDotsToShow = 3; // Limit dots shown directly in cell
 
   return (
     <div className="flex flex-col h-full w-full p-1 overflow-hidden">
@@ -39,15 +39,17 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
       <div className={cn("text-xs font-medium", isOutside ? "text-muted-foreground opacity-50" : "text-white")}>
         {format(date, 'd')}
       </div>
-      <div className="flex-grow space-y-0.5 overflow-hidden mt-1">
-        {dayEvents.slice(0, maxEventsToShow).map((event) => (
-          <div key={event.id} className="text-xs truncate text-white leading-tight">
-            <span className="font-semibold">{event.eventName}</span> - {event.fraternity}
-          </div>
+      <div className="flex-grow flex flex-wrap gap-1 mt-1 justify-center"> {/* Use flex-wrap for dots */}
+        {dayEvents.slice(0, maxDotsToShow).map((event) => (
+          <div
+            key={event.id}
+            className={cn("h-2 w-2 rounded-full", STATUS_COLORS[event.status])} // Colored dot
+            title={`${event.eventName} - ${event.fraternity} (${event.status})`} // Add tooltip for accessibility
+          />
         ))}
-        {dayEvents.length > maxEventsToShow && (
+        {dayEvents.length > maxDotsToShow && (
           <div className="text-xs text-muted-foreground mt-0.5">
-            +{dayEvents.length - maxEventsToShow} more
+            +{dayEvents.length - maxDotsToShow}
           </div>
         )}
       </div>
