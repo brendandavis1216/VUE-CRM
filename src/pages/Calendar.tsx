@@ -80,6 +80,8 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
   const { events, inquiries } = useAppContext();
 
   const isOutside = activeModifiers?.outside;
+  const isSelected = activeModifiers?.selected;
+  const isToday = activeModifiers?.today;
 
   const allDayItems: CalendarItem[] = [
     ...inquiries.filter(inq => isSameDay(inq.inquiryDate, date)),
@@ -93,23 +95,34 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
   const maxDotsToShow = 3;
 
   return (
-    <div className="flex flex-col h-full w-full p-1 overflow-hidden">
-      <div className={cn("text-xs font-medium", isOutside ? "text-muted-foreground opacity-50" : "text-white")}>
-        {format(date, 'd')}
-      </div>
-      <div className="flex-grow flex flex-wrap gap-1 mt-1 justify-center">
-        {allDayItems.slice(0, maxDotsToShow).map((item, index) => (
-          <div
-            key={item.id + index}
-            className={cn("h-2 w-2 rounded-full", getCalendarItemColor(item))}
-            title={getCalendarItemTitle(item)}
-          />
-        ))}
-        {allDayItems.length > maxDotsToShow && (
-          <div className="text-xs text-muted-foreground mt-0.5">
-            +{allDayItems.length - maxDotsToShow}
-          </div>
-        )}
+    <div
+      className={cn(
+        "h-full w-full p-1 font-normal rounded-md relative", // Base styles for a day cell
+        "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground", // Hover/focus
+        isOutside && "text-muted-foreground opacity-50", // Outside days
+        isToday && "bg-accent text-accent-foreground", // Today's date
+        isSelected && "bg-primary text-primary-foreground" // **Crucial: Selected day styling**
+      )}
+      aria-selected={isSelected ? "true" : undefined} // Important for accessibility
+    >
+      <div className="flex flex-col h-full w-full overflow-hidden">
+        <div className="text-xs font-medium">
+          {format(date, 'd')}
+        </div>
+        <div className="flex-grow flex flex-wrap gap-1 mt-1 justify-center">
+          {allDayItems.slice(0, maxDotsToShow).map((item, index) => (
+            <div
+              key={item.id + index}
+              className={cn("h-2 w-2 rounded-full", getCalendarItemColor(item))}
+              title={getCalendarItemTitle(item)}
+            />
+          ))}
+          {allDayItems.length > maxDotsToShow && (
+            <div className="text-xs text-muted-foreground mt-0.5">
+              +{allDayItems.length - maxDotsToShow}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -210,15 +223,7 @@ const CalendarPage = () => {
               head_cell: "rounded-md font-normal text-[0.8rem] text-white flex-1",
               row: "flex w-full mt-2",
               cell: "h-24 text-center text-sm p-1 relative flex-1 focus-within:relative focus-within:z-20",
-              day: cn(
-                "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md relative",
-                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-              ),
-              day_selected:
-                "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-              day_today: "bg-accent text-accent-foreground",
-              day_outside: "text-muted-foreground opacity-50",
-              day_disabled: "text-muted-foreground opacity-50",
+              // Removed day_selected, day_today, day_outside from here as EventDayContent now handles them
               day_range_middle:
                 "aria-selected:bg-accent aria-selected:text-accent-foreground",
               day_hidden: "invisible",
