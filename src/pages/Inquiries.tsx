@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Search } from "lucide-react"; // Import Search icon
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input"; // Import Input component
 import { cn } from "@/lib/utils";
 import { InquiryForm } from "@/components/InquiryForm";
 import { useAppContext } from "@/context/AppContext";
@@ -16,36 +17,65 @@ import { useAppContext } from "@/context/AppContext";
 const InquiriesPage = () => {
   const { inquiries, addInquiry, updateInquiryTask } = useAppContext();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // State for search term
 
   const handleFormSubmit = (newInquiryData: Parameters<typeof addInquiry>[0]) => {
     addInquiry(newInquiryData);
     setIsFormOpen(false);
   };
 
+  const filteredInquiries = useMemo(() => {
+    if (!searchTerm) {
+      return inquiries;
+    }
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    return inquiries.filter(
+      (inquiry) =>
+        inquiry.school.toLowerCase().includes(lowerCaseSearchTerm) ||
+        inquiry.fraternity.toLowerCase().includes(lowerCaseSearchTerm) ||
+        inquiry.mainContact.toLowerCase().includes(lowerCaseSearchTerm) ||
+        inquiry.addressOfEvent.toLowerCase().includes(lowerCaseSearchTerm)
+    );
+  }, [inquiries, searchTerm]);
+
   return (
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold text-white">Inquiries</h1>
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <PlusCircle className="mr-2 h-4 w-4" /> Add Inquiry
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
-            <DialogHeader>
-              <DialogTitle className="text-white">Add New Inquiry</DialogTitle>
-            </DialogHeader>
-            <InquiryForm onSubmit={handleFormSubmit} />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2 items-center"> {/* Added flex and items-center for alignment */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search inquiries..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 bg-input text-foreground border-border w-40 sm:w-auto" // Adjusted width for mobile
+            />
+          </div>
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Inquiry
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+              <DialogHeader>
+                <DialogTitle className="text-white">Add New Inquiry</DialogTitle>
+              </DialogHeader>
+              <InquiryForm onSubmit={handleFormSubmit} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      {inquiries.length === 0 ? (
-        <p className="text-center text-muted-foreground mt-8">No inquiries yet. Click "Add Inquiry" to get started!</p>
+      {filteredInquiries.length === 0 ? (
+        <p className="text-center text-muted-foreground mt-8">
+          {searchTerm ? "No inquiries match your search." : "No inquiries yet. Click 'Add Inquiry' to get started!"}
+        </p>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {inquiries.map((inquiry) => (
+          {filteredInquiries.map((inquiry) => (
             <Card key={inquiry.id} className="bg-card text-card-foreground border-border">
               <CardHeader>
                 <CardTitle className="text-lg font-medium">{inquiry.fraternity} - {inquiry.school}</CardTitle>
