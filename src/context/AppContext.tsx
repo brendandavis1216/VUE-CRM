@@ -188,19 +188,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 newEventTasks.push({ id: `event-task-stage-${Date.now()}`, name: `${inq.stageBuild} Build`, completed: false });
             }
 
-            // Power: If power is NOT provided by the client (i.e., not "Provided" and not "None"), add a task for setting it up.
+            // Power: If power is NOT provided by the client (i.e., not "Provided" and not "None"), add a task for sourcing it.
             if (inq.power !== "None" && inq.power !== "Provided") {
-                newEventTasks.push({ id: `event-task-power-${Date.now()}`, name: `${inq.power} Setup`, completed: false });
+                newEventTasks.push({ id: `event-task-power-${Date.now()}`, name: `Source ${inq.power}`, completed: false });
             }
 
-            // Gates: If gates are NOT provided by the client, add a task for installation.
+            // Gates: If gates are NOT provided by the client, add a task for sourcing them.
             if (!inq.gates) {
-                newEventTasks.push({ id: `event-task-gates-${Date.now()}`, name: "Gate Installation", completed: false });
+                newEventTasks.push({ id: `event-task-gates-${Date.now()}`, name: "Source Gates", completed: false });
             }
 
-            // Security: If security is NOT provided by the client, add a task for briefing/provision.
+            // Security: If security is NOT provided by the client, add a task for sourcing it.
             if (!inq.security) {
-                newEventTasks.push({ id: `event-task-security-${Date.now()}`, name: "Security Provision", completed: false });
+                newEventTasks.push({ id: `event-task-security-${Date.now()}`, name: "Source Security", completed: false });
             }
 
             // Add a default task if no specific ones are generated (e.g., if everything is provided)
