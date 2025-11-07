@@ -24,7 +24,7 @@ interface Inquiry {
   addressOfEvent: string;
   capacity: number;
   budget: number;
-  stageBuild: boolean;
+  stageBuild: "None" | "Base Stage" | "Totem Stage" | "SL 100" | "SL 75" | "SL260" | "Custom Rig";
   power: boolean;
   gates: boolean;
   security: boolean;

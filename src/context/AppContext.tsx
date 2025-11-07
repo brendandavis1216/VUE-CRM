@@ -56,7 +56,7 @@ const initialInquiries: Inquiry[] = [
     addressOfEvent: "123 Party Lane",
     capacity: 500,
     budget: 8000,
-    stageBuild: true,
+    stageBuild: "Base Stage",
     power: false,
     gates: true,
     security: false,
@@ -114,7 +114,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             toast.success(`Inquiry "${inq.fraternity}" completed! Moving to Events.`);
             
             const newEventTasks: EventTask[] = [];
-            if (inq.stageBuild) newEventTasks.push({ id: `event-task-stage-${Date.now()}`, name: "Stage Build", completed: false });
+            if (inq.stageBuild !== "None") newEventTasks.push({ id: `event-task-stage-${Date.now()}`, name: `${inq.stageBuild} Build`, completed: false });
             if (inq.power) newEventTasks.push({ id: `event-task-power-${Date.now()}`, name: "Power Setup", completed: false });
             if (inq.gates) newEventTasks.push({ id: `event-task-gates-${Date.now()}`, name: "Gate Installation", completed: false });
             if (inq.security) newEventTasks.push({ id: `event-task-security-${Date.now()}`, name: "Security Briefing", completed: false });

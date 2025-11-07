@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
   school: z.string().min(2, { message: "School name must be at least 2 characters." }),
@@ -24,7 +25,7 @@ const formSchema = z.object({
   addressOfEvent: z.string().min(5, { message: "Address must be at least 5 characters." }),
   capacity: z.coerce.number().min(1, { message: "Capacity must be at least 1." }),
   budget: z.coerce.number().min(0, { message: "Budget cannot be negative." }),
-  stageBuild: z.boolean().default(false),
+  stageBuild: z.enum(["None", "Base Stage", "Totem Stage", "SL 100", "SL 75", "SL260", "Custom Rig"]),
   power: z.boolean().default(false),
   gates: z.boolean().default(false),
   security: z.boolean().default(false),
@@ -46,7 +47,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
       addressOfEvent: "",
       capacity: 0,
       budget: 0,
-      stageBuild: false,
+      stageBuild: "None", // Default to "None"
       power: false,
       gates: false,
       security: false,
@@ -144,16 +145,25 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
             control={form.control}
             name="stageBuild"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="block font-semibold text-black dark:text-white">Stage Build</FormLabel>
-                </div>
+              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                <FormLabel className="block font-semibold text-black dark:text-white">Stage Build</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="bg-input text-foreground border-border">
+                      <SelectValue placeholder="Select stage type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-popover text-popover-foreground border-border">
+                    <SelectItem value="None">None</SelectItem>
+                    <SelectItem value="Base Stage">Base Stage</SelectItem>
+                    <SelectItem value="Totem Stage">Totem Stage</SelectItem>
+                    <SelectItem value="SL 100">SL 100</SelectItem>
+                    <SelectItem value="SL 75">SL 75</SelectItem>
+                    <SelectItem value="SL260">SL260</SelectItem>
+                    <SelectItem value="Custom Rig">Custom Rig</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
               </FormItem>
             )}
           />

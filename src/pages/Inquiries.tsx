@@ -56,7 +56,7 @@ const InquiriesPage = () => {
                 <p className="text-sm"><strong>Capacity:</strong> {inquiry.capacity}</p>
                 <p className="text-sm"><strong>Budget:</strong> ${inquiry.budget.toLocaleString()}</p>
                 <div className="flex flex-wrap gap-2 text-sm">
-                  {inquiry.stageBuild && <Badge variant="secondary">Stage Build</Badge>}
+                  {inquiry.stageBuild !== "None" && <Badge variant="secondary">{inquiry.stageBuild}</Badge>}
                   {inquiry.power && <Badge variant="secondary">Power</Badge>}
                   {inquiry.gates && <Badge variant="secondary">Gates</Badge>}
                   {inquiry.security && <Badge variant="secondary">Security</Badge>}
