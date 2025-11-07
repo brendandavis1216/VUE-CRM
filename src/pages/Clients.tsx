@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ClientEditForm } from "@/components/ClientEditForm";
+import { ClientEditForm } from "@/components/ClientEdit/ClientEditForm";
 import { ClientFilterSort } from "@/components/ClientFilterSort";
 import { ClientAddForm } from "@/components/ClientAddForm";
 import { Client } from "@/types/app";
@@ -159,7 +159,7 @@ const ClientsPage = () => {
                   </p>
                   <p><strong>Avg. Event Size:</strong> ${client.averageEventSize.toLocaleString()}</p>
                   <p><strong># Events:</strong> {client.numberOfEvents}</p>
-                  <p><strong>Client Score:</strong> {client.clientScore} (placeholder)</p>
+                  <p><strong>Client Score:</strong> {client.clientScore}</p>
                   <Button
                     variant="outline"
                     size="sm"
