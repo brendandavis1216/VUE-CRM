@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EventEditForm } from "@/components/EventEditForm";
 import { Event } from "@/types/app";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs components
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const EventsPage = () => {
   const { events, updateEventTask, updateEvent } = useAppContext();
@@ -92,40 +92,39 @@ const EventsPage = () => {
                     </Button>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
-                  <CardContent className="text-sm space-y-3 p-0">
-                    {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
-                    <p><strong>Date:</strong> {event.eventDate.toLocaleDateString()}</p>
-                    <p><strong>Address:</strong> {event.addressOfEvent}</p>
-                    <p><strong>Capacity:</strong> {event.capacity}</p>
-                    <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
+                <AccordionContent className="p-4 pt-0 text-sm text-card-foreground space-y-3">
+                  {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
+                  <p><strong>Date:</strong> {event.eventDate.toLocaleDateString()}</p>
+                  <p><strong>Address:</strong> {event.addressOfEvent}</p>
+                  <p><strong>Capacity:</strong> {event.capacity}</p>
+                  <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
 
-                    <div className="space-y-2 mt-4">
-                      <h3 className="font-semibold text-white">Tasks:</h3>
-                      <div className="grid grid-cols-1 gap-2 mt-2">
-                        {event.tasks.map((task) => (
-                          <div key={task.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`event-task-${event.id}-${task.id}`}
-                              checked={task.completed}
-                              onCheckedChange={() => updateEventTask(event.id, task.id)}
-                            />
-                            <Label
-                              htmlFor={`event-task-${event.id}-${task.id}`}
-                              className={cn(task.completed ? "line-through text-muted-foreground" : "text-white")}
-                            >
-                              {task.name}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </AccordionContent>
-                </AccordionItem>
-              </Card>
-            ))}
-          </Accordion>
-        </div>
+                  <div className="space-y-2 mt-4">
+                    <h3 className="font-semibold text-white">Tasks:</h3>
+                    <div className="grid grid-cols-1 gap-2 mt-2">
+                      {event.tasks.map((task) => (
+                        <div key={task.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`event-task-${event.id}-${task.id}`}
+                            checked={task.completed}
+                            onCheckedChange={() => updateEventTask(event.id, task.id)}
+                          />
+                          <Label
+                            htmlFor={`event-task-${event.id}-${task.id}`}
+                            className={cn(task.completed ? "line-through text-muted-foreground" : "text-white")}
+                          >
+                            {task.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Card>
+          ))}
+        </Accordion>
+      </div>
     );
   };
 
