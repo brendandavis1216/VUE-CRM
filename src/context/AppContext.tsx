@@ -182,11 +182,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             toast.success(`Inquiry "${inq.fraternity}" completed! Moving to Events.`);
             
             const newEventTasks: EventTask[] = [];
-            if (inq.stageBuild !== "None") newEventTasks.push({ id: `event-task-stage-${Date.now()}`, name: `${inq.stageBuild} Build`, completed: false });
-            if (inq.power !== "None") newEventTasks.push({ id: `event-task-power-${Date.now()}`, name: `${inq.power} Setup`, completed: false });
-            if (inq.gates) newEventTasks.push({ id: `event-task-gates-${Date.now()}`, name: "Gate Installation", completed: false });
-            if (inq.security) newEventTasks.push({ id: `event-task-security-${Date.now()}`, name: "Security Briefing", completed: false });
-            // Add a default task if no specific ones are generated
+            
+            // Stage Build: If a specific stage build is selected (not "None"), add a task for it.
+            if (inq.stageBuild !== "None") {
+                newEventTasks.push({ id: `event-task-stage-${Date.now()}`, name: `${inq.stageBuild} Build`, completed: false });
+            }
+
+            // Power: If power is NOT provided by the client (i.e., not "Provided" and not "None"), add a task for setting it up.
+            if (inq.power !== "None" && inq.power !== "Provided") {
+                newEventTasks.push({ id: `event-task-power-${Date.now()}`, name: `${inq.power} Setup`, completed: false });
+            }
+
+            // Gates: If gates are NOT provided by the client, add a task for installation.
+            if (!inq.gates) {
+                newEventTasks.push({ id: `event-task-gates-${Date.now()}`, name: "Gate Installation", completed: false });
+            }
+
+            // Security: If security is NOT provided by the client, add a task for briefing/provision.
+            if (!inq.security) {
+                newEventTasks.push({ id: `event-task-security-${Date.now()}`, name: "Security Provision", completed: false });
+            }
+
+            // Add a default task if no specific ones are generated (e.g., if everything is provided)
             if (newEventTasks.length === 0) {
                 newEventTasks.push({ id: `event-task-default-${Date.now()}`, name: "Event Logistics", completed: false });
             }
