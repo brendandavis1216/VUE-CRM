@@ -98,12 +98,12 @@ const CalendarPage = () => {
 
   const goToPreviousWeek = () => {
     setCurrentWeekStart((prev) => subWeeks(prev, 1));
-    toast.info(`Navigating to previous week.`);
+    // toast.info(`Navigating to previous week.`); // Removed toast
   };
 
   const goToNextWeek = () => {
     setCurrentWeekStart((prev) => addWeeks(prev, 1));
-    toast.info(`Navigating to next week.`);
+    // toast.info(`Navigating to next week.`); // Removed toast
   };
 
   return (
