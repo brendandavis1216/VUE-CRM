@@ -54,6 +54,9 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
           currentEvent.eventDate = date;
         }
 
+        // Filter out any old "Final Payment Received" tasks
+        currentEvent.tasks = currentEvent.tasks.filter(task => task.name !== 'Final Payment Received');
+
         // Ensure 'Paid(Full)' task exists for all events
         if (!currentEvent.tasks.some(task => task.name === 'Paid(Full)')) {
           const newTasks = [...currentEvent.tasks, { id: `event-task-final-payment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, name: "Paid(Full)", completed: false }];
