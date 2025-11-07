@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo } from "react";
 import { format, isSameDay } from "date-fns";
-import { Calendar as CalendarIcon, CalendarDays } from "lucide-react"; // Added CalendarDays for the icon
+import { Calendar as CalendarIcon, CalendarDays } from "lucide-react";
 import { DayPicker, DayContentProps } from "react-day-picker";
-import "react-day-picker/dist/style.css"; // Ensure the default styles are imported
+import "react-day-picker/dist/style.css";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
@@ -88,9 +88,9 @@ const CalendarPage = () => {
               head_row: "flex",
               head_cell: "rounded-md w-9 font-normal text-[0.8rem] text-white", // Day of week headers
               row: "flex w-full mt-2",
-              cell: "h-12 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+              cell: "h-12 w-9 text-center text-sm p-1 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20", // Changed p-0 to p-1
               day: cn(
-                "h-9 w-9 p-0 font-normal aria-selected:opacity-100 rounded-md", // Removed text-white from here, handled by EventDayContent
+                "h-9 w-9 p-1 font-normal aria-selected:opacity-100 rounded-md text-white", // Changed p-0 to p-1 and added text-white
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
               ),
               day_range_end: "day-range-end",
