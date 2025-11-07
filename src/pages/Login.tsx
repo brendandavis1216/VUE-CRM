@@ -20,20 +20,20 @@ const Login = () => {
             variables: {
               default: {
                 colors: {
-                  brand: 'hsl(0 0% 100%)', // White for primary button background
-                  brandAccent: 'hsl(222.2 47.4% 11.2%)', // Dark for primary button text/hover
-                  defaultButtonBackground: 'hsl(0 0% 100%)', // White for default button background
-                  defaultButtonBackgroundHover: 'hsl(222.2 47.4% 11.2%)', // Dark for default button text/hover
-                  inputBackground: 'hsl(217.2 32.6% 17.5%)', // Dark gray for input background
-                  inputBorder: 'hsl(217.2 32.6% 17.5%)', // Dark gray for input border
-                  inputLabel: 'hsl(0 0% 100%)', // Pure white label text
-                  inputText: 'hsl(0 0% 100%)', // Pure white input text
-                  messageText: 'hsl(0 0% 100%)', // Pure white for message text (e.g., error messages)
-                  messageBackground: 'hsl(0 62.8% 30.6%)', // Destructive red for message background
-                  anchorTextColor: 'hsl(0 0% 100%)', // Pure white for links
-                  inputPlaceholder: 'hsl(0 0% 100%)', // Pure white for placeholder text
-                  dividerBackground: 'hsl(217.2 32.6% 17.5%)', // Dark gray for dividers
-                  textColor: 'hsl(0 0% 100%)', // Pure white for general text
+                  brand: 'hsl(var(--primary))', // Dark background for primary button
+                  brandAccent: 'hsl(var(--primary-foreground))', // White text for primary button
+                  defaultButtonBackground: 'hsl(var(--primary))', // Dark background for default button
+                  defaultButtonBackgroundHover: 'hsl(var(--primary-foreground))', // White text for default button hover
+                  inputBackground: 'hsl(var(--secondary))', // Dark gray for input background
+                  inputBorder: 'hsl(var(--border))', // Dark gray for input border
+                  inputLabel: 'hsl(var(--foreground))', // Pure white label text
+                  inputText: 'hsl(var(--foreground))', // Pure white input text
+                  messageText: 'hsl(var(--destructive-foreground))', // Pure white text on red background
+                  messageBackground: 'hsl(var(--destructive))', // Red background
+                  anchorTextColor: 'hsl(var(--foreground))', // Pure white for links
+                  inputPlaceholder: 'hsl(var(--muted-foreground))', // Pure white for placeholder text
+                  dividerBackground: 'hsl(var(--border))', // Dark gray for dividers
+                  textColor: 'hsl(var(--foreground))', // Pure white for general text
                 },
               },
             },

@@ -52,39 +52,40 @@
   }
 
   .dark {
-    --background: 0 0% 0%; /* Changed to pure black */
-    --foreground: 0 0% 100%; /* Changed to pure white */
+    --background: 0 0% 0%; /* Pure black */
+    --foreground: 0 0% 100%; /* Pure white */
 
-    --card: 0 0% 0%; /* Changed to pure black */
-    --card-foreground: 0 0% 100%; /* Changed to pure white */
+    --card: 0 0% 0%; /* Pure black */
+    --card-foreground: 0 0% 100%; /* Pure white */
 
-    --popover: 0 0% 0%; /* Changed to pure black */
-    --popover-foreground: 0 0% 100%; /* Changed to pure white */
+    --popover: 0 0% 0%; /* Pure black */
+    --popover-foreground: 0 0% 100%; /* Pure white */
 
-    --primary: 0 0% 100%; /* Changed to pure white for primary text/buttons */
-    --primary-foreground: 222.2 47.4% 11.2%; /* This is for text *on* primary buttons, should be dark */
+    --primary: 222.2 47.4% 11.2%; /* Dark blue/gray for primary button background */
+    --primary-foreground: 0 0% 100%; /* Pure white for text on primary buttons */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 0 0% 100%; /* Changed to pure white */
+    --secondary: 217.2 32.6% 17.5%; /* Dark gray for secondary elements like input backgrounds */
+    --secondary-foreground: 0 0% 100%; /* Pure white for text on secondary elements */
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 0 0% 100%; /* Changed to pure white */
+    --muted: 217.2 32.6% 17.5%; /* Dark gray */
+    --muted-foreground: 0 0% 100%; /* Pure white */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 0 0% 100%; /* Changed to pure white */
+    --accent: 217.2 32.6% 17.5%; /* Dark gray */
+    --accent-foreground: 0 0% 100%; /* Pure white */
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%; /* Changed to pure white */
+    --destructive: 0 62.8% 30.6%; /* Red */
+    --destructive-foreground: 0 0% 100%; /* Pure white */
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 217.2 32.6% 17.5%; /* Dark gray */
+    --input: 217.2 32.6% 17.5%; /* Dark gray */
     --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 0 0% 0%; /* Changed to pure black */
-    --sidebar-foreground: 0 0% 100%; /* Changed to pure white */
+
+    --sidebar-background: 0 0% 0%; /* Pure black */
+    --sidebar-foreground: 0 0% 100%; /* Pure white */
     --sidebar-primary: 224.3 76.3% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 0 0% 100%; /* Changed to pure white */
+    --sidebar-accent-foreground: 0 0% 100%; /* Pure white */
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
