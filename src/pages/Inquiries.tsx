@@ -90,8 +90,8 @@ const InquiriesPage = () => {
                       <CardTitle className="text-lg font-medium text-card-foreground flex-shrink-0">
                         {inquiry.fraternity} - {inquiry.school}
                       </CardTitle>
-                      <div className="flex-grow">
-                        <Progress value={inquiry.progress} className="w-full h-2" />
+                      <div className="flex-grow flex justify-end"> {/* Added flex justify-end here */}
+                        <Progress value={inquiry.progress} className="w-1/2 h-2 ml-auto" /> {/* Changed w-full to w-1/2 and added ml-auto */}
                       </div>
                     </div>
                   </AccordionTrigger>
