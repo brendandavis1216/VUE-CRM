@@ -80,7 +80,8 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
   const { events, inquiries } = useAppContext();
 
   const isOutside = activeModifiers?.outside;
-  // isSelected and isToday will be handled by DayPicker's classNames.day_selected/day_today
+  const isSelected = activeModifiers?.selected;
+  const isToday = activeModifiers?.today;
 
   const allDayItems: CalendarItem[] = [
     ...inquiries.filter(inq => isSameDay(inq.inquiryDate, date)),
@@ -93,10 +94,18 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
 
   const maxDotsToShow = 3;
 
+  // Determine text color based on modifiers, allowing DayPicker's main text color to take precedence if selected
+  const dateNumberTextColor = cn(
+    "text-xs font-medium",
+    // If selected, DayPicker's day_selected class will handle the text color.
+    // Otherwise, apply specific colors for today/outside.
+    !isSelected && (isToday ? "text-accent-foreground" : (isOutside ? "text-muted-foreground opacity-50" : "text-white"))
+  );
+
   return (
-    // DayPicker will apply classNames.day, day_selected, day_today, day_outside to this div
-    <div className="flex flex-col h-full w-full p-1 overflow-hidden">
-      <div className={cn("text-xs font-medium", isOutside ? "text-muted-foreground opacity-50" : "text-white")}>
+    // This div will receive the classNames.day, day_selected, day_today, etc. from DayPicker
+    <div className="flex flex-col h-full w-full">
+      <div className={dateNumberTextColor}>
         {format(date, 'd')}
       </div>
       <div className="flex-grow flex flex-wrap gap-1 mt-1 justify-center">
@@ -212,7 +221,7 @@ const CalendarPage = () => {
               head_cell: "rounded-md font-normal text-[0.8rem] text-white flex-1",
               row: "flex w-full mt-2",
               cell: "h-24 text-center text-sm p-1 relative flex-1 focus-within:relative focus-within:z-20",
-              day: "h-full w-full p-1 font-normal rounded-md relative", // Base styles for the custom Day component's root
+              day: "h-full w-full p-1 font-normal rounded-md relative bg-card text-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground", // Base styles for the custom Day component's root
               day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
               day_today: "bg-accent text-accent-foreground",
               day_outside: "text-muted-foreground opacity-50",
