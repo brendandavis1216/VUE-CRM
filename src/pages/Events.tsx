@@ -5,10 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input"; // Import Input component
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
-import { CalendarDays, Search } from "lucide-react"; // Import Search icon
+import { Search } from "lucide-react"; // Removed CalendarDays icon
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"; // Added Accordion components
 
 const EventsPage = () => {
   const { events, updateEventTask } = useAppContext();
@@ -56,45 +62,51 @@ const EventsPage = () => {
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {filteredAndSortedEvents.map((event) => (
-            <Card key={event.id} className="bg-card text-card-foreground border-border">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-medium">{event.eventName}</CardTitle>
-                <CalendarDays className="h-5 w-5 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="text-sm space-y-3">
-                <p><strong>Fraternity:</strong> {event.fraternity}</p>
-                <p><strong>School:</strong> {event.school}</p>
-                <p><strong>Date:</strong> {event.eventDate.toLocaleDateString()}</p>
-                <p><strong>Address:</strong> {event.addressOfEvent}</p>
-                <p><strong>Capacity:</strong> {event.capacity}</p>
-                <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
-                {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>} {/* Display stageBuild here */}
+          <Accordion type="single" collapsible className="w-full">
+            {filteredAndSortedEvents.map((event) => (
+              <Card key={event.id} className="mb-4 bg-card text-card-foreground border-border">
+                <AccordionItem value={event.id} className="border-none">
+                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
+                    <CardTitle className="text-lg font-medium">{event.eventName}</CardTitle>
+                    {/* CalendarDays icon removed */}
+                  </AccordionTrigger>
+                  <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
+                    <CardContent className="text-sm space-y-3 p-0"> {/* Removed padding from CardContent as AccordionContent provides it */}
+                      <p><strong>Fraternity:</strong> {event.fraternity}</p>
+                      <p><strong>School:</strong> {event.school}</p>
+                      <p><strong>Date:</strong> {event.eventDate.toLocaleDateString()}</p>
+                      <p><strong>Address:</strong> {event.addressOfEvent}</p>
+                      <p><strong>Capacity:</strong> {event.capacity}</p>
+                      <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
+                      {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
 
-                <div className="space-y-2 mt-4">
-                  <h3 className="font-semibold text-white">Progress: {Math.round(event.progress)}%</h3>
-                  <Progress value={event.progress} className="w-full" />
-                  <div className="grid grid-cols-1 gap-2 mt-2">
-                    {event.tasks.map((task) => (
-                      <div key={task.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`event-task-${event.id}-${task.id}`}
-                          checked={task.completed}
-                          onCheckedChange={() => updateEventTask(event.id, task.id)}
-                        />
-                        <Label
-                          htmlFor={`event-task-${event.id}-${task.id}`}
-                          className={cn(task.completed ? "line-through text-muted-foreground" : "text-white")}
-                        >
-                          {task.name}
-                        </Label>
+                      <div className="space-y-2 mt-4">
+                        <h3 className="font-semibold text-white">Progress: {Math.round(event.progress)}%</h3>
+                        <Progress value={event.progress} className="w-full" />
+                        <div className="grid grid-cols-1 gap-2 mt-2">
+                          {event.tasks.map((task) => (
+                            <div key={task.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`event-task-${event.id}-${task.id}`}
+                                checked={task.completed}
+                                onCheckedChange={() => updateEventTask(event.id, task.id)}
+                              />
+                              <Label
+                                htmlFor={`event-task-${event.id}-${task.id}`}
+                                className={cn(task.completed ? "line-through text-muted-foreground" : "text-white")}
+                              >
+                                {task.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    </CardContent>
+                  </AccordionContent>
+                </AccordionItem>
+              </Card>
+            ))}
+          </Accordion>
         </div>
       )}
     </div>
