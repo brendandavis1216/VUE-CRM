@@ -54,9 +54,9 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
           currentEvent.eventDate = date;
         }
 
-        // Ensure 'Final Payment Received' task exists for all events
-        if (!currentEvent.tasks.some(task => task.name === 'Final Payment Received')) {
-          const newTasks = [...currentEvent.tasks, { id: `event-task-final-payment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, name: "Final Payment Received", completed: false }];
+        // Ensure 'Paid(Full)' task exists for all events
+        if (!currentEvent.tasks.some(task => task.name === 'Paid(Full)')) {
+          const newTasks = [...currentEvent.tasks, { id: `event-task-final-payment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, name: "Paid(Full)", completed: false }];
           currentEvent.tasks = newTasks;
           // Recalculate progress after adding a task
           const completedTasks = currentEvent.tasks.filter(task => task.completed).length;
@@ -338,8 +338,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 newEventTasks.push({ id: `event-task-default-${Date.now()}`, name: "Event Logistics", completed: false });
             }
 
-            // Add the "Final Payment Received" task
-            newEventTasks.push({ id: `event-task-final-payment-${Date.now() + 3}`, name: "Final Payment Received", completed: false });
+            // Add the "Paid(Full)" task
+            newEventTasks.push({ id: `event-task-final-payment-${Date.now() + 3}`, name: "Paid(Full)", completed: false });
 
 
             // Combine inquiry date and time to create the eventDate

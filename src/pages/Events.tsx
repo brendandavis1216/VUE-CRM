@@ -71,7 +71,7 @@ const EventsPage = () => {
       <div className="grid grid-cols-1 gap-4">
         <Accordion type="single" collapsible className="w-full">
           {eventList.map((event) => {
-            const finalPaymentTask = event.tasks.find(task => task.name === "Final Payment Received");
+            const finalPaymentTask = event.tasks.find(task => task.name === "Paid(Full)");
             return (
               <Card key={event.id} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={event.id} className="border-none">
@@ -88,11 +88,11 @@ const EventsPage = () => {
                           <Label
                             htmlFor={`final-payment-${event.id}`}
                             className={cn(
-                              "text-sm font-medium",
+                              "text-xs font-medium", // Changed text-sm to text-xs
                               finalPaymentTask.completed ? "line-through text-muted-foreground" : "text-white"
                             )}
                           >
-                            Final Payment
+                            Paid(Full)
                           </Label>
                         </div>
                       )}
