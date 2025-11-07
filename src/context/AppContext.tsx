@@ -8,7 +8,7 @@ interface AppContextType {
   clients: Client[];
   inquiries: Inquiry[];
   events: Event[];
-  addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void;
+  addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => void;
   updateInquiryTask: (inquiryId: string, taskId: string) => void;
   updateEventTask: (eventId: string, taskId: string) => void;
   updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
@@ -51,7 +51,7 @@ const initialClients: Client[] = [
     fraternity: "Gamma Delta Epsilon",
     school: "University of West",
     mainContactName: "Chris Evans",
-    phoneNumber: "N/A",
+    phoneNumber: "555-111-2222", // Example phone number
     instagramHandle: "N/A",
     averageEventSize: 8000, // Initial budget from inquiry
     numberOfEvents: 0, // Starts at 0 events
@@ -66,7 +66,7 @@ const initialInquiries: Inquiry[] = [
     school: "University of West",
     fraternity: "Gamma Delta Epsilon",
     mainContact: "Chris Evans",
-    phoneNumber: "N/A", // Updated initial inquiry to include phone number
+    phoneNumber: "555-111-2222", // Updated initial inquiry to include phone number
     addressOfEvent: "123 Party Lane",
     capacity: 500,
     budget: 8000,
@@ -96,8 +96,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (completedTasks / tasks.length) * 100;
   };
 
-  const addInquiry = (newInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => {
-    const newClientId = `client-${Date.now()}-from-inq`; // Unique ID for the new client
+  const addInquiry = (newInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => {
+    let targetClientId: string;
+    let clientToUpdate: Client | undefined;
+
+    if (existingClientId) {
+      targetClientId = existingClientId;
+      clientToUpdate = clients.find(c => c.id === existingClientId);
+      if (!clientToUpdate) {
+        console.error(`Existing client with ID ${existingClientId} not found. Creating a new client.`);
+        targetClientId = `client-${Date.now()}-from-inq`; // Fallback to new ID
+      }
+    } else {
+      targetClientId = `client-${Date.now()}-from-inq`;
+    }
 
     const defaultTasks: InquiryTask[] = [
       { id: "task-render-" + Date.now(), name: "Rendering", completed: false },
@@ -108,7 +120,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const inquiryWithTasks: Inquiry = {
       ...newInquiryData,
       id: `inq-${Date.now()}`,
-      clientId: newClientId, // Link to the newly created client
+      clientId: targetClientId, // Link to the client
       tasks: defaultTasks,
       progress: 0,
     };
@@ -116,24 +128,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setInquiries((prev) => [...prev, inquiryWithTasks]);
     toast.success("New inquiry added!");
 
-    // Create a new client from the inquiry details
-    const initialAverageEventSize = newInquiryData.budget;
-    const initialNumberOfEvents = 0;
+    // Handle client creation/update
+    if (!clientToUpdate) { // If no existing client was found or existingClientId was not provided
+      const initialAverageEventSize = newInquiryData.budget;
+      const initialNumberOfEvents = 0; // New client starts with 0 events from this inquiry's perspective
 
-    const newClient: Client = {
-      id: newClientId,
-      fraternity: newInquiryData.fraternity,
-      school: newInquiryData.school,
-      mainContactName: newInquiryData.mainContact,
-      phoneNumber: newInquiryData.phoneNumber, // Use phone number from inquiry
-      instagramHandle: "N/A", // Placeholder, as not available in inquiry form
-      averageEventSize: initialAverageEventSize,
-      numberOfEvents: initialNumberOfEvents,
-      clientScore: calculateClientScore(initialNumberOfEvents, initialAverageEventSize),
-    };
-
-    setClients((prevClients) => [...prevClients, newClient]);
-    toast.success(`New client "${newClient.fraternity} - ${newClient.school}" added from inquiry!`);
+      const newClient: Client = {
+        id: targetClientId,
+        fraternity: newInquiryData.fraternity,
+        school: newInquiryData.school,
+        mainContactName: newInquiryData.mainContact,
+        phoneNumber: newInquiryData.phoneNumber,
+        instagramHandle: "N/A", // Placeholder, as not available in inquiry form
+        averageEventSize: initialAverageEventSize,
+        numberOfEvents: initialNumberOfEvents,
+        clientScore: calculateClientScore(initialNumberOfEvents, initialAverageEventSize),
+      };
+      setClients((prevClients) => [...prevClients, newClient]);
+      toast.success(`New client "${newClient.fraternity} - ${newClient.school}" added from inquiry!`);
+    } else {
+      // If an existing client was found, we don't update its event count or average event size here.
+      // Those updates happen when the inquiry is *completed* in `updateInquiryTask`.
+      // We just ensure the inquiry is linked.
+      toast.success(`Inquiry linked to existing client "${clientToUpdate.fraternity} - ${clientToUpdate.school}"!`);
+    }
   };
 
   const updateInquiryTask = (inquiryId: string, taskId: string) => {

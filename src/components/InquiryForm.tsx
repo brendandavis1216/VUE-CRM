@@ -36,16 +36,18 @@ type InquiryFormValues = z.infer<typeof formSchema>;
 
 interface InquiryFormProps {
   onSubmit: (values: Omit<InquiryFormValues, 'id' | 'tasks' | 'progress'>) => void;
+  onClose?: () => void; // Added onClose prop
+  defaultValues?: Partial<InquiryFormValues>; // Added defaultValues prop
 }
 
-export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
+export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, defaultValues }) => {
   const form = useForm<InquiryFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      school: "",
-      fraternity: "",
-      mainContact: "",
-      phoneNumber: "", // Default value for phone number
+      school: defaultValues?.school || "",
+      fraternity: defaultValues?.fraternity || "",
+      mainContact: defaultValues?.mainContact || "",
+      phoneNumber: defaultValues?.phoneNumber || "", // Default value for phone number
       addressOfEvent: "",
       capacity: 0,
       budget: 0,
@@ -59,6 +61,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
   function handleSubmit(values: InquiryFormValues) {
     onSubmit(values);
     form.reset();
+    onClose?.(); // Close dialog after submission
   }
 
   return (

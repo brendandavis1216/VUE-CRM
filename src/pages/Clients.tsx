@@ -15,16 +15,21 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ClientEditForm } from "@/components/ClientEditForm";
 import { ClientFilterSort } from "@/components/ClientFilterSort";
 import { ClientAddForm } from "@/components/ClientAddForm";
+import { InquiryForm } from "@/components/InquiryForm"; // Import InquiryForm
 import { Client } from "@/types/app";
 
 type SortBy = 'none' | 'school' | 'averageEventSize' | 'numberOfEvents' | 'clientScore';
 type SortOrder = 'asc' | 'desc';
 
 const ClientsPage = () => {
-  const { clients, updateClient, addClient } = useAppContext();
+  const { clients, updateClient, addClient, addInquiry } = useAppContext();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false); // Renamed for clarity
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  // State for adding inquiry from client card
+  const [isAddInquiryDialogOpen, setIsAddInquiryDialogOpen] = useState(false);
+  const [clientForNewInquiry, setClientForNewInquiry] = useState<Client | null>(null);
 
   // State for filtering and sorting
   const [filterSchool, setFilterSchool] = useState("");
@@ -46,7 +51,22 @@ const ClientsPage = () => {
 
   const handleAddClientSubmit = (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => {
     addClient(newClientData);
-    setIsAddDialogOpen(false);
+    setIsAddClientDialogOpen(false);
+  };
+
+  const handleAddInquiryClick = (client: Client) => {
+    setClientForNewInquiry(client);
+    setIsAddInquiryDialogOpen(true);
+  };
+
+  const handleAddInquirySubmit = (newInquiryData: Parameters<typeof addInquiry>[0]) => {
+    if (clientForNewInquiry) {
+      addInquiry(newInquiryData, clientForNewInquiry.id);
+    } else {
+      addInquiry(newInquiryData); // Fallback if clientForNewInquiry is somehow null
+    }
+    setIsAddInquiryDialogOpen(false);
+    setClientForNewInquiry(null);
   };
 
   const handleFilterSortChange = (
@@ -124,7 +144,7 @@ const ClientsPage = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold text-white">Clients</h1>
         <div className="flex gap-2">
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddClientDialogOpen} onOpenChange={setIsAddClientDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Client
@@ -134,7 +154,7 @@ const ClientsPage = () => {
               <DialogHeader>
                 <DialogTitle className="text-white">Add New Client</DialogTitle>
               </DialogHeader>
-              <ClientAddForm onSubmit={handleAddClientSubmit} onClose={() => setIsAddDialogOpen(false)} />
+              <ClientAddForm onSubmit={handleAddClientSubmit} onClose={() => setIsAddClientDialogOpen(false)} />
             </DialogContent>
           </Dialog>
           <ClientFilterSort onFilterSortChange={handleFilterSortChange} />
@@ -154,6 +174,39 @@ const ClientsPage = () => {
                       <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline [&>svg]:hidden group">
                         <CardTitle className="text-lg font-medium text-card-foreground">{client.fraternity}</CardTitle>
                         <div className="flex items-center gap-2">
+                          <Dialog> {/* Wrap the button in a Dialog */}
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent accordion from toggling
+                                  handleAddInquiryClick(client);
+                                }}
+                              >
+                                <PlusCircle className="h-4 w-4" />
+                                <span className="sr-only">Add Inquiry for {client.fraternity}</span>
+                              </Button>
+                            </DialogTrigger>
+                            {isAddInquiryDialogOpen && clientForNewInquiry?.id === client.id && (
+                              <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+                                <DialogHeader>
+                                  <DialogTitle className="text-white">Add New Inquiry for {clientForNewInquiry.fraternity}</DialogTitle>
+                                </DialogHeader>
+                                <InquiryForm
+                                  onSubmit={handleAddInquirySubmit}
+                                  onClose={() => setIsAddInquiryDialogOpen(false)}
+                                  defaultValues={{
+                                    school: clientForNewInquiry.school,
+                                    fraternity: clientForNewInquiry.fraternity,
+                                    mainContact: clientForNewInquiry.mainContactName,
+                                    phoneNumber: clientForNewInquiry.phoneNumber,
+                                  }}
+                                />
+                              </DialogContent>
+                            )}
+                          </Dialog>
                           <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                         </div>
                       </AccordionTrigger>
