@@ -2,7 +2,7 @@
 
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Users, ClipboardList, LayoutDashboard, BriefcaseBusiness } from "lucide-react";
+import { Users, ClipboardList, LayoutDashboard, BriefcaseBusiness, CalendarDays } from "lucide-react"; // Import CalendarDays
 import { cn } from "@/lib/utils";
 
 export const MobileNav = () => {
@@ -10,6 +10,7 @@ export const MobileNav = () => {
     { name: "Clients", icon: Users, path: "/clients" },
     { name: "Inquiries", icon: BriefcaseBusiness, path: "/inquiries" },
     { name: "Events", icon: ClipboardList, path: "/events" },
+    { name: "Calendar", icon: CalendarDays, path: "/calendar" }, // Add Calendar item
     { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   ];
 

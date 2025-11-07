@@ -45,6 +45,8 @@ interface EventTask {
   completed: boolean;
 }
 
+type EventStatus = "Pending" | "Confirmed" | "Completed" | "Cancelled"; // Re-added EventStatus type
+
 interface Event {
   id: string;
   clientId: string; // Link to client
@@ -56,7 +58,7 @@ interface Event {
   capacity: number;
   budget: number;
   stageBuild: "None" | "Base Stage" | "Totem Stage" | "SL 100" | "SL 75" | "SL260" | "Custom Rig"; // Added stageBuild
-  status: "Pending" | "Confirmed" | "Completed" | "Cancelled"; // Added event status
+  status: EventStatus; // Using the re-added EventStatus type
   tasks: EventTask[];
   progress: number; // 0-100
 }
