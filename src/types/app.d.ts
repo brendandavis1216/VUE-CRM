@@ -21,7 +21,6 @@ interface Inquiry {
   school: string;
   fraternity: string;
   mainContact: string;
-  phoneNumber: string;
   addressOfEvent: string;
   capacity: number;
   budget: number;

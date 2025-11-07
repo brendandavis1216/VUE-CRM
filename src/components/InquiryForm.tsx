@@ -6,8 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -17,12 +15,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const formSchema = z.object({
   school: z.string().min(2, { message: "School name must be at least 2 characters." }),
   fraternity: z.string().min(2, { message: "Fraternity name must be at least 2 characters." }),
   mainContact: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
-  phoneNumber: z.string().regex(/^\d{3}-\d{3}-\d{4}$/, { message: "Phone number must be in XXX-XXX-XXXX format." }),
   addressOfEvent: z.string().min(5, { message: "Address must be at least 5 characters." }),
   capacity: z.coerce.number().min(1, { message: "Capacity must be at least 1." }),
   budget: z.coerce.number().min(0, { message: "Budget cannot be negative." }),
@@ -45,7 +43,6 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
       school: "",
       fraternity: "",
       mainContact: "",
-      phoneNumber: "",
       addressOfEvent: "",
       capacity: 0,
       budget: 0,
@@ -98,19 +95,6 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
               <FormLabel className="text-white">Main Contact</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., John Doe" {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-white">Phone Number</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., 555-123-4567" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>

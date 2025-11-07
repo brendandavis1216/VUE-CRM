@@ -49,7 +49,7 @@ const InquiriesPage = () => {
             <Card key={inquiry.id} className="bg-card text-card-foreground border-border">
               <CardHeader>
                 <CardTitle className="text-lg font-medium">{inquiry.fraternity} - {inquiry.school}</CardTitle>
-                <p className="text-sm text-muted-foreground">{inquiry.mainContact} ({inquiry.phoneNumber})</p>
+                <p className="text-sm text-muted-foreground">{inquiry.mainContact}</p>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm"><strong>Event Address:</strong> {inquiry.addressOfEvent}</p>

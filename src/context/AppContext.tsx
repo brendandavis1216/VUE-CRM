@@ -53,7 +53,6 @@ const initialInquiries: Inquiry[] = [
     school: "University of West",
     fraternity: "Gamma Delta Epsilon",
     mainContact: "Chris Evans",
-    phoneNumber: "555-111-2222",
     addressOfEvent: "123 Party Lane",
     capacity: 500,
     budget: 8000,
@@ -155,7 +154,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                         fraternity: inq.fraternity,
                         school: inq.school,
                         mainContactName: inq.mainContact,
-                        phoneNumber: inq.phoneNumber,
+                        phoneNumber: "N/A", // Placeholder as phone number is removed from inquiry
                         instagramHandle: "N/A", // Placeholder
                         averageEventSize: inq.budget, // Use budget as initial avg event size
                         numberOfEvents: 1, // First event from this inquiry
