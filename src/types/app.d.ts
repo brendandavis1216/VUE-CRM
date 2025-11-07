@@ -41,7 +41,7 @@ interface Inquiry {
 
 interface EventTask {
   id: string;
-  name: string | 'Final Payment Received'; // Added 'Final Payment Received'
+  name: string | 'Paid(Full)'; // Updated to 'Paid(Full)'
   completed: boolean;
 }
 

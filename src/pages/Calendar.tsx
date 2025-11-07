@@ -19,7 +19,7 @@ const getCalendarItemColor = (item: CalendarItem): string => {
   if ('inquiryDate' in item) { // It's an Inquiry
     return "bg-red-500"; // Red: Inquired
   } else { // It's an Event
-    const finalPaymentTask = item.tasks.find(task => task.name === "Final Payment Received");
+    const finalPaymentTask = item.tasks.find(task => task.name === "Paid(Full)");
 
     if (finalPaymentTask?.completed) {
       return "bg-green-500"; // Green: Event Paid
@@ -40,7 +40,7 @@ const getCalendarItemTitle = (item: CalendarItem): string => {
   if ('inquiryDate' in item) {
     return `Inquiry: ${item.fraternity} - ${item.school}`;
   } else {
-    const finalPaymentTask = item.tasks.find(task => task.name === "Final Payment Received");
+    const finalPaymentTask = item.tasks.find(task => task.name === "Paid(Full)");
     if (finalPaymentTask?.completed) {
       return `Event: ${item.eventName} - ${item.fraternity} (Paid)`;
     }
