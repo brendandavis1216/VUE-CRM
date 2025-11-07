@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Users, Pencil } from "lucide-react";
+import { Users, Pencil, ChevronDown } from "lucide-react"; // Import ChevronDown
 import { useAppContext } from "@/context/AppContext";
 import {
   Accordion,
@@ -42,9 +42,12 @@ const ClientsPage = () => {
           {clients.map((client) => (
             <Card key={client.id} className="mb-4 bg-card text-card-foreground border-border">
               <AccordionItem value={client.id} className="border-none">
-                <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline [&>svg]:hidden">
+                <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline [&>svg]:hidden group">
                   <CardTitle className="text-lg font-medium text-card-foreground">{client.fraternity} - {client.school}</CardTitle>
-                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-muted-foreground" />
+                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </div>
                 </AccordionTrigger>
                 <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
                   <p><strong>Contact:</strong> {client.mainContactName} ({client.phoneNumber})</p>
