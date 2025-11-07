@@ -1,0 +1,139 @@
+"use client";
+
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Client } from "@/types/app";
+
+const formSchema = z.object({
+  fraternity: z.string().min(2, { message: "Fraternity name must be at least 2 characters." }),
+  school: z.string().min(2, { message: "School name must be at least 2 characters." }),
+  mainContactName: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
+  phoneNumber: z.string().regex(/^\d{3}-\d{3}-\d{4}$/, { message: "Phone number must be in XXX-XXX-XXXX format." }),
+  instagramHandle: z.string().optional().or(z.literal("")), // Optional, allow empty string
+  averageEventSize: z.coerce.number().min(0, { message: "Average event size cannot be negative." }),
+});
+
+type ClientFormValues = z.infer<typeof formSchema>;
+
+interface ClientEditFormProps {
+  client: Client;
+  onSubmit: (values: ClientFormValues) => void;
+  onClose: () => void;
+}
+
+export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit, onClose }) => {
+  const form = useForm<ClientFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      fraternity: client.fraternity,
+      school: client.school,
+      mainContactName: client.mainContactName,
+      phoneNumber: client.phoneNumber,
+      instagramHandle: client.instagramHandle,
+      averageEventSize: client.averageEventSize,
+    },
+  });
+
+  function handleSubmit(values: ClientFormValues) {
+    onSubmit(values);
+    onClose(); // Close dialog after submission
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="fraternity"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-white">Fraternity</FormLabel>
+              <FormControl>
+                <Input {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="school"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-white">School</FormLabel>
+              <FormControl>
+                <Input {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="mainContactName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-white">Main Contact Name</FormLabel>
+              <FormControl>
+                <Input {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="phoneNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-white">Phone Number</FormLabel>
+              <FormControl>
+                <Input {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="instagramHandle"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-white">Instagram Handle</FormLabel>
+              <FormControl>
+                <Input {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="averageEventSize"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-white">Average Event Size ($)</FormLabel>
+              <FormControl>
+                <Input type="number" {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</Button>
+      </form>
+    </Form>
+  );
+};

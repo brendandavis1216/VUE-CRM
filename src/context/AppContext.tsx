@@ -11,6 +11,7 @@ interface AppContextType {
   addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress'>) => void;
   updateInquiryTask: (inquiryId: string, taskId: string) => void;
   updateEventTask: (eventId: string, taskId: string) => void;
+  updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -130,20 +131,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               clientScore: 50, // Initial client score
             };
 
-            const newEvent: Event = {
-              id: `event-${Date.now()}`,
-              clientId: newClient.id,
-              fraternity: inq.fraternity,
-              school: inq.school,
-              eventName: `${inq.fraternity} - ${inq.school} Event`, // Default event name
-              eventDate: new Date(), // Placeholder, will be set by calendar later
-              addressOfEvent: inq.addressOfEvent,
-              capacity: inq.capacity,
-              budget: inq.budget,
-              tasks: newEventTasks,
-              progress: calculateProgress(newEventTasks),
-            };
-
             setClients((prev) => {
                 const existingClient = prev.find(c => c.id === newClient.id);
                 if (existingClient) {
@@ -176,6 +163,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   };
 
+  const updateClient = (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => {
+    setClients((prevClients) =>
+      prevClients.map((client) =>
+        client.id === clientId ? { ...client, ...updatedClientData } : client
+      )
+    );
+    toast.success("Client updated successfully!");
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -185,6 +181,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addInquiry,
         updateInquiryTask,
         updateEventTask,
+        updateClient,
       }}
     >
       {children}
