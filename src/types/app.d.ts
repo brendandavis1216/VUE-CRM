@@ -32,6 +32,7 @@ interface Inquiry {
   security: boolean;
   co2Tanks: number; // Added CO2 Tanks
   cdjs: number; // Added CDJs
+  audio: "QSC Rig" | "4 Arrays 2 Subs" | "8 Arrays 4 Subs" | "Custom"; // Added Audio
   tasks: InquiryTask[];
   progress: number; // 0-100
 }

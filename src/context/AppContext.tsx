@@ -77,6 +77,7 @@ const initialInquiries: Inquiry[] = [
     security: false,
     co2Tanks: 0,
     cdjs: 0, // Added CDJs to initial inquiry
+    audio: "QSC Rig", // Added Audio to initial inquiry
     tasks: [
       { id: "task1", name: "Rendering", completed: false },
       { id: "task2", name: "Contract", completed: false },
@@ -208,6 +209,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             // CDJs: If CDJs are needed (quantity > 2), add a task for sourcing them.
             if (inq.cdjs > 2) {
                 newEventTasks.push({ id: `event-task-cdjs-${Date.now()}`, name: `Source ${inq.cdjs} CDJs`, completed: false });
+            }
+
+            // Audio: If audio is not "QSC Rig", add a task for sourcing it.
+            if (inq.audio !== "QSC Rig") {
+                newEventTasks.push({ id: `event-task-audio-${Date.now()}`, name: `Source ${inq.audio} Audio`, completed: false });
             }
 
             // Add a default task if no specific ones are generated (e.g., if everything is provided)

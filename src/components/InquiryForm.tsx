@@ -33,6 +33,7 @@ const formSchema = z.object({
   security: z.boolean().default(false),
   co2Tanks: z.coerce.number().min(0, { message: "CO2 Tanks cannot be negative." }).default(0), // Added CO2 Tanks
   cdjs: z.coerce.number().min(0, { message: "CDJs cannot be negative." }).default(0), // Added CDJs
+  audio: z.enum(["QSC Rig", "4 Arrays 2 Subs", "8 Arrays 4 Subs", "Custom"]).default("QSC Rig"), // Added Audio
 });
 
 type InquiryFormValues = z.infer<typeof formSchema>;
@@ -60,6 +61,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
       security: false,
       co2Tanks: 0, // Default for new inquiries
       cdjs: 0, // Default for new inquiries
+      audio: "QSC Rig", // Default for new inquiries
       ...defaultValues, // Spread defaultValues last to override initial defaults if provided
     },
   });
@@ -281,6 +283,29 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
                 <FormControl>
                   <Input type="number" placeholder="e.g., 3" {...field} className="bg-input text-foreground border-border" />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="audio"
+            render={({ field }) => (
+              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                <FormLabel className="block font-semibold text-black dark:text-white">Audio</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="bg-input text-foreground border-border">
+                      <SelectValue placeholder="Select audio setup" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-popover text-popover-foreground border-border">
+                    <SelectItem value="QSC Rig">QSC Rig</SelectItem>
+                    <SelectItem value="4 Arrays 2 Subs">4 Arrays 2 Subs</SelectItem>
+                    <SelectItem value="8 Arrays 4 Subs">8 Arrays 4 Subs</SelectItem>
+                    <SelectItem value="Custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
