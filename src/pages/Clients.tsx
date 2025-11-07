@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ClientEditForm } from "@/components/ClientEdit/ClientEditForm";
+import { ClientEditForm } from "@/components/ClientEditForm"; // Corrected import path
 import { ClientFilterSort } from "@/components/ClientFilterSort";
 import { ClientAddForm } from "@/components/ClientAddForm";
 import { Client } from "@/types/app";
