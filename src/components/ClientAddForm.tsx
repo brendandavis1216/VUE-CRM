@@ -58,7 +58,7 @@ export const ClientAddForm: React.FC<ClientAddFormProps> = ({ onSubmit, onClose 
           name="fraternity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Fraternity</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Fraternity</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., Alpha Beta Gamma" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -71,7 +71,7 @@ export const ClientAddForm: React.FC<ClientAddFormProps> = ({ onSubmit, onClose 
           name="school"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">School</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">School</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., State University" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -84,7 +84,7 @@ export const ClientAddForm: React.FC<ClientAddFormProps> = ({ onSubmit, onClose 
           name="mainContactName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Main Contact Name</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Main Contact Name</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., John Doe" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -97,7 +97,7 @@ export const ClientAddForm: React.FC<ClientAddFormProps> = ({ onSubmit, onClose 
           name="phoneNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Phone Number</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Phone Number</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., 555-123-4567" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -110,7 +110,7 @@ export const ClientAddForm: React.FC<ClientAddFormProps> = ({ onSubmit, onClose 
           name="instagramHandle"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Instagram Handle</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Instagram Handle</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., @abg_stateu" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -123,7 +123,7 @@ export const ClientAddForm: React.FC<ClientAddFormProps> = ({ onSubmit, onClose 
           name="averageEventSize"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Average Event Size ($)</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Average Event Size ($)</FormLabel>
               <FormControl>
                 <Input type="number" placeholder="e.g., 15000" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
