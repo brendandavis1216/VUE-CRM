@@ -19,32 +19,32 @@ const STATUS_COLORS: Record<EventStatus, string> = {
   Cancelled: "bg-red-500",
 };
 
-// Custom DayContent component to render dots for events
+// Custom DayContent component to render event titles and client names
 const EventDayContent: React.FC<DayContentProps> = (props) => {
-  const { date, displayMonth, children } = props;
+  const { date, displayMonth, children } = props; // children is the day number element
   const { events } = useAppContext();
 
   const dayEvents = events.filter((event) =>
     isSameDay(event.eventDate, date)
-  );
+  ).sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime()); // Sort by time
 
-  // Get unique statuses for events on this day
-  const uniqueStatuses = Array.from(new Set(dayEvents.map((event) => event.status)));
+  const maxEventsToShow = 2; // Limit events shown directly in cell
 
   return (
-    <div className="relative h-full w-full"> {/* Removed flex centering from parent */}
-      <span className="absolute top-1 left-1 text-white text-xs font-medium">{children}</span> {/* Position day number top-left */}
-      {uniqueStatuses.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-0.5">
-          {uniqueStatuses.map((status, index) => (
-            <div
-              key={index}
-              className={cn("h-1.5 w-1.5 rounded-full", STATUS_COLORS[status])}
-              title={status}
-            />
-          ))}
-        </div>
-      )}
+    <div className="relative h-full w-full p-1 overflow-hidden">
+      <div className="absolute top-1 left-1 text-white text-xs font-medium">{children}</div> {/* Render children directly */}
+      <div className="mt-6 space-y-0.5">
+        {dayEvents.slice(0, maxEventsToShow).map((event) => (
+          <div key={event.id} className="text-xs truncate text-white leading-tight">
+            <span className="font-semibold">{event.eventName}</span> - {event.fraternity}
+          </div>
+        ))}
+        {dayEvents.length > maxEventsToShow && (
+          <div className="text-xs text-muted-foreground mt-0.5">
+            +{dayEvents.length - maxEventsToShow} more
+          </div>
+        )}
+      </div>
     </div>
   );
 };
@@ -75,7 +75,7 @@ const CalendarPage = () => {
             className="p-3 w-full"
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-              month: "space-y-4",
+              month: "space-y-4 flex-1", // Make month take available width
               caption: "flex justify-center pt-1 relative items-center",
               caption_label: "text-sm font-medium text-white", // Month and year
               nav: "space-x-1 flex items-center",
@@ -86,11 +86,11 @@ const CalendarPage = () => {
               nav_button_next: "absolute right-1",
               table: "w-full border-collapse space-y-1",
               head_row: "flex",
-              head_cell: "rounded-md w-9 font-normal text-[0.8rem] text-white", // Day of week headers
+              head_cell: "rounded-md font-normal text-[0.8rem] text-white flex-1", // Use flex-1 for width
               row: "flex w-full mt-2",
-              cell: "h-12 w-9 text-center text-sm p-1 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+              cell: "h-24 text-center text-sm p-0 relative flex-1 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20", // Use flex-1 and increased height
               day: cn(
-                "h-9 w-9 p-1 font-normal aria-selected:opacity-100 rounded-md",
+                "h-full w-full p-0 font-normal aria-selected:opacity-100 rounded-md",
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
               ),
               day_range_end: "day-range-end",
