@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Pencil, ChevronDown } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
 import {
@@ -13,11 +13,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ClientEditForm } from "@/components/ClientEditForm";
+import { ClientFilterSort } from "@/components/ClientFilterSort"; // Import the new component
+import { Client } from "@/types/app"; // Import Client type
+
+type SortBy = 'none' | 'school' | 'averageEventSize' | 'numberOfEvents' | 'clientScore';
+type SortOrder = 'asc' | 'desc';
 
 const ClientsPage = () => {
   const { clients, updateClient } = useAppContext();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  // State for filtering and sorting
+  const [filterSchool, setFilterSchool] = useState("");
+  const [sortBy, setSortBy] = useState<SortBy>('none');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   const handleEditClick = (client: Client) => {
     setSelectedClient(client);
@@ -32,14 +42,74 @@ const ClientsPage = () => {
     setSelectedClient(null);
   };
 
+  const handleFilterSortChange = (
+    newFilterSchool: string,
+    newSortBy: SortBy,
+    newSortOrder: SortOrder
+  ) => {
+    setFilterSchool(newFilterSchool);
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+  };
+
+  // Memoize filtered and sorted clients to prevent unnecessary re-renders
+  const filteredAndSortedClients = useMemo(() => {
+    let currentClients = [...clients];
+
+    // Apply filter by school
+    if (filterSchool) {
+      currentClients = currentClients.filter(client =>
+        client.school.toLowerCase().includes(filterSchool.toLowerCase())
+      );
+    }
+
+    // Apply sort
+    if (sortBy !== 'none') {
+      currentClients.sort((a, b) => {
+        let valA: any;
+        let valB: any;
+
+        switch (sortBy) {
+          case 'school':
+            valA = a.school.toLowerCase();
+            valB = b.school.toLowerCase();
+            break;
+          case 'averageEventSize':
+            valA = a.averageEventSize;
+            valB = b.averageEventSize;
+            break;
+          case 'numberOfEvents':
+            valA = a.numberOfEvents;
+            valB = b.numberOfEvents;
+            break;
+          case 'clientScore':
+            valA = a.clientScore;
+            valB = b.clientScore;
+            break;
+          default:
+            return 0;
+        }
+
+        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return currentClients;
+  }, [clients, filterSchool, sortBy, sortOrder]);
+
   return (
     <div className="p-4 space-y-4">
-      <h1 className="text-3xl font-bold text-white text-center">Clients</h1>
-      {clients.length === 0 ? (
-        <p className="text-center text-muted-foreground mt-8">No clients yet. Inquiries will become clients here!</p>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold text-white">Clients</h1>
+        <ClientFilterSort onFilterSortChange={handleFilterSortChange} />
+      </div>
+      {filteredAndSortedClients.length === 0 ? (
+        <p className="text-center text-muted-foreground mt-8">No clients match your current filters.</p>
       ) : (
         <Accordion type="single" collapsible className="w-full">
-          {clients.map((client) => (
+          {filteredAndSortedClients.map((client) => (
             <Card key={client.id} className="mb-4 bg-card text-card-foreground border-border">
               <AccordionItem value={client.id} className="border-none">
                 <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline [&>svg]:hidden group">
