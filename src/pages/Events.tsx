@@ -71,31 +71,14 @@ const EventsPage = () => {
       <div className="grid grid-cols-1 gap-4">
         <Accordion type="single" collapsible className="w-full">
           {eventList.map((event) => {
-            const finalPaymentTask = event.tasks.find(task => task.name === "Paid(Full)");
+            // const finalPaymentTask = event.tasks.find(task => task.name === "Paid(Full)"); // No longer needed here
             return (
               <Card key={event.id} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={event.id} className="border-none">
                   <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
                     <CardTitle className="text-lg font-medium flex-shrink-0">{event.eventName}</CardTitle>
                     <div className="flex items-center gap-2 flex-grow justify-end">
-                      {finalPaymentTask && (
-                        <div className="flex items-center space-x-2 mr-2" onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            id={`final-payment-${event.id}`}
-                            checked={finalPaymentTask.completed}
-                            onCheckedChange={() => updateEventTask(event.id, finalPaymentTask.id)}
-                          />
-                          <Label
-                            htmlFor={`final-payment-${event.id}`}
-                            className={cn(
-                              "text-xs font-medium",
-                              finalPaymentTask.completed ? "line-through text-muted-foreground" : "text-white"
-                            )}
-                          >
-                            Paid(Full)
-                          </Label>
-                        </div>
-                      )}
+                      {/* Removed the Paid(Full) checkbox and label */}
                       <span className="text-sm font-medium text-white">{Math.round(event.progress)}%</span>
                       <Progress value={event.progress} className="w-24 h-2" />
                       <Button
@@ -123,7 +106,7 @@ const EventsPage = () => {
                       <h3 className="font-semibold text-white">Tasks:</h3>
                       <div className="grid grid-cols-1 gap-2 mt-2">
                         {event.tasks
-                          .filter(task => task.name !== "Paid(Full)") // Filter out Paid(Full) task
+                          .filter(task => task.name !== "Paid(Full)") // Filter out Paid(Full) task from the detailed list
                           .map((task) => (
                             <div key={task.id} className="flex items-center space-x-2">
                               <Checkbox
