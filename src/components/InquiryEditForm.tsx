@@ -243,7 +243,7 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
               </FormItem>
             )}
           />
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4 col-span-2">
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
             <FormControl>
               <Checkbox
                 checked={isPowerProvidedChecked}
