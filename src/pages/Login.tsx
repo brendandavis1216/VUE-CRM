@@ -8,7 +8,7 @@ import { MadeWithDyad } from '@/components/made-with-dyad';
 
 const Login = () => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+    <div className="dark min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg border border-border text-black">
         <h1 className="text-3xl font-bold text-center text-black">Welcome Back!</h1>
         <p className="text-center text-gray-700">Sign in to manage your events and clients.</p>
