@@ -20,20 +20,19 @@ const Login = () => {
             variables: {
               default: {
                 colors: {
-                  brand: 'hsl(var(--primary))', // This will now be pure white for the button background
-                  brandAccent: 'hsl(var(--foreground))', // This will now be pure white
-                  defaultButtonBackground: 'hsl(var(--primary))', // This will now be pure white for the button background
-                  defaultButtonBackgroundHover: 'hsl(var(--primary-foreground))', // This is for text *on* primary buttons, should be dark
+                  brand: 'hsl(var(--primary))',
+                  brandAccent: 'hsl(var(--foreground))',
+                  defaultButtonBackground: 'hsl(var(--primary))',
+                  defaultButtonBackgroundHover: 'hsl(var(--primary-foreground))',
                   inputBackground: 'hsl(0 0% 100%)', // White input background
-                  inputBorder: 'hsl(var(--border))', // Border color
+                  inputBorder: 'hsl(var(--border))',
                   inputLabel: 'hsl(var(--foreground))', // Pure white label text
-                  inputText: 'hsl(var(--background))', // Black input text (inside the white input field)
-                  messageText: 'hsl(var(--destructive-foreground))', // Pure white text on red background
-                  messageBackground: 'hsl(var(--destructive))', // Red background
-                  anchorTextColor: 'hsl(var(--primary))', // Pure white for links
-                  inputPlaceholder: 'hsl(var(--muted-foreground))', // Pure white for placeholder text
-                  dividerBackground: 'hsl(var(--border))', // Border color for dividers
-                  // Add textColor to ensure all general text within Auth component is white
+                  inputText: 'hsl(var(--foreground))', // Changed to pure white input text
+                  messageText: 'hsl(var(--destructive-foreground))',
+                  messageBackground: 'hsl(var(--destructive))',
+                  anchorTextColor: 'hsl(var(--primary))',
+                  inputPlaceholder: 'hsl(var(--foreground))', // Pure white for placeholder text
+                  dividerBackground: 'hsl(var(--border))',
                   textColor: 'hsl(var(--foreground))', // Pure white for general text
                 },
               },
