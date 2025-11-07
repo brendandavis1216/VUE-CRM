@@ -12,10 +12,15 @@ interface AppContextType {
   updateInquiryTask: (inquiryId: string, taskId: string) => void;
   updateEventTask: (eventId: string, taskId: string) => void;
   updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
-  addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void; // New function
+  addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+
+// Helper function to calculate client score
+const calculateClientScore = (numberOfEvents: number, averageEventSize: number): number => {
+  return (numberOfEvents * averageEventSize) / 1000;
+};
 
 const initialClients: Client[] = [
   {
@@ -27,7 +32,7 @@ const initialClients: Client[] = [
     instagramHandle: "@abg_stateu",
     averageEventSize: 15000,
     numberOfEvents: 3,
-    clientScore: 85,
+    clientScore: calculateClientScore(3, 15000), // Calculated score
   },
   {
     id: "2",
@@ -38,7 +43,7 @@ const initialClients: Client[] = [
     instagramHandle: "@dez_citycollege",
     averageEventSize: 10000,
     numberOfEvents: 5,
-    clientScore: 92,
+    clientScore: calculateClientScore(5, 10000), // Calculated score
   },
 ];
 
@@ -133,24 +138,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 progress: 0,
             };
 
-            const newClient: Client = {
-              id: inq.id, // Use inquiry ID as client ID for simplicity
-              fraternity: inq.fraternity,
-              school: inq.school,
-              mainContactName: inq.mainContact,
-              phoneNumber: inq.phoneNumber,
-              instagramHandle: "N/A", // Placeholder, could be added to form later
-              averageEventSize: inq.budget, // Use budget as initial avg event size
-              numberOfEvents: 1,
-              clientScore: 50, // Initial client score
-            };
-
+            // Logic to add or update client based on completed inquiry
             setClients((prev) => {
-                const existingClient = prev.find(c => c.id === newClient.id);
+                const existingClient = prev.find(c => c.id === inq.id); // Check if client already exists by inquiry ID
                 if (existingClient) {
-                    return prev.map(c => c.id === newClient.id ? { ...c, numberOfEvents: c.numberOfEvents + 1, averageEventSize: (c.averageEventSize * c.numberOfEvents + newClient.averageEventSize) / (c.numberOfEvents + 1) } : c);
+                    const updatedClient = {
+                        ...existingClient,
+                        numberOfEvents: existingClient.numberOfEvents + 1,
+                        averageEventSize: (existingClient.averageEventSize * existingClient.numberOfEvents + inq.budget) / (existingClient.numberOfEvents + 1)
+                    };
+                    updatedClient.clientScore = calculateClientScore(updatedClient.numberOfEvents, updatedClient.averageEventSize);
+                    return prev.map(c => c.id === existingClient.id ? updatedClient : c);
+                } else {
+                    const newClient: Client = {
+                        id: inq.id, // Use inquiry ID as client ID for simplicity
+                        fraternity: inq.fraternity,
+                        school: inq.school,
+                        mainContactName: inq.mainContact,
+                        phoneNumber: inq.phoneNumber,
+                        instagramHandle: "N/A", // Placeholder
+                        averageEventSize: inq.budget, // Use budget as initial avg event size
+                        numberOfEvents: 1, // First event from this inquiry
+                        clientScore: calculateClientScore(1, inq.budget), // Calculate score
+                    };
+                    return [...prev, newClient];
                 }
-                return [...prev, newClient];
             });
             setEvents((prev) => [...prev, newEvent]);
             return null; // Remove inquiry from list
@@ -179,19 +191,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const updateClient = (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => {
     setClients((prevClients) =>
-      prevClients.map((client) =>
-        client.id === clientId ? { ...client, ...updatedClientData } : client
-      )
+      prevClients.map((client) => {
+        if (client.id === clientId) {
+          const updatedClient = { ...client, ...updatedClientData };
+          // Recalculate clientScore based on potentially updated averageEventSize
+          updatedClient.clientScore = calculateClientScore(updatedClient.numberOfEvents, updatedClient.averageEventSize);
+          return updatedClient;
+        }
+        return client;
+      })
     );
     toast.success("Client updated successfully!");
   };
 
   const addClient = (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => {
+    const numberOfEvents = 0; // New clients start with 0 events
+    const averageEventSize = newClientData.averageEventSize;
+    const clientScore = calculateClientScore(numberOfEvents, averageEventSize);
+
     const newClient: Client = {
       ...newClientData,
       id: `client-${Date.now()}`,
-      numberOfEvents: 0, // New clients start with 0 events
-      clientScore: 50, // Default client score
+      numberOfEvents: numberOfEvents,
+      clientScore: clientScore,
     };
     setClients((prev) => [...prev, newClient]);
     toast.success("New client added successfully!");
@@ -207,7 +229,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateInquiryTask,
         updateEventTask,
         updateClient,
-        addClient, // Provide the new function
+        addClient,
       }}
     >
       {children}
