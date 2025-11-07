@@ -41,7 +41,7 @@ const ClientsPage = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleClientUpdate = (updatedValues: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => {
+  const handleClientUpdate = (updatedValues: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => {
     if (selectedClient) {
       updateClient(selectedClient.id, updatedValues);
     }
@@ -49,7 +49,7 @@ const ClientsPage = () => {
     setSelectedClient(null);
   };
 
-  const handleAddClientSubmit = (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => {
+  const handleAddClientSubmit = (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => {
     addClient(newClientData);
     setIsAddClientDialogOpen(false);
   };
@@ -227,7 +227,10 @@ const ClientsPage = () => {
                             "N/A"
                           )}
                         </p>
-                        <p><strong>Avg. Event Size:</strong> ${client.averageEventSize.toLocaleString()}</p>
+                        <p>
+                          <strong>Avg. Event Size:</strong>{" "}
+                          {client.numberOfEvents > 0 ? `$${client.averageEventSize.toLocaleString()}` : "N/A"}
+                        </p>
                         <p><strong># Events:</strong> {client.numberOfEvents}</p>
                         <p><strong>Client Score:</strong> {client.clientScore}</p>
                         <Button

@@ -23,14 +23,13 @@ const formSchema = z.object({
   mainContactName: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
   phoneNumber: z.string().regex(/^\d{10}$/, { message: "Phone number must be 10 digits." }), // Updated validation
   instagramHandle: z.string().optional().or(z.literal("")), // Optional, allow empty string
-  averageEventSize: z.coerce.number().min(0, { message: "Average event size cannot be negative." }),
 });
 
 type ClientFormValues = z.infer<typeof formSchema>;
 
 interface ClientEditFormProps {
   client: Client;
-  onSubmit: (values: ClientFormValues) => void;
+  onSubmit: (values: Omit<ClientFormValues, 'averageEventSize'>) => void;
   onClose: () => void;
 }
 
@@ -43,7 +42,6 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
       mainContactName: client.mainContactName,
       phoneNumber: client.phoneNumber.replace(/\D/g, ''), // Ensure default value is raw 10 digits
       instagramHandle: client.instagramHandle,
-      averageEventSize: client.averageEventSize,
     },
   });
 
@@ -125,19 +123,6 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
               <FormLabel className="text-white">Instagram Handle</FormLabel>
               <FormControl>
                 <Input {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="averageEventSize"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-white">Average Event Size ($)</FormLabel>
-              <FormControl>
-                <Input type="number" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>

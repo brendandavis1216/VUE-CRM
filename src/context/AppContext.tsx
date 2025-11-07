@@ -11,8 +11,8 @@ interface AppContextType {
   addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => void;
   updateInquiryTask: (inquiryId: string, taskId: string) => void;
   updateEventTask: (eventId: string, taskId: string) => void;
-  updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
-  addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
+  updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => void;
+  addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => void;
   updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void;
   updateEvent: (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => void;
 }
@@ -200,7 +200,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Handle client creation/update
     if (!clientToUpdate) { // If no existing client was found or existingClientId was not provided
-      const initialAverageEventSize = newInquiryData.budget;
+      const initialAverageEventSize = newInquiryData.budget; // First event's budget
       const initialNumberOfEvents = 0; // New client starts with 0 events from this inquiry's perspective
 
       const newClient: Client = {
@@ -356,12 +356,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   };
 
-  const updateClient = (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => {
+  const updateClient = (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => {
     setClients((prevClients) =>
       prevClients.map((client) => {
         if (client.id === clientId) {
           const updatedClient = { ...client, ...updatedClientData };
-          // Recalculate clientScore based on potentially updated averageEventSize
+          // Recalculate clientScore based on potentially updated averageEventSize (though averageEventSize is now derived)
           updatedClient.clientScore = calculateClientScore(updatedClient.numberOfEvents, updatedClient.averageEventSize);
           return updatedClient;
         }
@@ -371,15 +371,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     toast.success("Client updated successfully!");
   };
 
-  const addClient = (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => {
+  const addClient = (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => {
     const numberOfEvents = 0; // New clients start with 0 events
-    const averageEventSize = newClientData.averageEventSize;
+    const averageEventSize = 0; // New clients start with 0 average event size
     const clientScore = calculateClientScore(numberOfEvents, averageEventSize);
 
     const newClient: Client = {
       ...newClientData,
       id: `client-${Date.now()}`,
       numberOfEvents: numberOfEvents,
+      averageEventSize: averageEventSize, // Initialize to 0
       clientScore: clientScore,
     };
     setClients((prev) => [...prev, newClient]);

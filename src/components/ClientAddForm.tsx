@@ -22,13 +22,12 @@ const formSchema = z.object({
   mainContactName: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
   phoneNumber: z.string().regex(/^\d{3}-\d{3}-\d{4}$/, { message: "Phone number must be in XXX-XXX-XXXX format." }),
   instagramHandle: z.string().optional().or(z.literal("")), // Optional, allow empty string
-  averageEventSize: z.coerce.number().min(0, { message: "Average event size cannot be negative." }),
 });
 
 type ClientFormValues = z.infer<typeof formSchema>;
 
 interface ClientAddFormProps {
-  onSubmit: (values: Omit<ClientFormValues, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
+  onSubmit: (values: Omit<ClientFormValues, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => void;
   onClose: () => void;
 }
 
@@ -41,7 +40,6 @@ export const ClientAddForm: React.FC<ClientAddFormProps> = ({ onSubmit, onClose 
       mainContactName: "",
       phoneNumber: "",
       instagramHandle: "",
-      averageEventSize: 0,
     },
   });
 
@@ -113,19 +111,6 @@ export const ClientAddForm: React.FC<ClientAddFormProps> = ({ onSubmit, onClose 
               <FormLabel className="block font-semibold text-black dark:text-white mb-1">Instagram Handle</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., @abg_stateu" {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="averageEventSize"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Average Event Size ($)</FormLabel>
-              <FormControl>
-                <Input type="number" placeholder="e.g., 15000" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>
