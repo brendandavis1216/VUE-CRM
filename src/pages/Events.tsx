@@ -78,10 +78,8 @@ const EventsPage = () => {
                   <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
                     <CardTitle className="text-lg font-medium flex-shrink-0">{event.eventName}</CardTitle>
                     <div className="flex items-center gap-2 flex-grow justify-end">
-                      <span className="text-sm font-medium text-white">{Math.round(event.progress)}%</span>
-                      <Progress value={event.progress} className="w-24 h-2" />
                       {finalPaymentTask && (
-                        <div className="flex items-center space-x-2 ml-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center space-x-2 mr-2" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             id={`final-payment-${event.id}`}
                             checked={finalPaymentTask.completed}
@@ -98,6 +96,8 @@ const EventsPage = () => {
                           </Label>
                         </div>
                       )}
+                      <span className="text-sm font-medium text-white">{Math.round(event.progress)}%</span>
+                      <Progress value={event.progress} className="w-24 h-2" />
                       <Button
                         variant="ghost"
                         size="sm"
