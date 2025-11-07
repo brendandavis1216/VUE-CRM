@@ -47,9 +47,19 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
         }
         if (isNaN(date.getTime())) {
           console.warn(`Invalid eventDate found for event ID ${event.id || 'unknown'}. Defaulting to current date.`);
-          return { ...event, eventDate: new Date() };
+          event.eventDate = new Date();
+        } else {
+          event.eventDate = date;
         }
-        return { ...event, eventDate: date };
+
+        // Ensure 'Final Payment Received' task exists for all events
+        if (!event.tasks.some(task => task.name === 'Final Payment Received')) {
+          event.tasks.push({ id: `event-task-final-payment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, name: "Final Payment Received", completed: false });
+          // Recalculate progress after adding a task
+          const completedTasks = event.tasks.filter(task => task.completed).length;
+          event.progress = (completedTasks / event.tasks.length) * 100;
+        }
+        return event;
       }) as T;
     }
     if (key === "appInquiries" && Array.isArray(storedData)) {
