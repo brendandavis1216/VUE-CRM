@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { format, isSameDay } from "date-fns";
-import { Calendar as CalendarIcon, CalendarDays } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { DayPicker, DayContentProps } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +21,7 @@ const STATUS_COLORS: Record<EventStatus, string> = {
 
 // Custom DayContent component to render event titles and client names
 const EventDayContent: React.FC<DayContentProps> = (props) => {
-  const { date, displayMonth, children } = props; // children is the day number element
+  const { date, children } = props; // children is the day number element
   const { events } = useAppContext();
 
   const dayEvents = events.filter((event) =>
@@ -32,7 +32,8 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
 
   return (
     <div className="relative h-full w-full p-1 overflow-hidden">
-      <div className="absolute top-1 left-1 text-white text-xs font-medium z-10">{children}</div> {/* Render children directly, added z-10 */}
+      {/* Render the day number (children) absolutely positioned */}
+      <div className="absolute top-1 left-1 text-white text-xs font-medium z-10">{children}</div>
       <div className="mt-6 space-y-0.5">
         {dayEvents.slice(0, maxEventsToShow).map((event) => (
           <div key={event.id} className="text-xs truncate text-white leading-tight">
@@ -75,9 +76,9 @@ const CalendarPage = () => {
             className="p-3 w-full"
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-              month: "space-y-4 flex-1", // Make month take available width
+              month: "space-y-4 flex-1",
               caption: "flex justify-center pt-1 relative items-center",
-              caption_label: "text-sm font-medium text-white", // Month and year
+              caption_label: "text-sm font-medium text-white",
               nav: "space-x-1 flex items-center",
               nav_button: cn(
                 "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -86,18 +87,20 @@ const CalendarPage = () => {
               nav_button_next: "absolute right-1",
               table: "w-full border-collapse space-y-1",
               head_row: "flex",
-              head_cell: "rounded-md font-normal text-[0.8rem] text-white flex-1", // Use flex-1 for width
+              head_cell: "rounded-md font-normal text-[0.8rem] text-white flex-1",
               row: "flex w-full mt-2",
-              cell: "h-24 text-center text-sm p-1 relative flex-1 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20", // Changed p-0 to p-1
+              // The 'cell' is the container for each day, ensuring it has enough height and is relative
+              cell: "h-24 text-center text-sm p-1 relative flex-1 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+              // The 'day' is the actual clickable button for the day, also needs relative for children positioning
               day: cn(
-                "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md text-white relative", // Changed p-0 to p-1 and added text-white, ADDED relative
+                "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md text-white relative",
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
               ),
               day_range_end: "day-range-end",
               day_selected:
                 "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
               day_today: "bg-accent text-accent-foreground",
-              day_outside: "text-muted-foreground opacity-50", // Days from other months
+              day_outside: "text-muted-foreground opacity-50",
               day_disabled: "text-muted-foreground opacity-50",
               day_range_middle:
                 "aria-selected:bg-accent aria-selected:text-accent-foreground",
