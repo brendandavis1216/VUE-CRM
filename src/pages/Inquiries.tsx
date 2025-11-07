@@ -3,25 +3,46 @@
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, Search } from "lucide-react"; // Import Search icon
+import { PlusCircle, Search } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input"; // Import Input component
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { InquiryForm } from "@/components/InquiryForm";
 import { useAppContext } from "@/context/AppContext";
+import { Inquiry } from "@/types/app"; // Import Inquiry type
 
 const InquiriesPage = () => {
   const { inquiries, addInquiry, updateInquiryTask } = useAppContext();
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // State for search term
+  const [isAddInquiryDialogOpen, setIsAddInquiryDialogOpen] = useState(false); // For the main "Add Inquiry" button
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const handleFormSubmit = (newInquiryData: Parameters<typeof addInquiry>[0]) => {
+  // State for adding inquiry from an existing inquiry card
+  const [isAddInquiryFromCardDialogOpen, setIsAddInquiryFromCardDialogOpen] = useState(false);
+  const [inquiryForNewInquiry, setInquiryForNewInquiry] = useState<Inquiry | null>(null);
+
+  const handleMainFormSubmit = (newInquiryData: Parameters<typeof addInquiry>[0]) => {
     addInquiry(newInquiryData);
-    setIsFormOpen(false);
+    setIsAddInquiryDialogOpen(false);
+  };
+
+  const handleAddInquiryFromCardClick = (inquiry: Inquiry) => {
+    setInquiryForNewInquiry(inquiry);
+    setIsAddInquiryFromCardDialogOpen(true);
+  };
+
+  const handleAddInquiryFromCardSubmit = (newInquiryData: Parameters<typeof addInquiry>[0]) => {
+    if (inquiryForNewInquiry) {
+      // Link the new inquiry to the client of the original inquiry
+      addInquiry(newInquiryData, inquiryForNewInquiry.clientId);
+    } else {
+      addInquiry(newInquiryData); // Fallback, though should not happen if button is clicked on an existing inquiry
+    }
+    setIsAddInquiryFromCardDialogOpen(false);
+    setInquiryForNewInquiry(null);
   };
 
   const filteredInquiries = useMemo(() => {
@@ -42,7 +63,7 @@ const InquiriesPage = () => {
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold text-white">Inquiries</h1>
-        <div className="flex gap-2 items-center"> {/* Added flex and items-center for alignment */}
+        <div className="flex gap-2 items-center">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -50,10 +71,10 @@ const InquiriesPage = () => {
               placeholder="Search inquiries..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 bg-input text-foreground border-border w-40 sm:w-auto" // Adjusted width for mobile
+              className="pl-9 bg-input text-foreground border-border w-40 sm:w-auto"
             />
           </div>
-          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <Dialog open={isAddInquiryDialogOpen} onOpenChange={setIsAddInquiryDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Inquiry
@@ -63,7 +84,7 @@ const InquiriesPage = () => {
               <DialogHeader>
                 <DialogTitle className="text-white">Add New Inquiry</DialogTitle>
               </DialogHeader>
-              <InquiryForm onSubmit={handleFormSubmit} />
+              <InquiryForm onSubmit={handleMainFormSubmit} onClose={() => setIsAddInquiryDialogOpen(false)} />
             </DialogContent>
           </Dialog>
         </div>
@@ -77,11 +98,53 @@ const InquiriesPage = () => {
         <div className="grid grid-cols-1 gap-4">
           {filteredInquiries.map((inquiry) => (
             <Card key={inquiry.id} className="bg-card text-card-foreground border-border">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium">{inquiry.fraternity} - {inquiry.school}</CardTitle>
-                <p className="text-sm text-muted-foreground">{inquiry.mainContact}</p>
+                <div className="flex items-center gap-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent any parent click handlers
+                          handleAddInquiryFromCardClick(inquiry);
+                        }}
+                      >
+                        <PlusCircle className="h-4 w-4" />
+                        <span className="sr-only">Add Inquiry based on {inquiry.fraternity}</span>
+                      </Button>
+                    </DialogTrigger>
+                    {isAddInquiryFromCardDialogOpen && inquiryForNewInquiry?.id === inquiry.id && (
+                      <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+                        <DialogHeader>
+                          <DialogTitle className="text-white">Add New Inquiry (Based on {inquiryForNewInquiry.fraternity})</DialogTitle>
+                        </DialogHeader>
+                        <InquiryForm
+                          onSubmit={handleAddInquiryFromCardSubmit}
+                          onClose={() => setIsAddInquiryFromCardDialogOpen(false)}
+                          defaultValues={{
+                            school: inquiryForNewInquiry.school,
+                            fraternity: inquiryForNewInquiry.fraternity,
+                            mainContact: inquiryForNewInquiry.mainContact,
+                            phoneNumber: inquiryForNewInquiry.phoneNumber,
+                            addressOfEvent: inquiryForNewInquiry.addressOfEvent,
+                            capacity: inquiryForNewInquiry.capacity,
+                            budget: inquiryForNewInquiry.budget,
+                            stageBuild: inquiryForNewInquiry.stageBuild,
+                            power: inquiryForNewInquiry.power,
+                            gates: inquiryForNewInquiry.gates,
+                            security: inquiryForNewInquiry.security,
+                          }}
+                        />
+                      </DialogContent>
+                    )}
+                  </Dialog>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
+                <p className="text-sm text-muted-foreground">{inquiry.mainContact} ({inquiry.phoneNumber})</p>
                 <p className="text-sm"><strong>Event Address:</strong> {inquiry.addressOfEvent}</p>
                 <p className="text-sm"><strong>Capacity:</strong> {inquiry.capacity}</p>
                 <p className="text-sm"><strong>Budget:</strong> ${inquiry.budget.toLocaleString()}</p>
