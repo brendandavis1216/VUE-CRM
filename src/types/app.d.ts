@@ -18,6 +18,7 @@ interface InquiryTask {
 
 interface Inquiry {
   id: string;
+  clientId: string; // Link to the client created from this inquiry
   school: string;
   fraternity: string;
   mainContact: string;

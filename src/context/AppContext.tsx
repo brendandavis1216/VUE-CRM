@@ -8,7 +8,7 @@ interface AppContextType {
   clients: Client[];
   inquiries: Inquiry[];
   events: Event[];
-  addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress'>) => void;
+  addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void;
   updateInquiryTask: (inquiryId: string, taskId: string) => void;
   updateEventTask: (eventId: string, taskId: string) => void;
   updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
@@ -45,11 +45,24 @@ const initialClients: Client[] = [
     numberOfEvents: 5,
     clientScore: calculateClientScore(5, 10000), // Calculated score
   },
+  // Client for initial inquiry
+  {
+    id: "client-from-inq1", // This ID will be linked to inq1
+    fraternity: "Gamma Delta Epsilon",
+    school: "University of West",
+    mainContactName: "Chris Evans",
+    phoneNumber: "N/A",
+    instagramHandle: "N/A",
+    averageEventSize: 8000, // Initial budget from inquiry
+    numberOfEvents: 0, // Starts at 0 events
+    clientScore: calculateClientScore(0, 8000),
+  }
 ];
 
 const initialInquiries: Inquiry[] = [
   {
     id: "inq1",
+    clientId: "client-from-inq1", // Link to the client above
     school: "University of West",
     fraternity: "Gamma Delta Epsilon",
     mainContact: "Chris Evans",
@@ -82,7 +95,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (completedTasks / tasks.length) * 100;
   };
 
-  const addInquiry = (newInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress'>) => {
+  const addInquiry = (newInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => {
+    const newClientId = `client-${Date.now()}-from-inq`; // Unique ID for the new client
+
     const defaultTasks: InquiryTask[] = [
       { id: "task-render-" + Date.now(), name: "Rendering", completed: false },
       { id: "task-contract-" + (Date.now() + 1), name: "Contract", completed: false },
@@ -92,12 +107,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const inquiryWithTasks: Inquiry = {
       ...newInquiryData,
       id: `inq-${Date.now()}`,
+      clientId: newClientId, // Link to the newly created client
       tasks: defaultTasks,
       progress: 0,
     };
 
     setInquiries((prev) => [...prev, inquiryWithTasks]);
     toast.success("New inquiry added!");
+
+    // Create a new client from the inquiry details
+    const initialAverageEventSize = newInquiryData.budget;
+    const initialNumberOfEvents = 0;
+
+    const newClient: Client = {
+      id: newClientId,
+      fraternity: newInquiryData.fraternity,
+      school: newInquiryData.school,
+      mainContactName: newInquiryData.mainContact,
+      phoneNumber: "N/A", // Placeholder, as not available in inquiry form
+      instagramHandle: "N/A", // Placeholder, as not available in inquiry form
+      averageEventSize: initialAverageEventSize,
+      numberOfEvents: initialNumberOfEvents,
+      clientScore: calculateClientScore(initialNumberOfEvents, initialAverageEventSize),
+    };
+
+    setClients((prevClients) => [...prevClients, newClient]);
+    toast.success(`New client "${newClient.fraternity} - ${newClient.school}" added from inquiry!`);
   };
 
   const updateInquiryTask = (inquiryId: string, taskId: string) => {
@@ -125,7 +160,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
             const newEvent: Event = {
                 id: `event-${Date.now()}`,
-                clientId: inq.id, // Link to client
+                clientId: inq.clientId, // Link to client using the stored clientId
                 fraternity: inq.fraternity,
                 school: inq.school,
                 eventName: `${inq.fraternity} - ${inq.school} Event`, // Default event name
@@ -137,9 +172,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 progress: 0,
             };
 
-            // Logic to add or update client based on completed inquiry
+            // Logic to update client based on completed inquiry
             setClients((prev) => {
-                const existingClient = prev.find(c => c.id === inq.id); // Check if client already exists by inquiry ID
+                const existingClient = prev.find(c => c.id === inq.clientId); // Use inq.clientId to find the client
                 if (existingClient) {
                     const updatedClient = {
                         ...existingClient,
@@ -149,18 +184,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                     updatedClient.clientScore = calculateClientScore(updatedClient.numberOfEvents, updatedClient.averageEventSize);
                     return prev.map(c => c.id === existingClient.id ? updatedClient : c);
                 } else {
-                    const newClient: Client = {
-                        id: inq.id, // Use inquiry ID as client ID for simplicity
-                        fraternity: inq.fraternity,
-                        school: inq.school,
-                        mainContactName: inq.mainContact,
-                        phoneNumber: "N/A", // Placeholder as phone number is removed from inquiry
-                        instagramHandle: "N/A", // Placeholder
-                        averageEventSize: inq.budget, // Use budget as initial avg event size
-                        numberOfEvents: 1, // First event from this inquiry
-                        clientScore: calculateClientScore(1, inq.budget), // Calculate score
-                    };
-                    return [...prev, newClient];
+                    console.error(`Client with ID ${inq.clientId} not found when completing inquiry ${inq.id}. This should not happen if client is added on inquiry creation.`);
+                    return prev; // Return previous state if client not found (should ideally not occur)
                 }
             });
             setEvents((prev) => [...prev, newEvent]);
