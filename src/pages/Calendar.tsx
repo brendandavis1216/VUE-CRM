@@ -32,8 +32,8 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
   const uniqueStatuses = Array.from(new Set(dayEvents.map((event) => event.status)));
 
   return (
-    <div className="relative h-full w-full flex items-center justify-center">
-      <span className="text-white">{children}</span> {/* Explicitly apply text-white to the day number */}
+    <div className="relative h-full w-full"> {/* Removed flex centering from parent */}
+      <span className="absolute top-1 left-1 text-white text-xs font-medium">{children}</span> {/* Position day number top-left */}
       {uniqueStatuses.length > 0 && (
         <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-0.5">
           {uniqueStatuses.map((status, index) => (
@@ -88,9 +88,9 @@ const CalendarPage = () => {
               head_row: "flex",
               head_cell: "rounded-md w-9 font-normal text-[0.8rem] text-white", // Day of week headers
               row: "flex w-full mt-2",
-              cell: "h-12 w-9 text-center text-sm p-1 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20", // Changed p-0 to p-1
+              cell: "h-12 w-9 text-center text-sm p-1 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
               day: cn(
-                "h-9 w-9 p-1 font-normal aria-selected:opacity-100 rounded-md text-white", // Changed p-0 to p-1 and added text-white
+                "h-9 w-9 p-1 font-normal aria-selected:opacity-100 rounded-md",
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
               ),
               day_range_end: "day-range-end",
