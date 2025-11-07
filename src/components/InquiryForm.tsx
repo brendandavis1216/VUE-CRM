@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -59,9 +59,27 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
     },
   });
 
+  const powerValue = form.watch('power');
+  const [isPowerProvidedChecked, setIsPowerProvidedChecked] = useState(powerValue === "Provided");
+
+  // Effect to update form's power value when checkbox is toggled
+  useEffect(() => {
+    if (isPowerProvidedChecked && powerValue !== "Provided") {
+      form.setValue('power', 'Provided', { shouldValidate: true });
+    } else if (!isPowerProvidedChecked && powerValue === "Provided") {
+      form.setValue('power', 'None', { shouldValidate: true }); // Revert to 'None' if unchecked from 'Provided'
+    }
+  }, [isPowerProvidedChecked, powerValue, form]);
+
+  // Effect to update checkbox state if powerValue is changed by other means (e.g., defaultValues)
+  useEffect(() => {
+    setIsPowerProvidedChecked(powerValue === "Provided");
+  }, [powerValue]);
+
   function handleSubmit(values: InquiryFormValues) {
     onSubmit(values);
     form.reset();
+    setIsPowerProvidedChecked(false); // Reset checkbox state
     onClose?.(); // Close dialog after submission
   }
 
@@ -203,7 +221,11 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
             render={({ field }) => (
               <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
                 <FormLabel className="block font-semibold text-black dark:text-white">Power</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  disabled={isPowerProvidedChecked} // Disable if checkbox is checked
+                >
                   <FormControl>
                     <SelectTrigger className="bg-input text-foreground border-border">
                       <SelectValue placeholder="Select power type" />
@@ -221,6 +243,17 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
               </FormItem>
             )}
           />
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
+            <FormControl>
+              <Checkbox
+                checked={isPowerProvidedChecked}
+                onCheckedChange={setIsPowerProvidedChecked}
+              />
+            </FormControl>
+            <div className="space-y-1 leading-none">
+              <FormLabel className="block font-semibold text-black dark:text-white">Power Provided</FormLabel>
+            </div>
+          </FormItem>
           <FormField
             control={form.control}
             name="gates"
