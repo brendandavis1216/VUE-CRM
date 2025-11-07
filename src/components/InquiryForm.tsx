@@ -66,7 +66,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
           name="school"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">School</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">School</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., State University" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -79,7 +79,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
           name="fraternity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Fraternity</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Fraternity</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., Alpha Beta Gamma" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -92,7 +92,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
           name="mainContact"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Main Contact</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Main Contact</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., John Doe" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -105,7 +105,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
           name="addressOfEvent"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Address of Event</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Address of Event</FormLabel>
               <FormControl>
                 <Textarea placeholder="e.g., 123 Main St, Anytown, USA" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -118,7 +118,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
           name="capacity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Capacity</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Capacity</FormLabel>
               <FormControl>
                 <Input type="number" placeholder="e.g., 500" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -131,7 +131,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
           name="budget"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Budget ($)</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Budget ($)</FormLabel>
               <FormControl>
                 <Input type="number" placeholder="e.g., 10000" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -152,7 +152,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel className="text-white">Stage Build</FormLabel>
+                  <FormLabel className="block font-semibold text-black dark:text-white">Stage Build</FormLabel>
                 </div>
               </FormItem>
             )}
@@ -169,7 +169,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel className="text-white">Power</FormLabel>
+                  <FormLabel className="block font-semibold text-black dark:text-white">Power</FormLabel>
                 </div>
               </FormItem>
             )}
@@ -186,7 +186,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel className="text-white">Gates</FormLabel>
+                  <FormLabel className="block font-semibold text-black dark:text-white">Gates</FormLabel>
                 </div>
               </FormItem>
             )}
@@ -203,7 +203,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit }) => {
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel className="text-white">Security</FormLabel>
+                  <FormLabel className="block font-semibold text-black dark:text-white">Security</FormLabel>
                 </div>
               </FormItem>
             )}
