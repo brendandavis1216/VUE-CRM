@@ -25,7 +25,7 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
   const { events } = useAppContext();
 
   // Determine if it's an outside day to potentially dim the number
-  const isOutside = activeModifiers.outside;
+  const isOutside = activeModifiers?.outside; // Safely access 'outside' using optional chaining
 
   const dayEvents = events.filter((event) =>
     isSameDay(event.eventDate, date)
