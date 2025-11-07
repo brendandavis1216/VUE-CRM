@@ -88,9 +88,9 @@ const CalendarPage = () => {
               head_row: "flex",
               head_cell: "rounded-md font-normal text-[0.8rem] text-white flex-1", // Use flex-1 for width
               row: "flex w-full mt-2",
-              cell: "h-24 text-center text-sm p-0 relative flex-1 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20", // Use flex-1 and increased height
+              cell: "h-24 text-center text-sm p-1 relative flex-1 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20", // Changed p-0 to p-1
               day: cn(
-                "h-full w-full p-0 font-normal aria-selected:opacity-100 rounded-md",
+                "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md text-white", // Changed p-0 to p-1 and added text-white
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
               ),
               day_range_end: "day-range-end",
