@@ -66,6 +66,7 @@ const initialInquiries: Inquiry[] = [
     school: "University of West",
     fraternity: "Gamma Delta Epsilon",
     mainContact: "Chris Evans",
+    phoneNumber: "N/A", // Updated initial inquiry to include phone number
     addressOfEvent: "123 Party Lane",
     capacity: 500,
     budget: 8000,
@@ -124,7 +125,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       fraternity: newInquiryData.fraternity,
       school: newInquiryData.school,
       mainContactName: newInquiryData.mainContact,
-      phoneNumber: "N/A", // Placeholder, as not available in inquiry form
+      phoneNumber: newInquiryData.phoneNumber, // Use phone number from inquiry
       instagramHandle: "N/A", // Placeholder, as not available in inquiry form
       averageEventSize: initialAverageEventSize,
       numberOfEvents: initialNumberOfEvents,
