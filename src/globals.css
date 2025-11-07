@@ -105,3 +105,8 @@
 .supabase-auth-ui-custom-theme label {
   color: hsl(0 0% 100%) !important; /* Force label text to white */
 }
+
+/* Custom override for Supabase Auth UI input placeholders */
+.supabase-auth-ui-custom-theme input::placeholder {
+  color: hsl(0 0% 100%) !important; /* Force placeholder text to white */
+}
