@@ -42,7 +42,7 @@ const ClientsPage = () => {
           {clients.map((client) => (
             <Card key={client.id} className="mb-4 bg-card text-card-foreground border-border">
               <AccordionItem value={client.id} className="border-none">
-                <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline">
+                <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline [&>svg]:hidden">
                   <CardTitle className="text-lg font-medium text-card-foreground">{client.fraternity} - {client.school}</CardTitle>
                   <Users className="h-5 w-5 text-muted-foreground" />
                 </AccordionTrigger>
