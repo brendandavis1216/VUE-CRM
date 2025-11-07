@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { Client, Inquiry, Event, InquiryTask, EventTask } from "@/types/app";
+import { Client, Inquiry, Event, InquiryTask, EventTask, EventStatus } from "@/types/app";
 import { toast } from "sonner";
 
 interface AppContextType {
@@ -15,6 +15,7 @@ interface AppContextType {
   addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => void;
   updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void;
   updateEvent: (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => void;
+  toggleEventPaidStatus: (eventId: string, isPaid: boolean) => void; // New function
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -54,19 +55,17 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
           currentEvent.eventDate = date;
         }
 
-        // Ensure 'Paid(Full)' task exists for all events
-        if (!currentEvent.tasks.some(task => task.name === 'Paid(Full)')) {
-          const newTasks = [...currentEvent.tasks, { id: `event-task-final-payment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, name: "Paid(Full)", completed: false }];
-          currentEvent.tasks = newTasks;
-          // Recalculate progress after adding a task
-          const completedTasks = currentEvent.tasks.filter(task => task.completed).length;
-          currentEvent.progress = (completedTasks / currentEvent.tasks.length) * 100;
-        }
-
         // Ensure status exists, default to "Pending" if not present
         if (!currentEvent.status) {
           currentEvent.status = "Pending";
         }
+
+        // Filter out any old "Paid(Full)" tasks if they exist from previous versions
+        currentEvent.tasks = currentEvent.tasks.filter((task: EventTask) => task.name !== "Paid(Full)");
+        // Recalculate progress after filtering tasks
+        const completedTasks = currentEvent.tasks.filter(task => task.completed).length;
+        currentEvent.progress = currentEvent.tasks.length > 0 ? (completedTasks / currentEvent.tasks.length) * 100 : 0;
+
 
         return currentEvent; // Return the (potentially modified) shallow copy
       }) as T;
@@ -338,10 +337,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 newEventTasks.push({ id: `event-task-default-${Date.now()}`, name: "Event Logistics", completed: false });
             }
 
-            // Add the "Paid(Full)" task
-            newEventTasks.push({ id: `event-task-final-payment-${Date.now() + 3}`, name: "Paid(Full)", completed: false });
-
-
             // Combine inquiry date and time to create the eventDate
             const [hours, minutes] = inq.inquiryTime.split(':').map(Number);
             const eventDateTime = new Date(inq.inquiryDate);
@@ -417,6 +412,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     );
   };
 
+  const toggleEventPaidStatus = (eventId: string, isPaid: boolean) => {
+    setEvents((prevEvents) =>
+      prevEvents.map((event) => {
+        if (event.id === eventId) {
+          const newStatus: EventStatus = isPaid ? "Completed" : "Confirmed"; // Assuming "Confirmed" is the state before "Completed"
+          toast.success(`Event "${event.eventName}" status updated to "${newStatus}"!`);
+          return { ...event, status: newStatus };
+        }
+        return event;
+      })
+    );
+  };
+
   const updateClient = (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => {
     setClients((prevClients) =>
       prevClients.map((client) => {
@@ -461,6 +469,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addClient,
         updateInquiry,
         updateEvent,
+        toggleEventPaidStatus, // Provide the new function
       }}
     >
       {children}
