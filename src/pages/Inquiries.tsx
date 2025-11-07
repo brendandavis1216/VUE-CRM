@@ -107,7 +107,7 @@ const InquiriesPage = () => {
                       </CardTitle>
                       <div className="flex items-center gap-2 flex-grow justify-end">
                         <span className="text-sm font-medium text-white">{Math.round(inquiry.progress)}%</span>
-                        <Progress value={inquiry.progress} className="w-1/2 h-2" />
+                        <Progress value={inquiry.progress} className="w-24 h-2" />
                         <Button
                           variant="ghost"
                           size="sm"
