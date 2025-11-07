@@ -17,40 +17,58 @@ type CalendarItem = Inquiry | Event;
 // Helper function to determine the color for a calendar item based on new logic
 const getCalendarItemColor = (item: CalendarItem): string => {
   if ('inquiryDate' in item) { // It's an Inquiry
-    return "bg-red-500"; // Inquiries are red
+    return "bg-red-500"; // Red: Inquired
   } else { // It's an Event
-    if (item.progress === 100) {
-      return "bg-green-500"; // Completed progress events are green
+    const finalPaymentTask = item.tasks.find(task => task.name === "Final Payment Received");
+
+    if (finalPaymentTask?.completed) {
+      return "bg-green-500"; // Green: Event Paid
     }
-    switch (item.status) {
-      case "Pending":
-      case "Confirmed":
-        return "bg-yellow-500"; // Pending/Confirmed events (not 100% progress) are yellow
-      case "Completed":
-        return "bg-blue-500"; // Completed status events are blue
-      case "Cancelled":
-        return "bg-red-500"; // Cancelled events are red
-      default:
-        return "bg-gray-500"; // Fallback color
+    if (item.status === "Completed") {
+      return "bg-blue-500"; // Blue: Event Completed
     }
+    if (item.status === "Cancelled") {
+      return "bg-red-500"; // Red: Event Cancelled
+    }
+    // Default for Pending/Confirmed events that are not yet paid
+    return "bg-yellow-500"; // Yellow: Event in Progress
+  }
+};
+
+// Helper function to get the title for the tooltip
+const getCalendarItemTitle = (item: CalendarItem): string => {
+  if ('inquiryDate' in item) {
+    return `Inquiry: ${item.fraternity} - ${item.school}`;
+  } else {
+    const finalPaymentTask = item.tasks.find(task => task.name === "Final Payment Received");
+    if (finalPaymentTask?.completed) {
+      return `Event: ${item.eventName} - ${item.fraternity} (Paid)`;
+    }
+    if (item.status === "Completed") {
+      return `Event: ${item.eventName} - ${item.fraternity} (Completed)`;
+    }
+    if (item.status === "Cancelled") {
+      return `Event: ${item.eventName} - ${item.fraternity} (Cancelled)`;
+    }
+    return `Event: ${item.eventName} - ${item.fraternity} (In Progress)`;
   }
 };
 
 // Priority for day cell background color (higher index = higher priority for display)
 const COLOR_PRIORITY: Record<string, number> = {
   "bg-red-500": 4,    // Inquiries, Cancelled Events
-  "bg-green-500": 3,  // Completed Progress Events
-  "bg-yellow-500": 2, // Pending/Confirmed Events
-  "bg-blue-500": 1,   // Completed Status Events
+  "bg-green-500": 3,  // Event Paid
+  "bg-blue-500": 2,   // Event Completed
+  "bg-yellow-500": 1, // Event in Progress
   "bg-gray-500": 0,   // Fallback
 };
 
 // Legend colors for display
 const LEGEND_COLORS = {
   "Inquiry / Event (Cancelled)": "bg-red-500",
-  "Event (Pending / Confirmed)": "bg-yellow-500",
-  "Event (Progress 100%)": "bg-green-500",
-  "Event (Completed Status)": "bg-blue-500",
+  "Event (In Progress)": "bg-yellow-500",
+  "Event (Paid)": "bg-green-500",
+  "Event (Completed)": "bg-blue-500",
 };
 
 
@@ -80,9 +98,9 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
       <div className="flex-grow flex flex-wrap gap-1 mt-1 justify-center">
         {allDayItems.slice(0, maxDotsToShow).map((item, index) => (
           <div
-            key={item.id + index} // Use index as well for unique key if multiple items have same ID (unlikely but safe)
+            key={item.id + index}
             className={cn("h-2 w-2 rounded-full", getCalendarItemColor(item))}
-            title={'inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school}` : `Event: ${item.eventName} - ${item.fraternity} (${item.status})`}
+            title={getCalendarItemTitle(item)}
           />
         ))}
         {allDayItems.length > maxDotsToShow && (
