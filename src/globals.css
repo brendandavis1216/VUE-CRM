@@ -102,7 +102,8 @@
 }
 
 /* Custom override for Supabase Auth UI labels */
-.supabase-auth-ui-custom-theme label {
+.supabase-auth-ui-custom-theme label,
+.supabase-auth-ui-custom-theme .supabase-ui-label { /* Target both label tag and specific class */
   color: hsl(0 0% 100%) !important; /* Force label text to white */
 }
 
