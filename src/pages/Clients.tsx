@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ClientEditForm } from "@/components/ClientEditForm"; // Corrected import path
+import { ClientEditForm } from "@/components/ClientEditForm";
 import { ClientFilterSort } from "@/components/ClientFilterSort";
 import { ClientAddForm } from "@/components/ClientAddForm";
 import { Client } from "@/types/app";
@@ -59,8 +59,8 @@ const ClientsPage = () => {
     setSortOrder(newSortOrder);
   };
 
-  // Memoize filtered and sorted clients to prevent unnecessary re-renders
-  const filteredAndSortedClients = useMemo(() => {
+  // Memoize filtered and sorted clients, then group them by school
+  const groupedClients = useMemo(() => {
     let currentClients = [...clients];
 
     // Apply filter by school
@@ -70,7 +70,7 @@ const ClientsPage = () => {
       );
     }
 
-    // Apply sort
+    // Apply global sort before grouping
     if (sortBy !== 'none') {
       currentClients.sort((a, b) => {
         let valA: any;
@@ -103,7 +103,20 @@ const ClientsPage = () => {
       });
     }
 
-    return currentClients;
+    // Group clients by school
+    const groups: { [schoolName: string]: Client[] } = {};
+    currentClients.forEach(client => {
+      if (!groups[client.school]) {
+        groups[client.school] = [];
+      }
+      groups[client.school].push(client);
+    });
+
+    // Convert to an array of { schoolName, clients } for easier rendering
+    return Object.entries(groups).map(([schoolName, clients]) => ({
+      schoolName,
+      clients,
+    }));
   }, [clients, filterSchool, sortBy, sortOrder]);
 
   return (
@@ -127,52 +140,59 @@ const ClientsPage = () => {
           <ClientFilterSort onFilterSortChange={handleFilterSortChange} />
         </div>
       </div>
-      {filteredAndSortedClients.length === 0 ? (
+      {groupedClients.length === 0 ? (
         <p className="text-center text-muted-foreground mt-8">No clients match your current filters.</p>
       ) : (
-        <Accordion type="single" collapsible className="w-full">
-          {filteredAndSortedClients.map((client) => (
-            <Card key={client.id} className="mb-4 bg-card text-card-foreground border-border">
-              <AccordionItem value={client.id} className="border-none">
-                <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline [&>svg]:hidden group">
-                  <CardTitle className="text-lg font-medium text-card-foreground">{client.school} - {client.fraternity}</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
-                  <p><strong>Contact:</strong> {client.mainContactName} ({client.phoneNumber})</p>
-                  <p>
-                    <strong>Instagram:</strong>{" "}
-                    {client.instagramHandle && client.instagramHandle !== "N/A" ? (
-                      <a
-                        href={`https://www.instagram.com/${client.instagramHandle.replace(/^@/, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:underline"
-                      >
-                        {client.instagramHandle}
-                      </a>
-                    ) : (
-                      "N/A"
-                    )}
-                  </p>
-                  <p><strong>Avg. Event Size:</strong> ${client.averageEventSize.toLocaleString()}</p>
-                  <p><strong># Events:</strong> {client.numberOfEvents}</p>
-                  <p><strong>Client Score:</strong> {client.clientScore}</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-4 w-full bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                    onClick={() => handleEditClick(client)}
-                  >
-                    <Pencil className="mr-2 h-4 w-4" /> Edit Client
-                  </Button>
-                </AccordionContent>
-              </AccordionItem>
-            </Card>
+        <div className="space-y-8"> {/* Added space between school groups */}
+          {groupedClients.map(({ schoolName, clients: schoolClients }) => (
+            <div key={schoolName} className="space-y-4">
+              <h2 className="text-2xl font-bold text-white mb-2">{schoolName}</h2>
+              <Accordion type="single" collapsible className="w-full">
+                {schoolClients.map((client) => (
+                  <Card key={client.id} className="mb-4 bg-card text-card-foreground border-border">
+                    <AccordionItem value={client.id} className="border-none">
+                      <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline [&>svg]:hidden group">
+                        <CardTitle className="text-lg font-medium text-card-foreground">{client.fraternity}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
+                        <p><strong>Contact:</strong> {client.mainContactName} ({client.phoneNumber})</p>
+                        <p>
+                          <strong>Instagram:</strong>{" "}
+                          {client.instagramHandle && client.instagramHandle !== "N/A" ? (
+                            <a
+                              href={`https://www.instagram.com/${client.instagramHandle.replace(/^@/, '')}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:underline"
+                            >
+                              {client.instagramHandle}
+                            </a>
+                          ) : (
+                            "N/A"
+                          )}
+                        </p>
+                        <p><strong>Avg. Event Size:</strong> ${client.averageEventSize.toLocaleString()}</p>
+                        <p><strong># Events:</strong> {client.numberOfEvents}</p>
+                        <p><strong>Client Score:</strong> {client.clientScore}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-4 w-full bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                          onClick={() => handleEditClick(client)}
+                        >
+                          <Pencil className="mr-2 h-4 w-4" /> Edit Client
+                        </Button>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Card>
+                ))}
+              </Accordion>
+            </div>
           ))}
-        </Accordion>
+        </div>
       )}
 
       {selectedClient && (
