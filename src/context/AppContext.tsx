@@ -12,6 +12,7 @@ interface AppContextType {
   updateInquiryTask: (inquiryId: string, taskId: string) => void;
   updateEventTask: (eventId: string, taskId: string) => void;
   updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
+  addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void; // New function
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -118,6 +119,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 newEventTasks.push({ id: `event-task-default-${Date.now()}`, name: "Event Logistics", completed: false });
             }
 
+            const newEvent: Event = {
+                id: `event-${Date.now()}`,
+                clientId: inq.id, // Link to client
+                fraternity: inq.fraternity,
+                school: inq.school,
+                eventName: `${inq.fraternity} - ${inq.school} Event`, // Default event name
+                eventDate: new Date(), // Placeholder, could be added to form later
+                addressOfEvent: inq.addressOfEvent,
+                capacity: inq.capacity,
+                budget: inq.budget,
+                tasks: newEventTasks,
+                progress: 0,
+            };
 
             const newClient: Client = {
               id: inq.id, // Use inquiry ID as client ID for simplicity
@@ -172,6 +186,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     toast.success("Client updated successfully!");
   };
 
+  const addClient = (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => {
+    const newClient: Client = {
+      ...newClientData,
+      id: `client-${Date.now()}`,
+      numberOfEvents: 0, // New clients start with 0 events
+      clientScore: 50, // Default client score
+    };
+    setClients((prev) => [...prev, newClient]);
+    toast.success("New client added successfully!");
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -182,6 +207,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateInquiryTask,
         updateEventTask,
         updateClient,
+        addClient, // Provide the new function
       }}
     >
       {children}

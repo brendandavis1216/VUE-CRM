@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Pencil, ChevronDown } from "lucide-react";
+import { Pencil, ChevronDown, PlusCircle } from "lucide-react"; // Added PlusCircle import
 import { useAppContext } from "@/context/AppContext";
 import {
   Accordion,
@@ -11,17 +11,19 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"; // Added DialogTrigger
 import { ClientEditForm } from "@/components/ClientEditForm";
-import { ClientFilterSort } from "@/components/ClientFilterSort"; // Import the new component
-import { Client } from "@/types/app"; // Import Client type
+import { ClientFilterSort } from "@/components/ClientFilterSort";
+import { ClientAddForm } from "@/components/ClientAddForm"; // Import the new component
+import { Client } from "@/types/app";
 
 type SortBy = 'none' | 'school' | 'averageEventSize' | 'numberOfEvents' | 'clientScore';
 type SortOrder = 'asc' | 'desc';
 
 const ClientsPage = () => {
-  const { clients, updateClient } = useAppContext();
+  const { clients, updateClient, addClient } = useAppContext(); // Destructure addClient
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false); // State for add client dialog
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // State for filtering and sorting
@@ -40,6 +42,11 @@ const ClientsPage = () => {
     }
     setIsEditDialogOpen(false);
     setSelectedClient(null);
+  };
+
+  const handleAddClientSubmit = (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => {
+    addClient(newClientData);
+    setIsAddDialogOpen(false);
   };
 
   const handleFilterSortChange = (
@@ -103,7 +110,22 @@ const ClientsPage = () => {
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold text-white">Clients</h1>
-        <ClientFilterSort onFilterSortChange={handleFilterSortChange} />
+        <div className="flex gap-2">
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Client
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+              <DialogHeader>
+                <DialogTitle className="text-white">Add New Client</DialogTitle>
+              </DialogHeader>
+              <ClientAddForm onSubmit={handleAddClientSubmit} onClose={() => setIsAddDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+          <ClientFilterSort onFilterSortChange={handleFilterSortChange} />
+        </div>
       </div>
       {filteredAndSortedClients.length === 0 ? (
         <p className="text-center text-muted-foreground mt-8">No clients match your current filters.</p>
