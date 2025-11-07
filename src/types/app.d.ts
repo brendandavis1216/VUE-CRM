@@ -50,6 +50,7 @@ interface Event {
   addressOfEvent: string;
   capacity: number;
   budget: number;
+  stageBuild: "None" | "Base Stage" | "Totem Stage" | "SL 100" | "SL 75" | "SL260" | "Custom Rig"; // Added stageBuild
   tasks: EventTask[];
   progress: number; // 0-100
 }

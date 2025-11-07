@@ -69,6 +69,7 @@ const EventsPage = () => {
                 <p><strong>Address:</strong> {event.addressOfEvent}</p>
                 <p><strong>Capacity:</strong> {event.capacity}</p>
                 <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
+                {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>} {/* Display stageBuild here */}
 
                 <div className="space-y-2 mt-4">
                   <h3 className="font-semibold text-white">Progress: {Math.round(event.progress)}%</h3>

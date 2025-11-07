@@ -183,11 +183,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             
             const newEventTasks: EventTask[] = [];
             
-            // Stage Build: If a specific stage build is selected (not "None"), add a task for it.
-            if (inq.stageBuild !== "None") {
-                newEventTasks.push({ id: `event-task-stage-${Date.now()}`, name: `${inq.stageBuild} Build`, completed: false });
-            }
-
             // Power: If power is NOT provided by the client (i.e., not "Provided" and not "None"), add a task for sourcing it.
             if (inq.power !== "None" && inq.power !== "Provided") {
                 newEventTasks.push({ id: `event-task-power-${Date.now()}`, name: `Source ${inq.power}`, completed: false });
@@ -218,6 +213,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 addressOfEvent: inq.addressOfEvent,
                 capacity: inq.capacity,
                 budget: inq.budget,
+                stageBuild: inq.stageBuild, // Transfer stageBuild directly to event
                 tasks: newEventTasks,
                 progress: 0,
             };
