@@ -233,7 +233,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel className="block font-semibold text-black dark:text-white">Gates</FormLabel>
+                  <FormLabel className="block font-semibold text-black dark:text-white">Gates Provided</FormLabel>
                 </div>
               </FormItem>
             )}
@@ -250,7 +250,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel className="block font-semibold text-black dark:text-white">Security</FormLabel>
+                  <FormLabel className="block font-semibold text-black dark:text-white">Security Provided</FormLabel>
                 </div>
               </FormItem>
             )}
