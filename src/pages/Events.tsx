@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
-import { Search, Pencil } from "lucide-react"; // Import Pencil icon
+import { Search, Pencil } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -16,15 +16,16 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { EventEditForm } from "@/components/EventEditForm"; // Import EventEditForm
-import { Event } from "@/types/app"; // Import Event type
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EventEditForm } from "@/components/EventEditForm";
+import { Event } from "@/types/app";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Import Tabs components
 
 const EventsPage = () => {
   const { events, updateEventTask, updateEvent } = useAppContext();
   const [searchTerm, setSearchTerm] = useState("");
-  const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false); // State for edit dialog
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null); // State for selected event to edit
+  const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const handleEditClick = (event: Event) => {
     setSelectedEvent(event);
@@ -37,8 +38,9 @@ const EventsPage = () => {
     setSelectedEvent(null);
   };
 
-  const filteredAndSortedEvents = useMemo(() => {
+  const { upcomingEvents, pastEvents } = useMemo(() => {
     let currentEvents = [...events];
+    const now = new Date();
 
     // Filter events based on search term
     if (searchTerm) {
@@ -52,11 +54,80 @@ const EventsPage = () => {
       );
     }
 
-    // Sort events by eventDate in ascending order (soonest first)
+    // Sort events by eventDate
     currentEvents.sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime());
 
-    return currentEvents;
+    const upcoming = currentEvents.filter(event => event.eventDate >= now);
+    const past = currentEvents.filter(event => event.eventDate < now);
+
+    return { upcomingEvents: upcoming, pastEvents: past };
   }, [events, searchTerm]);
+
+  const renderEventList = (eventList: Event[], noEventsMessage: string) => {
+    if (eventList.length === 0) {
+      return <p className="text-center text-muted-foreground mt-8">{noEventsMessage}</p>;
+    }
+    return (
+      <div className="grid grid-cols-1 gap-4">
+        <Accordion type="single" collapsible className="w-full">
+          {eventList.map((event) => (
+            <Card key={event.id} className="mb-4 bg-card text-card-foreground border-border">
+              <AccordionItem value={event.id} className="border-none">
+                <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
+                  <CardTitle className="text-lg font-medium flex-shrink-0">{event.eventName}</CardTitle>
+                  <div className="flex items-center gap-2 flex-grow justify-end">
+                    <span className="text-sm font-medium text-white">{Math.round(event.progress)}%</span>
+                    <Progress value={event.progress} className="w-24 h-2" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent accordion from toggling
+                        handleEditClick(event);
+                      }}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Edit Event</span>
+                    </Button>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
+                  <CardContent className="text-sm space-y-3 p-0">
+                    {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
+                    <p><strong>Date:</strong> {event.eventDate.toLocaleDateString()}</p>
+                    <p><strong>Address:</strong> {event.addressOfEvent}</p>
+                    <p><strong>Capacity:</strong> {event.capacity}</p>
+                    <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
+
+                    <div className="space-y-2 mt-4">
+                      <h3 className="font-semibold text-white">Tasks:</h3>
+                      <div className="grid grid-cols-1 gap-2 mt-2">
+                        {event.tasks.map((task) => (
+                          <div key={task.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`event-task-${event.id}-${task.id}`}
+                              checked={task.completed}
+                              onCheckedChange={() => updateEventTask(event.id, task.id)}
+                            />
+                            <Label
+                              htmlFor={`event-task-${event.id}-${task.id}`}
+                              className={cn(task.completed ? "line-through text-muted-foreground" : "text-white")}
+                            >
+                              {task.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </AccordionContent>
+                </AccordionItem>
+              </Card>
+            ))}
+          </Accordion>
+        </div>
+    );
+  };
 
   return (
     <div className="p-4 space-y-4">
@@ -73,71 +144,18 @@ const EventsPage = () => {
         />
       </div>
 
-      {filteredAndSortedEvents.length === 0 ? (
-        <p className="text-center text-muted-foreground mt-8">
-          {searchTerm ? "No events match your search." : "No events yet. Completed inquiries will appear here!"}
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          <Accordion type="single" collapsible className="w-full">
-            {filteredAndSortedEvents.map((event) => (
-              <Card key={event.id} className="mb-4 bg-card text-card-foreground border-border">
-                <AccordionItem value={event.id} className="border-none">
-                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
-                    <CardTitle className="text-lg font-medium flex-shrink-0">{event.eventName}</CardTitle>
-                    <div className="flex items-center gap-2 flex-grow justify-end">
-                      <span className="text-sm font-medium text-white">{Math.round(event.progress)}%</span>
-                      <Progress value={event.progress} className="w-24 h-2" />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent accordion from toggling
-                          handleEditClick(event);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                        <span className="sr-only">Edit Event</span>
-                      </Button>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
-                    <CardContent className="text-sm space-y-3 p-0">
-                      {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
-                      <p><strong>Date:</strong> {event.eventDate.toLocaleDateString()}</p>
-                      <p><strong>Address:</strong> {event.addressOfEvent}</p>
-                      <p><strong>Capacity:</strong> {event.capacity}</p>
-                      <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
-
-                      <div className="space-y-2 mt-4">
-                        <h3 className="font-semibold text-white">Tasks:</h3>
-                        <div className="grid grid-cols-1 gap-2 mt-2">
-                          {event.tasks.map((task) => (
-                            <div key={task.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`event-task-${event.id}-${task.id}`}
-                                checked={task.completed}
-                                onCheckedChange={() => updateEventTask(event.id, task.id)}
-                              />
-                              <Label
-                                htmlFor={`event-task-${event.id}-${task.id}`}
-                                className={cn(task.completed ? "line-through text-muted-foreground" : "text-white")}
-                              >
-                                {task.name}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </AccordionContent>
-                </AccordionItem>
-              </Card>
-            ))}
-          </Accordion>
-        </div>
-      )}
+      <Tabs defaultValue="upcoming" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 bg-secondary text-secondary-foreground">
+          <TabsTrigger value="upcoming">Upcoming Events</TabsTrigger>
+          <TabsTrigger value="past">Past Events</TabsTrigger>
+        </TabsList>
+        <TabsContent value="upcoming">
+          {renderEventList(upcomingEvents, searchTerm ? "No upcoming events match your search." : "No upcoming events yet. Completed inquiries will appear here!")}
+        </TabsContent>
+        <TabsContent value="past">
+          {renderEventList(pastEvents, searchTerm ? "No past events match your search." : "No past events to display.")}
+        </TabsContent>
+      </Tabs>
 
       {selectedEvent && (
         <Dialog open={isEditEventDialogOpen} onOpenChange={setIsEditEventDialogOpen}>
