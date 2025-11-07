@@ -91,7 +91,7 @@ const InquiriesPage = () => {
                         {inquiry.fraternity} - {inquiry.school}
                       </CardTitle>
                       <div className="flex items-center gap-2 flex-grow justify-end"> {/* Added flex items-center and gap-2 */}
-                        <span className="text-sm font-medium text-muted-foreground">{Math.round(inquiry.progress)}%</span> {/* Percentage text */}
+                        <span className="text-sm font-medium text-white">{Math.round(inquiry.progress)}%</span> {/* Percentage text */}
                         <Progress value={inquiry.progress} className="w-1/2 h-2" />
                       </div>
                     </div>
