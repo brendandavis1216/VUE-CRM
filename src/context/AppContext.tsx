@@ -329,7 +329,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 clientId: inq.clientId, // Link to client using the stored clientId
                 fraternity: inq.fraternity,
                 school: inq.school,
-                eventName: `${inq.fraternity} - ${inq.school} Event`, // Default event name
+                eventName: `${inq.fraternity} - ${inq.school}`, // Default event name without "Event"
                 eventDate: eventDateTime, // Use the combined date and time
                 addressOfEvent: inq.addressOfEvent,
                 capacity: inq.capacity,
