@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { Client, Inquiry, Event, InquiryTask, EventTask, EventStatus } from "@/types/app";
+import { Client, Inquiry, Event, InquiryTask, EventTask } from "@/types/app";
 import { toast } from "sonner";
 
 interface AppContextType {
@@ -15,7 +15,6 @@ interface AppContextType {
   addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => void;
   updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void;
   updateEvent: (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => void;
-  updateEventStatus: (eventId: string, newStatus: EventStatus) => void; // New function
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -403,15 +402,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     toast.success("Event updated successfully!");
   };
 
-  const updateEventStatus = (eventId: string, newStatus: EventStatus) => {
-    setEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event.id === eventId ? { ...event, status: newStatus } : event
-      )
-    );
-    toast.success(`Event status updated to ${newStatus}!`);
-  };
-
   const updateEventTask = (eventId: string, taskId: string) => {
     setEvents((prevEvents) =>
       prevEvents.map((event) => {
@@ -471,7 +461,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addClient,
         updateInquiry,
         updateEvent,
-        updateEventStatus,
       }}
     >
       {children}

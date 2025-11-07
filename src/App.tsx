@@ -5,9 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MobileLayout } from "./components/MobileLayout";
 import ClientsPage from "./pages/Clients";
-import InquiriesPage from "./pages/Inquiries"; // Corrected import path
+import InquiriesPage from "./pages/Inquiries";
 import EventsPage from "./pages/Events";
-import CalendarPage from "./pages/Calendar";
 import DashboardPage from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import { AppProvider } from "./context/AppContext";
@@ -27,7 +26,6 @@ const App = () => (
               <Route path="/clients" element={<ClientsPage />} />
               <Route path="/inquiries" element={<InquiriesPage />} />
               <Route path="/events" element={<EventsPage />} />
-              <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="*" element={<NotFound />} />
             </Route>
