@@ -9,47 +9,85 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Event, EventStatus } from "@/types/app";
+import { Event, Inquiry, EventStatus } from "@/types/app";
 
-// Define color mapping for event statuses
-const STATUS_COLORS: Record<EventStatus, string> = {
-  Pending: "bg-yellow-500",
-  Confirmed: "bg-green-500",
-  Completed: "bg-blue-500",
-  Cancelled: "bg-red-500",
+// Define a union type for items that can appear on the calendar
+type CalendarItem = Inquiry | Event;
+
+// Helper function to determine the color for a calendar item based on new logic
+const getCalendarItemColor = (item: CalendarItem): string => {
+  if ('inquiryDate' in item) { // It's an Inquiry
+    return "bg-red-500"; // Inquiries are red
+  } else { // It's an Event
+    if (item.progress === 100) {
+      return "bg-green-500"; // Completed progress events are green
+    }
+    switch (item.status) {
+      case "Pending":
+      case "Confirmed":
+        return "bg-yellow-500"; // Pending/Confirmed events (not 100% progress) are yellow
+      case "Completed":
+        return "bg-blue-500"; // Completed status events are blue
+      case "Cancelled":
+        return "bg-red-500"; // Cancelled events are red
+      default:
+        return "bg-gray-500"; // Fallback color
+    }
+  }
 };
+
+// Priority for day cell background color (higher index = higher priority for display)
+const COLOR_PRIORITY: Record<string, number> = {
+  "bg-red-500": 4,    // Inquiries, Cancelled Events
+  "bg-green-500": 3,  // Completed Progress Events
+  "bg-yellow-500": 2, // Pending/Confirmed Events
+  "bg-blue-500": 1,   // Completed Status Events
+  "bg-gray-500": 0,   // Fallback
+};
+
+// Legend colors for display
+const LEGEND_COLORS = {
+  "Inquiry / Event (Cancelled)": "bg-red-500",
+  "Event (Pending / Confirmed)": "bg-yellow-500",
+  "Event (Progress 100%)": "bg-green-500",
+  "Event (Completed Status)": "bg-blue-500",
+};
+
 
 // Custom DayContent component to render event titles and client names
 const EventDayContent: React.FC<DayContentProps> = (props) => {
-  const { date, activeModifiers } = props; // activeModifiers tells us if it's an outside day
-  const { events } = useAppContext();
+  const { date, activeModifiers } = props;
+  const { events, inquiries } = useAppContext();
 
-  // Determine if it's an outside day to potentially dim the number
   const isOutside = activeModifiers?.outside;
 
-  const dayEvents = events.filter((event) =>
-    isSameDay(event.eventDate, date)
-  ).sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime()); // Sort by time
+  const allDayItems: CalendarItem[] = [
+    ...inquiries.filter(inq => isSameDay(inq.inquiryDate, date)),
+    ...events.filter(event => isSameDay(event.eventDate, date)),
+  ].sort((a, b) => {
+    const dateA = 'inquiryDate' in a ? a.inquiryDate : a.eventDate;
+    const dateB = 'inquiryDate' in b ? b.inquiryDate : b.eventDate;
+    return dateA.getTime() - dateB.getTime();
+  });
 
-  const maxDotsToShow = 3; // Limit dots shown directly in cell
+  const maxDotsToShow = 3;
 
   return (
     <div className="flex flex-col h-full w-full p-1 overflow-hidden">
-      {/* Render the day number explicitly using format(date, 'd') */}
       <div className={cn("text-xs font-medium", isOutside ? "text-muted-foreground opacity-50" : "text-white")}>
         {format(date, 'd')}
       </div>
-      <div className="flex-grow flex flex-wrap gap-1 mt-1 justify-center"> {/* Use flex-wrap for dots */}
-        {dayEvents.slice(0, maxDotsToShow).map((event) => (
+      <div className="flex-grow flex flex-wrap gap-1 mt-1 justify-center">
+        {allDayItems.slice(0, maxDotsToShow).map((item, index) => (
           <div
-            key={event.id}
-            className={cn("h-2 w-2 rounded-full", STATUS_COLORS[event.status])} // Colored dot
-            title={`${event.eventName} - ${event.fraternity} (${event.status})`} // Add tooltip for accessibility
+            key={item.id + index} // Use index as well for unique key if multiple items have same ID (unlikely but safe)
+            className={cn("h-2 w-2 rounded-full", getCalendarItemColor(item))}
+            title={'inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school}` : `Event: ${item.eventName} - ${item.fraternity} (${item.status})`}
           />
         ))}
-        {dayEvents.length > maxDotsToShow && (
+        {allDayItems.length > maxDotsToShow && (
           <div className="text-xs text-muted-foreground mt-0.5">
-            +{dayEvents.length - maxDotsToShow}
+            +{allDayItems.length - maxDotsToShow}
           </div>
         )}
       </div>
@@ -58,31 +96,37 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
 };
 
 const CalendarPage = () => {
-  const { events } = useAppContext();
+  const { events, inquiries } = useAppContext();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  // Calculate modifiers for DayPicker to color cells based on event status
+  // Combine all calendar items for processing
+  const allCalendarItems: CalendarItem[] = useMemo(() => {
+    return [
+      ...inquiries.map(inq => ({ ...inq, date: inq.inquiryDate })),
+      ...events.map(event => ({ ...event, date: event.eventDate })),
+    ];
+  }, [events, inquiries]);
+
+  // Calculate modifiers for DayPicker to color cells based on item status/type
   const eventModifiers = useMemo(() => {
     const modifiers: { [key: string]: Date[] } = {};
-    const dayStatusMap = new Map<string, EventStatus>(); // To store highest priority status per day
+    const dayColorMap = new Map<string, { color: string, priority: number }>();
 
-    // Define status priority (higher index means higher priority for display color)
-    const statusPriority: EventStatus[] = ["Cancelled", "Completed", "Pending", "Confirmed"];
+    allCalendarItems.forEach(item => {
+      const dayKey = format('inquiryDate' in item ? item.inquiryDate : item.eventDate, 'yyyy-MM-dd');
+      const itemColor = getCalendarItemColor(item);
+      const itemPriority = COLOR_PRIORITY[itemColor] || 0;
 
-    events.forEach(event => {
-      const dayKey = format(event.eventDate, 'yyyy-MM-dd');
-      const currentStatus = event.status;
-      const existingStatus = dayStatusMap.get(dayKey);
+      const existingDayInfo = dayColorMap.get(dayKey);
 
-      if (!existingStatus || statusPriority.indexOf(currentStatus) > statusPriority.indexOf(existingStatus)) {
-        dayStatusMap.set(dayKey, currentStatus);
+      if (!existingDayInfo || itemPriority > existingDayInfo.priority) {
+        dayColorMap.set(dayKey, { color: itemColor, priority: itemPriority });
       }
     });
 
-    // Populate modifiers based on the highest priority status for each day
-    dayStatusMap.forEach((status, dayKey) => {
-      const date = new Date(dayKey); // Reconstruct date from key
-      const modifierName = `event${status}`; // e.g., 'eventConfirmed'
+    dayColorMap.forEach((info, dayKey) => {
+      const date = new Date(dayKey);
+      const modifierName = info.color.replace('bg-', 'event-'); // e.g., 'event-red-500'
       if (!modifiers[modifierName]) {
         modifiers[modifierName] = [];
       }
@@ -90,15 +134,19 @@ const CalendarPage = () => {
     });
 
     return modifiers;
-  }, [events]);
+  }, [allCalendarItems]);
 
   const eventsForSelectedDate = useMemo(() => {
     return selectedDate
-      ? events.filter(event =>
-          isSameDay(event.eventDate, selectedDate)
-        ).sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime()) // Sort events by time
+      ? allCalendarItems.filter(item =>
+          isSameDay('inquiryDate' in item ? item.inquiryDate : item.eventDate, selectedDate)
+        ).sort((a, b) => {
+          const dateA = 'inquiryDate' in a ? a.inquiryDate : a.eventDate;
+          const dateB = 'inquiryDate' in b ? b.inquiryDate : b.eventDate;
+          return dateA.getTime() - dateB.getTime();
+        })
       : [];
-  }, [events, selectedDate]);
+  }, [allCalendarItems, selectedDate]);
 
   return (
     <div className="p-4 space-y-4">
@@ -112,13 +160,12 @@ const CalendarPage = () => {
             onSelect={setSelectedDate}
             showOutsideDays
             className="p-3 w-full"
-            modifiers={eventModifiers} // Apply modifiers for coloring
-            modifierClassNames={{ // Map modifiers to Tailwind classes for background colors
-              eventPending: STATUS_COLORS.Pending,
-              eventConfirmed: STATUS_COLORS.Confirmed,
-              eventCompleted: STATUS_COLORS.Completed,
-              eventCancelled: STATUS_COLORS.Cancelled,
-            }}
+            modifiers={eventModifiers}
+            modifierClassNames={Object.fromEntries(
+              Object.values(LEGEND_COLORS).map(colorClass => [
+                colorClass.replace('bg-', 'event-'), colorClass
+              ])
+            )}
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
               month: "space-y-4 flex-1",
@@ -134,9 +181,7 @@ const CalendarPage = () => {
               head_row: "flex",
               head_cell: "rounded-md font-normal text-[0.8rem] text-white flex-1",
               row: "flex w-full mt-2",
-              // The 'cell' is the container for each day, ensuring it has enough height and is relative
               cell: "h-24 text-center text-sm p-1 relative flex-1 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-              // The 'day' is the actual clickable button for the day, also needs relative for children positioning
               day: cn(
                 "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md relative",
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
@@ -154,7 +199,7 @@ const CalendarPage = () => {
             components={{
               IconLeft: ({ ...props }) => <CalendarIcon className="h-4 w-4" />,
               IconRight: ({ ...props }) => <CalendarIcon className="h-4 w-4" />,
-              Day: EventDayContent, // Use custom DayContent component
+              Day: EventDayContent,
             }}
           />
         </CardContent>
@@ -164,37 +209,53 @@ const CalendarPage = () => {
       <Card className="bg-card text-card-foreground border-border p-4 mt-4">
         <CardTitle className="text-lg font-bold mb-2 text-white">Status Legend</CardTitle>
         <div className="flex flex-wrap gap-4">
-          {Object.entries(STATUS_COLORS).map(([status, colorClass]) => (
-            <div key={status} className="flex items-center gap-2">
+          {Object.entries(LEGEND_COLORS).map(([statusText, colorClass]) => (
+            <div key={statusText} className="flex items-center gap-2">
               <div className={cn("h-3 w-3 rounded-full", colorClass)}></div>
-              <span className="text-sm text-white">{status}</span>
+              <span className="text-sm text-white">{statusText}</span>
             </div>
           ))}
         </div>
       </Card>
 
       <h2 className="text-2xl font-bold text-white mt-6 mb-3 text-center">
-        {selectedDate ? `Events on ${format(selectedDate, "PPP")}` : "Select a date to see events"}
+        {selectedDate ? `Items on ${format(selectedDate, "PPP")}` : "Select a date to see items"}
       </h2>
       {eventsForSelectedDate.length === 0 ? (
-        <p className="text-center text-muted-foreground">No events scheduled for this date.</p>
+        <p className="text-center text-muted-foreground">No items scheduled for this date.</p>
       ) : (
         <div className="grid grid-cols-1 gap-3">
-          {eventsForSelectedDate.map((event) => (
-            <Card key={event.id} className="bg-card text-card-foreground border-border">
+          {eventsForSelectedDate.map((item) => (
+            <Card key={item.id} className="bg-card text-card-foreground border-border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-medium">{event.eventName}</CardTitle>
-                <Badge className={cn("text-xs", STATUS_COLORS[event.status])}>
-                  {event.status}
+                <CardTitle className="text-lg font-medium">
+                  {'inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school}` : `Event: ${item.eventName}`}
+                </CardTitle>
+                <Badge className={cn("text-xs", getCalendarItemColor(item))}>
+                  {'inquiryDate' in item ? "Inquiry" : item.status}
                 </Badge>
               </CardHeader>
               <CardContent className="text-sm space-y-1">
-                <p><strong>Fraternity:</strong> {event.fraternity}</p>
-                <p><strong>School:</strong> {event.school}</p>
-                <p><strong>Address:</strong> {event.addressOfEvent}</p>
-                <p><strong>Time:</strong> {format(event.eventDate, "p")}</p>
-                <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
-                {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
+                {'inquiryDate' in item ? (
+                  <>
+                    <p><strong>Fraternity:</strong> {item.fraternity}</p>
+                    <p><strong>School:</strong> {item.school}</p>
+                    <p><strong>Contact:</strong> {item.mainContact} ({item.phoneNumber})</p>
+                    <p><strong>Address:</strong> {item.addressOfEvent}</p>
+                    <p><strong>Time:</strong> {format(item.inquiryDate, "p")}</p>
+                    <p><strong>Budget:</strong> ${item.budget.toLocaleString()}</p>
+                    {item.stageBuild !== "None" && <p><strong>Stage Build:</strong> {item.stageBuild}</p>}
+                  </>
+                ) : (
+                  <>
+                    <p><strong>Fraternity:</strong> {item.fraternity}</p>
+                    <p><strong>School:</strong> {item.school}</p>
+                    <p><strong>Address:</strong> {item.addressOfEvent}</p>
+                    <p><strong>Time:</strong> {format(item.eventDate, "p")}</p>
+                    <p><strong>Budget:</strong> ${item.budget.toLocaleString()}</p>
+                    {item.stageBuild !== "None" && <p><strong>Stage Build:</strong> {item.stageBuild}</p>}
+                  </>
+                )}
               </CardContent>
             </Card>
           ))}
