@@ -41,7 +41,7 @@ interface Inquiry {
 
 interface EventTask {
   id: string;
-  name: string; // e.g., "Power Setup", "Gate Installation", "Security Briefing", "Stage Build"
+  name: string | 'Final Payment Received'; // Added 'Final Payment Received'
   completed: boolean;
 }
 

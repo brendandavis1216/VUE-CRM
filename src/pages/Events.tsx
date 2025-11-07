@@ -70,59 +70,80 @@ const EventsPage = () => {
     return (
       <div className="grid grid-cols-1 gap-4">
         <Accordion type="single" collapsible className="w-full">
-          {eventList.map((event) => (
-            <Card key={event.id} className="mb-4 bg-card text-card-foreground border-border">
-              <AccordionItem value={event.id} className="border-none">
-                <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
-                  <CardTitle className="text-lg font-medium flex-shrink-0">{event.eventName}</CardTitle>
-                  <div className="flex items-center gap-2 flex-grow justify-end">
-                    <span className="text-sm font-medium text-white">{Math.round(event.progress)}%</span>
-                    <Progress value={event.progress} className="w-24 h-2" />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent accordion from toggling
-                        handleEditClick(event);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                      <span className="sr-only">Edit Event</span>
-                    </Button>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="p-4 pt-0 text-sm text-card-foreground space-y-3">
-                  {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
-                  <p><strong>Date:</strong> {event.eventDate.toLocaleDateString()}</p>
-                  <p><strong>Address:</strong> {event.addressOfEvent}</p>
-                  <p><strong>Capacity:</strong> {event.capacity}</p>
-                  <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
-
-                  <div className="space-y-2 mt-4">
-                    <h3 className="font-semibold text-white">Tasks:</h3>
-                    <div className="grid grid-cols-1 gap-2 mt-2">
-                      {event.tasks.map((task) => (
-                        <div key={task.id} className="flex items-center space-x-2">
+          {eventList.map((event) => {
+            const finalPaymentTask = event.tasks.find(task => task.name === "Final Payment Received");
+            return (
+              <Card key={event.id} className="mb-4 bg-card text-card-foreground border-border">
+                <AccordionItem value={event.id} className="border-none">
+                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
+                    <CardTitle className="text-lg font-medium flex-shrink-0">{event.eventName}</CardTitle>
+                    <div className="flex items-center gap-2 flex-grow justify-end">
+                      {finalPaymentTask && (
+                        <div className="flex items-center space-x-2 mr-2" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
-                            id={`event-task-${event.id}-${task.id}`}
-                            checked={task.completed}
-                            onCheckedChange={() => updateEventTask(event.id, task.id)}
+                            id={`final-payment-${event.id}`}
+                            checked={finalPaymentTask.completed}
+                            onCheckedChange={() => updateEventTask(event.id, finalPaymentTask.id)}
                           />
                           <Label
-                            htmlFor={`event-task-${event.id}-${task.id}`}
-                            className={cn(task.completed ? "line-through text-muted-foreground" : "text-white")}
+                            htmlFor={`final-payment-${event.id}`}
+                            className={cn(
+                              "text-sm font-medium",
+                              finalPaymentTask.completed ? "line-through text-muted-foreground" : "text-white"
+                            )}
                           >
-                            {task.name}
+                            Final Payment
                           </Label>
                         </div>
-                      ))}
+                      )}
+                      <span className="text-sm font-medium text-white">{Math.round(event.progress)}%</span>
+                      <Progress value={event.progress} className="w-24 h-2" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion from toggling
+                          handleEditClick(event);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Edit Event</span>
+                      </Button>
                     </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Card>
-          ))}
+                  </AccordionTrigger>
+                  <AccordionContent className="p-4 pt-0 text-sm text-card-foreground space-y-3">
+                    {event.stageBuild !== "None" && <p><strong>Stage Build:</strong> {event.stageBuild}</p>}
+                    <p><strong>Date:</strong> {event.eventDate.toLocaleDateString()}</p>
+                    <p><strong>Address:</strong> {event.addressOfEvent}</p>
+                    <p><strong>Capacity:</strong> {event.capacity}</p>
+                    <p><strong>Budget:</strong> ${event.budget.toLocaleString()}</p>
+
+                    <div className="space-y-2 mt-4">
+                      <h3 className="font-semibold text-white">Tasks:</h3>
+                      <div className="grid grid-cols-1 gap-2 mt-2">
+                        {event.tasks.map((task) => (
+                          <div key={task.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`event-task-${event.id}-${task.id}`}
+                              checked={task.completed}
+                              onCheckedChange={() => updateEventTask(event.id, task.id)}
+                            />
+                            <Label
+                              htmlFor={`event-task-${event.id}-${task.id}`}
+                              className={cn(task.completed ? "line-through text-muted-foreground" : "text-white")}
+                            >
+                              {task.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Card>
+            );
+          })}
         </Accordion>
       </div>
     );

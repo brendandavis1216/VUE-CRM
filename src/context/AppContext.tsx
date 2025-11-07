@@ -319,6 +319,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 newEventTasks.push({ id: `event-task-default-${Date.now()}`, name: "Event Logistics", completed: false });
             }
 
+            // Add the "Final Payment Received" task
+            newEventTasks.push({ id: `event-task-final-payment-${Date.now() + 3}`, name: "Final Payment Received", completed: false });
+
+
             // Combine inquiry date and time to create the eventDate
             const [hours, minutes] = inq.inquiryTime.split(':').map(Number);
             const eventDateTime = new Date(inq.inquiryDate);
