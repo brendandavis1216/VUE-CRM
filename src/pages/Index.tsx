@@ -1,17 +1,14 @@
-// Update this page (the content is just a fallback if you fail to update the page)
-
-import { MadeWithDyad } from "@/components/made-with-dyad";
+// This page is now redirected to /clients in App.tsx
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-background">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">
-          Start building your amazing project here!
+        <h1 className="text-4xl font-bold mb-4 text-foreground">Redirecting...</h1>
+        <p className="text-xl text-muted-foreground">
+          You should be redirected to the Clients page shortly.
         </p>
       </div>
-      <MadeWithDyad />
     </div>
   );
 };
