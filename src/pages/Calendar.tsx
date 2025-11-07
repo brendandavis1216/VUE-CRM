@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Event, Inquiry } from "@/types/app";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 // Define a union type for items that can appear on the calendar
 type CalendarItem = Inquiry | Event;
@@ -66,6 +67,7 @@ const LEGEND_COLORS = {
 
 const CalendarPage = () => {
   const { events, inquiries } = useAppContext();
+  const navigate = useNavigate(); // Initialize useNavigate
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(
     startOfWeek(new Date(), { weekStartsOn: 1 }) // Start week on Monday
   );
@@ -117,6 +119,14 @@ const CalendarPage = () => {
     const currentMonth = getMonth(currentWeekStart);
     const newDate = startOfMonth(setYear(new Date(0, currentMonth, 1), newYear));
     setCurrentWeekStart(startOfWeek(newDate, { weekStartsOn: 1 }));
+  };
+
+  const handleItemClick = (item: CalendarItem) => {
+    if ('inquiryDate' in item) {
+      navigate(`/inquiries?inquiryId=${item.id}`);
+    } else {
+      navigate(`/events?eventId=${item.id}`);
+    }
   };
 
   const currentMonth = getMonth(currentWeekStart);
@@ -200,7 +210,11 @@ const CalendarPage = () => {
               ) : (
                 <div className="grid grid-cols-1 gap-3">
                   {itemsOnDay.map((item) => (
-                    <Card key={item.id} className="bg-card text-card-foreground border-border">
+                    <Card
+                      key={item.id}
+                      className="bg-card text-card-foreground border-border cursor-pointer hover:bg-card/90 transition-colors"
+                      onClick={() => handleItemClick(item)} // Add onClick handler
+                    >
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-lg font-medium">
                           {'inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school}` : `Event: ${item.eventName}`}
@@ -209,7 +223,6 @@ const CalendarPage = () => {
                           {'inquiryDate' in item ? "Inquiry" : item.status}
                         </Badge>
                       </CardHeader>
-                      {/* Removed CardContent to simplify display */}
                     </Card>
                   ))}
                 </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PlusCircle, Search, Pencil } from "lucide-react"; // Import Pencil icon
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/accordion";
 import { Inquiry } from "@/types/app"; // Import Inquiry type
 import { format } from "date-fns";
+import { useSearchParams } from "react-router-dom"; // Import useSearchParams
 
 const InquiriesPage = () => {
   const { inquiries, addInquiry, updateInquiryTask, updateInquiry } = useAppContext();
@@ -29,6 +30,22 @@ const InquiriesPage = () => {
   const [isEditInquiryDialogOpen, setIsEditInquiryDialogOpen] = useState(false); // State for edit dialog
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null); // State for selected inquiry to edit
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchParams] = useSearchParams(); // Initialize useSearchParams
+  const [activeAccordionItem, setActiveAccordionItem] = useState<string | undefined>(undefined); // State to control accordion
+
+  useEffect(() => {
+    const inquiryIdFromUrl = searchParams.get('inquiryId');
+    if (inquiryIdFromUrl) {
+      setActiveAccordionItem(inquiryIdFromUrl);
+      // Optionally, scroll to the item if it's not in view
+      const element = document.getElementById(`inquiry-${inquiryIdFromUrl}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } else {
+      setActiveAccordionItem(undefined); // Reset if no ID in URL
+    }
+  }, [searchParams]);
 
   const handleMainFormSubmit = (newInquiryData: Parameters<typeof addInquiry>[0]) => {
     addInquiry(newInquiryData);
@@ -99,9 +116,15 @@ const InquiriesPage = () => {
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          <Accordion type="single" collapsible className="w-full">
+          <Accordion
+            type="single"
+            collapsible
+            className="w-full"
+            value={activeAccordionItem} // Control the active item
+            onValueChange={setActiveAccordionItem} // Update state when user interacts
+          >
             {filteredInquiries.map((inquiry) => (
-              <Card key={inquiry.id} className="mb-4 bg-card text-card-foreground border-border">
+              <Card key={inquiry.id} id={`inquiry-${inquiry.id}`} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={inquiry.id} className="border-none">
                   <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
                     <div className="flex items-center gap-3 flex-grow">
