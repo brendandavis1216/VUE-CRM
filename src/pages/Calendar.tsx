@@ -54,6 +54,37 @@ const CalendarPage = () => {
   const { events } = useAppContext();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
+  // Calculate modifiers for DayPicker to color cells based on event status
+  const eventModifiers = useMemo(() => {
+    const modifiers: { [key: string]: Date[] } = {};
+    const dayStatusMap = new Map<string, EventStatus>(); // To store highest priority status per day
+
+    // Define status priority (higher index means higher priority for display color)
+    const statusPriority: EventStatus[] = ["Cancelled", "Completed", "Pending", "Confirmed"];
+
+    events.forEach(event => {
+      const dayKey = format(event.eventDate, 'yyyy-MM-dd');
+      const currentStatus = event.status;
+      const existingStatus = dayStatusMap.get(dayKey);
+
+      if (!existingStatus || statusPriority.indexOf(currentStatus) > statusPriority.indexOf(existingStatus)) {
+        dayStatusMap.set(dayKey, currentStatus);
+      }
+    });
+
+    // Populate modifiers based on the highest priority status for each day
+    dayStatusMap.forEach((status, dayKey) => {
+      const date = new Date(dayKey); // Reconstruct date from key
+      const modifierName = `event${status}`; // e.g., 'eventConfirmed'
+      if (!modifiers[modifierName]) {
+        modifiers[modifierName] = [];
+      }
+      modifiers[modifierName].push(date);
+    });
+
+    return modifiers;
+  }, [events]);
+
   const eventsForSelectedDate = useMemo(() => {
     return selectedDate
       ? events.filter(event =>
@@ -74,6 +105,13 @@ const CalendarPage = () => {
             onSelect={setSelectedDate}
             showOutsideDays
             className="p-3 w-full"
+            modifiers={eventModifiers} // Apply modifiers for coloring
+            modifierClassNames={{ // Map modifiers to Tailwind classes for background colors
+              eventPending: STATUS_COLORS.Pending,
+              eventConfirmed: STATUS_COLORS.Confirmed,
+              eventCompleted: STATUS_COLORS.Completed,
+              eventCancelled: STATUS_COLORS.Cancelled,
+            }}
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
               month: "space-y-4 flex-1",
@@ -93,7 +131,7 @@ const CalendarPage = () => {
               cell: "h-24 text-center text-sm p-1 relative flex-1 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
               // The 'day' is the actual clickable button for the day, also needs relative for children positioning
               day: cn(
-                "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md text-white relative", // Keep relative here for potential future absolute children
+                "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md relative", // Removed text-white here, as EventDayContent handles it
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
               ),
               day_range_end: "day-range-end",
