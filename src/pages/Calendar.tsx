@@ -5,7 +5,7 @@ import { format, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks, eachDayO
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select components
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -209,28 +209,7 @@ const CalendarPage = () => {
                           {'inquiryDate' in item ? "Inquiry" : item.status}
                         </Badge>
                       </CardHeader>
-                      <CardContent className="text-sm space-y-1">
-                        {'inquiryDate' in item ? (
-                          <>
-                            <p><strong>Fraternity:</strong> {item.fraternity}</p>
-                            <p><strong>School:</strong> {item.school}</p>
-                            <p><strong>Contact:</strong> {item.mainContact} ({item.phoneNumber})</p>
-                            <p><strong>Address:</strong> {item.addressOfEvent}</p>
-                            <p><strong>Time:</strong> {format(item.inquiryDate, "p")}</p>
-                            <p><strong>Budget:</strong> ${item.budget.toLocaleString()}</p>
-                            {item.stageBuild !== "None" && <p><strong>Stage Build:</strong> {item.stageBuild}</p>}
-                          </>
-                        ) : (
-                          <>
-                            <p><strong>Fraternity:</strong> {item.fraternity}</p>
-                            <p><strong>School:</strong> {item.school}</p>
-                            <p><strong>Address:</strong> {item.addressOfEvent}</p>
-                            <p><strong>Time:</strong> {format(item.eventDate, "p")}</p>
-                            <p><strong>Budget:</strong> ${item.budget.toLocaleString()}</p>
-                            {item.stageBuild !== "None" && <p><strong>Stage Build:</strong> {item.stageBuild}</p>}
-                          </>
-                        )}
-                      </CardContent>
+                      {/* Removed CardContent to simplify display */}
                     </Card>
                   ))}
                 </div>
