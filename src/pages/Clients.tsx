@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Pencil, ChevronDown, PlusCircle } from "lucide-react"; // Added PlusCircle import
+import { Pencil, ChevronDown, PlusCircle } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
 import {
   Accordion,
@@ -11,19 +11,19 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"; // Added DialogTrigger
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ClientEditForm } from "@/components/ClientEditForm";
 import { ClientFilterSort } from "@/components/ClientFilterSort";
-import { ClientAddForm } from "@/components/ClientAddForm"; // Import the new component
+import { ClientAddForm } from "@/components/ClientAddForm";
 import { Client } from "@/types/app";
 
 type SortBy = 'none' | 'school' | 'averageEventSize' | 'numberOfEvents' | 'clientScore';
 type SortOrder = 'asc' | 'desc';
 
 const ClientsPage = () => {
-  const { clients, updateClient, addClient } = useAppContext(); // Destructure addClient
+  const { clients, updateClient, addClient } = useAppContext();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false); // State for add client dialog
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // State for filtering and sorting
@@ -142,7 +142,21 @@ const ClientsPage = () => {
                 </AccordionTrigger>
                 <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
                   <p><strong>Contact:</strong> {client.mainContactName} ({client.phoneNumber})</p>
-                  <p><strong>Instagram:</strong> {client.instagramHandle}</p>
+                  <p>
+                    <strong>Instagram:</strong>{" "}
+                    {client.instagramHandle && client.instagramHandle !== "N/A" ? (
+                      <a
+                        href={`https://www.instagram.com/${client.instagramHandle.replace(/^@/, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 hover:underline"
+                      >
+                        {client.instagramHandle}
+                      </a>
+                    ) : (
+                      "N/A"
+                    )}
+                  </p>
                   <p><strong>Avg. Event Size:</strong> ${client.averageEventSize.toLocaleString()}</p>
                   <p><strong># Events:</strong> {client.numberOfEvents}</p>
                   <p><strong>Client Score:</strong> {client.clientScore} (placeholder)</p>
