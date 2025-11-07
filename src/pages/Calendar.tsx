@@ -21,8 +21,11 @@ const STATUS_COLORS: Record<EventStatus, string> = {
 
 // Custom DayContent component to render event titles and client names
 const EventDayContent: React.FC<DayContentProps> = (props) => {
-  const { date, children } = props; // children is the day number element
+  const { date, activeModifiers } = props; // activeModifiers tells us if it's an outside day
   const { events } = useAppContext();
+
+  // Determine if it's an outside day to potentially dim the number
+  const isOutside = activeModifiers.outside;
 
   const dayEvents = events.filter((event) =>
     isSameDay(event.eventDate, date)
@@ -32,9 +35,11 @@ const EventDayContent: React.FC<DayContentProps> = (props) => {
 
   return (
     <div className="flex flex-col h-full w-full p-1 overflow-hidden">
-      {/* Render the day number (children) directly at the top */}
-      <div className="text-white text-xs font-medium">{children}</div>
-      <div className="flex-grow space-y-0.5 overflow-hidden mt-1"> {/* Added mt-1 for spacing */}
+      {/* Render the day number explicitly using format(date, 'd') */}
+      <div className={cn("text-xs font-medium", isOutside ? "text-muted-foreground opacity-50" : "text-white")}>
+        {format(date, 'd')}
+      </div>
+      <div className="flex-grow space-y-0.5 overflow-hidden mt-1">
         {dayEvents.slice(0, maxEventsToShow).map((event) => (
           <div key={event.id} className="text-xs truncate text-white leading-tight">
             <span className="font-semibold">{event.eventName}</span> - {event.fraternity}
@@ -131,7 +136,7 @@ const CalendarPage = () => {
               cell: "h-24 text-center text-sm p-1 relative flex-1 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
               // The 'day' is the actual clickable button for the day, also needs relative for children positioning
               day: cn(
-                "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md relative", // Removed text-white here, as EventDayContent handles it
+                "h-full w-full p-1 font-normal aria-selected:opacity-100 rounded-md relative",
                 "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
               ),
               day_range_end: "day-range-end",
