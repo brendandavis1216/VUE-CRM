@@ -86,7 +86,14 @@ const InquiriesPage = () => {
               <Card key={inquiry.id} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={inquiry.id} className="border-none">
                   <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
-                    <CardTitle className="text-lg font-medium text-card-foreground">{inquiry.fraternity} - {inquiry.school}</CardTitle>
+                    <div className="flex items-center gap-3 flex-grow">
+                      <CardTitle className="text-lg font-medium text-card-foreground flex-shrink-0">
+                        {inquiry.fraternity} - {inquiry.school}
+                      </CardTitle>
+                      <div className="flex-grow">
+                        <Progress value={inquiry.progress} className="w-full h-2" />
+                      </div>
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
                     <p className="text-sm text-muted-foreground">{inquiry.mainContact} ({inquiry.phoneNumber})</p>
@@ -102,7 +109,6 @@ const InquiriesPage = () => {
 
                     <div className="space-y-2 mt-4">
                       <h3 className="font-semibold text-white">Progress: {Math.round(inquiry.progress)}%</h3>
-                      <Progress value={inquiry.progress} className="w-full" />
                       <div className="grid grid-cols-1 gap-2 mt-2">
                         {inquiry.tasks.map((task) => (
                           <div key={task.id} className="flex items-center space-x-2">
