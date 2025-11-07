@@ -1,25 +1,62 @@
 "use client";
 
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input"; // Import Input component
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Search } from "lucide-react"; // Import Search icon
 
 const EventsPage = () => {
   const { events, updateEventTask } = useAppContext();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredAndSortedEvents = useMemo(() => {
+    let currentEvents = [...events];
+
+    // Filter events based on search term
+    if (searchTerm) {
+      const lowerCaseSearchTerm = searchTerm.toLowerCase();
+      currentEvents = currentEvents.filter(
+        (event) =>
+          event.eventName.toLowerCase().includes(lowerCaseSearchTerm) ||
+          event.fraternity.toLowerCase().includes(lowerCaseSearchTerm) ||
+          event.school.toLowerCase().includes(lowerCaseSearchTerm) ||
+          event.addressOfEvent.toLowerCase().includes(lowerCaseSearchTerm)
+      );
+    }
+
+    // Sort events by eventDate in ascending order (soonest first)
+    currentEvents.sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime());
+
+    return currentEvents;
+  }, [events, searchTerm]);
 
   return (
     <div className="p-4 space-y-4">
       <h1 className="text-3xl font-bold text-white text-center">Events</h1>
-      {events.length === 0 ? (
-        <p className="text-center text-muted-foreground mt-8">No events yet. Completed inquiries will appear here!</p>
+      
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Search events by name, fraternity, school, or address..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9 bg-input text-foreground border-border"
+        />
+      </div>
+
+      {filteredAndSortedEvents.length === 0 ? (
+        <p className="text-center text-muted-foreground mt-8">
+          {searchTerm ? "No events match your search." : "No events yet. Completed inquiries will appear here!"}
+        </p>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {events.map((event) => (
+          {filteredAndSortedEvents.map((event) => (
             <Card key={event.id} className="bg-card text-card-foreground border-border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium">{event.eventName}</CardTitle>
