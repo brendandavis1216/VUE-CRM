@@ -28,7 +28,7 @@ const initialClients: Client[] = [
     fraternity: "Alpha Beta Gamma",
     school: "State University",
     mainContactName: "John Doe",
-    phoneNumber: "555-123-4567",
+    phoneNumber: "5551234567", // Raw 10 digits
     instagramHandle: "@abg_stateu",
     averageEventSize: 15000,
     numberOfEvents: 3,
@@ -39,7 +39,7 @@ const initialClients: Client[] = [
     fraternity: "Delta Epsilon Zeta",
     school: "City College",
     mainContactName: "Jane Smith",
-    phoneNumber: "555-987-6543",
+    phoneNumber: "5559876543", // Raw 10 digits
     instagramHandle: "@dez_citycollege",
     averageEventSize: 10000,
     numberOfEvents: 5,
@@ -51,7 +51,7 @@ const initialClients: Client[] = [
     fraternity: "Gamma Delta Epsilon",
     school: "University of West",
     mainContactName: "Chris Evans",
-    phoneNumber: "555-111-2222", // Example phone number
+    phoneNumber: "5551112222", // Raw 10 digits
     instagramHandle: "N/A",
     averageEventSize: 8000, // Initial budget from inquiry
     numberOfEvents: 0, // Starts at 0 events
@@ -66,7 +66,7 @@ const initialInquiries: Inquiry[] = [
     school: "University of West",
     fraternity: "Gamma Delta Epsilon",
     mainContact: "Chris Evans",
-    phoneNumber: "555-111-2222", // Updated initial inquiry to include phone number
+    phoneNumber: "5551112222", // Raw 10 digits
     addressOfEvent: "123 Party Lane",
     capacity: 500,
     budget: 8000,

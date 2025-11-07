@@ -17,12 +17,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatPhoneNumber } from "@/lib/utils"; // Import the utility function
 
 const formSchema = z.object({
   school: z.string().min(2, { message: "School name must be at least 2 characters." }),
   fraternity: z.string().min(2, { message: "Fraternity name must be at least 2 characters." }),
   mainContact: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
-  phoneNumber: z.string().regex(/^\d{3}-\d{3}-\d{4}$/, { message: "Phone number must be in XXX-XXX-XXXX format." }), // Added phone number validation
+  phoneNumber: z.string().regex(/^\d{10}$/, { message: "Phone number must be 10 digits." }), // Updated validation
   addressOfEvent: z.string().min(5, { message: "Address must be at least 5 characters." }),
   capacity: z.coerce.number().min(1, { message: "Capacity must be at least 1." }),
   budget: z.coerce.number().min(0, { message: "Budget cannot be negative." }),
@@ -47,7 +48,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
       school: defaultValues?.school || "",
       fraternity: defaultValues?.fraternity || "",
       mainContact: defaultValues?.mainContact || "",
-      phoneNumber: defaultValues?.phoneNumber || "", // Default value for phone number
+      phoneNumber: defaultValues?.phoneNumber?.replace(/\D/g, '') || "", // Ensure default value is raw 10 digits
       addressOfEvent: "",
       capacity: 0,
       budget: 0,
@@ -113,7 +114,18 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
             <FormItem>
               <FormLabel className="block font-semibold text-black dark:text-white mb-1">Phone Number</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., 555-123-4567" {...field} className="bg-input text-foreground border-border" />
+                <Input
+                  placeholder="e.g., 5551234567"
+                  {...field}
+                  value={formatPhoneNumber(field.value)} // Display formatted value
+                  onChange={(e) => {
+                    const rawValue = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                    if (rawValue.length <= 10) { // Allow typing up to 10 digits
+                      field.onChange(rawValue); // Update form state with raw digits
+                    }
+                  }}
+                  className="bg-input text-foreground border-border"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

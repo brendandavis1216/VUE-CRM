@@ -15,12 +15,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Client } from "@/types/app";
+import { formatPhoneNumber } from "@/lib/utils"; // Import the utility function
 
 const formSchema = z.object({
   fraternity: z.string().min(2, { message: "Fraternity name must be at least 2 characters." }),
   school: z.string().min(2, { message: "School name must be at least 2 characters." }),
   mainContactName: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
-  phoneNumber: z.string().regex(/^\d{3}-\d{3}-\d{4}$/, { message: "Phone number must be in XXX-XXX-XXXX format." }),
+  phoneNumber: z.string().regex(/^\d{10}$/, { message: "Phone number must be 10 digits." }), // Updated validation
   instagramHandle: z.string().optional().or(z.literal("")), // Optional, allow empty string
   averageEventSize: z.coerce.number().min(0, { message: "Average event size cannot be negative." }),
 });
@@ -40,7 +41,7 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
       fraternity: client.fraternity,
       school: client.school,
       mainContactName: client.mainContactName,
-      phoneNumber: client.phoneNumber,
+      phoneNumber: client.phoneNumber.replace(/\D/g, ''), // Ensure default value is raw 10 digits
       instagramHandle: client.instagramHandle,
       averageEventSize: client.averageEventSize,
     },
@@ -100,7 +101,17 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
             <FormItem>
               <FormLabel className="text-white">Phone Number</FormLabel>
               <FormControl>
-                <Input {...field} className="bg-input text-foreground border-border" />
+                <Input
+                  {...field}
+                  value={formatPhoneNumber(field.value)} // Display formatted value
+                  onChange={(e) => {
+                    const rawValue = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                    if (rawValue.length <= 10) { // Allow typing up to 10 digits
+                      field.onChange(rawValue); // Update form state with raw digits
+                    }
+                  }}
+                  className="bg-input text-foreground border-border"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
