@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { Client, Inquiry, Event, InquiryTask, EventTask } from "@/types/app";
 import { toast } from "sonner";
 
@@ -13,7 +13,7 @@ interface AppContextType {
   updateEventTask: (eventId: string, taskId: string) => void;
   updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
   addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
-  updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void; // New function
+  updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -23,39 +23,85 @@ const calculateClientScore = (numberOfEvents: number, averageEventSize: number):
   return (numberOfEvents * averageEventSize) / 1000;
 };
 
+// Helper to load state from localStorage
+const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
+  if (typeof window === 'undefined') {
+    return initialValue; // Return initial value if not in browser environment
+  }
+  try {
+    const serializedState = localStorage.getItem(key);
+    if (serializedState === null) {
+      return initialValue;
+    }
+    const storedData = JSON.parse(serializedState);
+
+    // Special handling for events to parse Date objects
+    if (key === "appEvents" && Array.isArray(storedData)) {
+      return storedData.map(event => ({
+        ...event,
+        eventDate: new Date(event.eventDate),
+      })) as T;
+    }
+    return storedData;
+  } catch (error) {
+    console.error(`Error loading state for ${key} from localStorage:`, error);
+    return initialValue;
+  }
+};
+
+// Helper to save state to localStorage
+const saveStateToLocalStorage = <T,>(key: string, state: T) => {
+  if (typeof window === 'undefined') {
+    return; // Do nothing if not in browser environment
+  }
+  try {
+    let stateToStore = state;
+    // Special handling for events to stringify Date objects
+    if (key === "appEvents" && Array.isArray(state)) {
+      stateToStore = state.map(event => ({
+        ...event,
+        eventDate: event.eventDate.toISOString(),
+      })) as T;
+    }
+    const serializedState = JSON.stringify(stateToStore);
+    localStorage.setItem(key, serializedState);
+  } catch (error) {
+    console.error(`Error saving state for ${key} to localStorage:`, error);
+  }
+};
+
 const initialClients: Client[] = [
   {
     id: "1",
     fraternity: "Alpha Beta Gamma",
     school: "State University",
     mainContactName: "John Doe",
-    phoneNumber: "5551234567", // Raw 10 digits
+    phoneNumber: "5551234567",
     instagramHandle: "@abg_stateu",
     averageEventSize: 15000,
     numberOfEvents: 3,
-    clientScore: calculateClientScore(3, 15000), // Calculated score
+    clientScore: calculateClientScore(3, 15000),
   },
   {
     id: "2",
     fraternity: "Delta Epsilon Zeta",
     school: "City College",
     mainContactName: "Jane Smith",
-    phoneNumber: "5559876543", // Raw 10 digits
+    phoneNumber: "5559876543",
     instagramHandle: "@dez_citycollege",
     averageEventSize: 10000,
     numberOfEvents: 5,
-    clientScore: calculateClientScore(5, 10000), // Calculated score
+    clientScore: calculateClientScore(5, 10000),
   },
-  // Client for initial inquiry
   {
-    id: "client-from-inq1", // This ID will be linked to inq1
+    id: "client-from-inq1",
     fraternity: "Gamma Delta Epsilon",
     school: "University of West",
     mainContactName: "Chris Evans",
-    phoneNumber: "5551112222", // Raw 10 digits
+    phoneNumber: "5551112222",
     instagramHandle: "N/A",
-    averageEventSize: 8000, // Initial budget from inquiry
-    numberOfEvents: 0, // Starts at 0 events
+    averageEventSize: 8000,
+    numberOfEvents: 0,
     clientScore: calculateClientScore(0, 8000),
   }
 ];
@@ -63,11 +109,11 @@ const initialClients: Client[] = [
 const initialInquiries: Inquiry[] = [
   {
     id: "inq1",
-    clientId: "client-from-inq1", // Link to the client above
+    clientId: "client-from-inq1",
     school: "University of West",
     fraternity: "Gamma Delta Epsilon",
     mainContact: "Chris Evans",
-    phoneNumber: "5551112222", // Raw 10 digits
+    phoneNumber: "5551112222",
     addressOfEvent: "123 Party Lane",
     capacity: 500,
     budget: 8000,
@@ -76,8 +122,8 @@ const initialInquiries: Inquiry[] = [
     gates: true,
     security: false,
     co2Tanks: 0,
-    cdjs: 0, // Added CDJs to initial inquiry
-    audio: "QSC Rig", // Added Audio to initial inquiry
+    cdjs: 0,
+    audio: "QSC Rig",
     tasks: [
       { id: "task1", name: "Rendering", completed: false },
       { id: "task2", name: "Contract", completed: false },
@@ -90,9 +136,28 @@ const initialInquiries: Inquiry[] = [
 const initialEvents: Event[] = [];
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [clients, setClients] = useState<Client[]>(initialClients);
-  const [inquiries, setInquiries] = useState<Inquiry[]>(initialInquiries);
-  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [clients, setClients] = useState<Client[]>(() =>
+    loadStateFromLocalStorage("appClients", initialClients)
+  );
+  const [inquiries, setInquiries] = useState<Inquiry[]>(() =>
+    loadStateFromLocalStorage("appInquiries", initialInquiries)
+  );
+  const [events, setEvents] = useState<Event[]>(() =>
+    loadStateFromLocalStorage("appEvents", initialEvents)
+  );
+
+  // Use useEffect to save state whenever it changes
+  useEffect(() => {
+    saveStateToLocalStorage("appClients", clients);
+  }, [clients]);
+
+  useEffect(() => {
+    saveStateToLocalStorage("appInquiries", inquiries);
+  }, [inquiries]);
+
+  useEffect(() => {
+    saveStateToLocalStorage("appEvents", events);
+  }, [events]);
 
   const calculateProgress = (tasks: InquiryTask[] | EventTask[]) => {
     if (tasks.length === 0) return 0;
@@ -318,7 +383,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateEventTask,
         updateClient,
         addClient,
-        updateInquiry, // Provide the new function
+        updateInquiry,
       }}
     >
       {children}
