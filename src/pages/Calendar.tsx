@@ -213,10 +213,10 @@ const CalendarPage = () => {
                     <Card
                       key={item.id}
                       className="bg-card text-card-foreground border-border cursor-pointer hover:bg-card/90 transition-colors"
-                      onClick={() => handleItemClick(item)} // Add onClick handler
+                      onClick={() => handleItemClick(item)}
                     >
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-lg font-medium">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3"> {/* Adjusted padding to p-3 */}
+                        <CardTitle className="text-base font-medium"> {/* Reduced font size to text-base */}
                           {'inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school}` : `Event: ${item.eventName}`}
                         </CardTitle>
                         <Badge className={cn("text-xs", getCalendarItemColor(item))}>
