@@ -131,8 +131,9 @@ const InquiriesPage = () => {
                     <div className="flex flex-wrap gap-2 text-sm">
                       {inquiry.stageBuild !== "None" && <Badge variant="secondary">{inquiry.stageBuild}</Badge>}
                       {inquiry.power !== "None" && <Badge variant="secondary">{inquiry.power}</Badge>}
-                      {inquiry.gates && <Badge variant="secondary">Gates</Badge>}
-                      {inquiry.security && <Badge variant="secondary">Security</Badge>}
+                      {inquiry.gates && <Badge variant="secondary">Gates Provided</Badge>}
+                      {inquiry.security && <Badge variant="secondary">Security Provided</Badge>}
+                      {inquiry.co2Tanks > 0 && <Badge variant="secondary">{inquiry.co2Tanks} CO2 Tanks</Badge>} {/* Display CO2 Tanks */}
                     </div>
 
                     <div className="space-y-2 mt-4">

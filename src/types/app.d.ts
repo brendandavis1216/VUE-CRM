@@ -30,6 +30,7 @@ interface Inquiry {
   power: "None" | "Gas Generators" | "20kW Diesel" | "36kW" | "Provided";
   gates: boolean;
   security: boolean;
+  co2Tanks: number; // Added CO2 Tanks
   tasks: InquiryTask[];
   progress: number; // 0-100
 }

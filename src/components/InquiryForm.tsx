@@ -31,6 +31,7 @@ const formSchema = z.object({
   power: z.enum(["None", "Gas Generators", "20kW Diesel", "36kW", "Provided"]),
   gates: z.boolean().default(false),
   security: z.boolean().default(false),
+  co2Tanks: z.coerce.number().min(0, { message: "CO2 Tanks cannot be negative." }).default(0), // Added CO2 Tanks
 });
 
 type InquiryFormValues = z.infer<typeof formSchema>;
@@ -56,6 +57,8 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
       power: "None",
       gates: false,
       security: false,
+      co2Tanks: 0, // Default for new inquiries
+      ...defaultValues, // Spread defaultValues last to override initial defaults if provided
     },
   });
 
@@ -254,6 +257,19 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
               <FormLabel className="block font-semibold text-black dark:text-white">Power Provided</FormLabel>
             </div>
           </FormItem>
+          <FormField
+            control={form.control}
+            name="co2Tanks"
+            render={({ field }) => (
+              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                <FormLabel className="block font-semibold text-black dark:text-white">CO2 Tanks</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="e.g., 4" {...field} className="bg-input text-foreground border-border" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="gates"

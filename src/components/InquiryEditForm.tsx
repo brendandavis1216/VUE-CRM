@@ -32,6 +32,7 @@ const formSchema = z.object({
   power: z.enum(["None", "Gas Generators", "20kW Diesel", "36kW", "Provided"]),
   gates: z.boolean().default(false),
   security: z.boolean().default(false),
+  co2Tanks: z.coerce.number().min(0, { message: "CO2 Tanks cannot be negative." }).default(0), // Added CO2 Tanks
 });
 
 type InquiryFormValues = z.infer<typeof formSchema>;
@@ -57,6 +58,7 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
       power: inquiry.power,
       gates: inquiry.gates,
       security: inquiry.security,
+      co2Tanks: inquiry.co2Tanks, // Set default value from inquiry
     },
   });
 
@@ -254,6 +256,19 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
           </FormItem>
           <FormField
             control={form.control}
+            name="co2Tanks"
+            render={({ field }) => (
+              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                <FormLabel className="block font-semibold text-black dark:text-white">CO2 Tanks</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="e.g., 4" {...field} className="bg-input text-foreground border-border" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="gates"
             render={({ field }) => (
               <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
@@ -287,7 +302,7 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
             )}
           />
         </div>
-        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</Button>
+        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Add Inquiry</Button>
       </form>
     </Form>
   );
