@@ -3,14 +3,14 @@
 import React, { useState, useMemo } from "react";
 import { format, isSameDay } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
-import { DayPicker, DayContentProps, SelectSingleEventHandler } from "react-day-picker"; // Import SelectSingleEventHandler
+import { DayPicker, DayContentProps, SelectSingleEventHandler } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Event, Inquiry, EventStatus } from "@/types/app";
-import { toast } from "sonner"; // Import toast for feedback
+import { toast } from "sonner";
 
 // Define a union type for items that can appear on the calendar
 type CalendarItem = Inquiry | Event;
@@ -49,7 +49,7 @@ const getCalendarItemTitle = (item: CalendarItem): string => {
       return `Event: ${item.eventName} - ${item.fraternity} (Completed)`;
     }
     if (item.status === "Cancelled") {
-      return `Event: ${item.eventName} - ${item.fraternity} (Cancelled)`; // Keep tooltip accurate
+      return `Event: ${item.eventName} - ${item.fraternity} (Cancelled)`;
     }
     return `Event: ${item.eventName} - ${item.fraternity} (In Progress)`;
   }
@@ -70,7 +70,7 @@ const LEGEND_COLORS = {
   "Event (In Progress)": "bg-yellow-500",
   "Event (Paid)": "bg-green-500",
   "Event (Completed)": "bg-blue-500",
-  "Event (Cancelled)": "bg-gray-500", // New legend entry for cancelled events
+  "Event (Cancelled)": "bg-gray-500",
 };
 
 
@@ -173,6 +173,7 @@ const CalendarPage = () => {
     setSelectedDate(date);
     if (date) {
       toast.info(`Selected date: ${format(date, "PPP")}`);
+      console.log("Selected date:", format(date, "PPP")); // Added console log for debugging
     }
   };
 
@@ -185,7 +186,7 @@ const CalendarPage = () => {
           <DayPicker
             mode="single"
             selected={selectedDate}
-            onSelect={handleDateSelect} // Use the custom handler
+            onSelect={handleDateSelect}
             showOutsideDays
             className="p-3 w-full"
             modifiers={eventModifiers}
@@ -216,7 +217,7 @@ const CalendarPage = () => {
               ),
               day_range_end: "day-range-end",
               day_selected:
-                "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+                "bg-blue-600 text-white hover:bg-blue-700 hover:text-white focus:bg-blue-700 focus:text-white", // Made selected day very distinct
               day_today: "bg-accent text-accent-foreground",
               day_outside: "text-muted-foreground opacity-50",
               day_disabled: "text-muted-foreground opacity-50",
