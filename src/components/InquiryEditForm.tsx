@@ -1,0 +1,262 @@
+"use client";
+
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Inquiry } from "@/types/app";
+import { formatPhoneNumber } from "@/lib/utils";
+
+const formSchema = z.object({
+  school: z.string().min(2, { message: "School name must be at least 2 characters." }),
+  fraternity: z.string().min(2, { message: "Fraternity name must be at least 2 characters." }),
+  mainContact: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
+  phoneNumber: z.string().regex(/^\d{10}$/, { message: "Phone number must be 10 digits." }),
+  addressOfEvent: z.string().min(5, { message: "Address must be at least 5 characters." }),
+  capacity: z.coerce.number().min(1, { message: "Capacity must be at least 1." }),
+  budget: z.coerce.number().min(0, { message: "Budget cannot be negative." }),
+  stageBuild: z.enum(["None", "Base Stage", "Totem Stage", "SL 100", "SL 75", "SL260", "Custom Rig"]),
+  power: z.enum(["None", "Gas Generators", "20kW Diesel", "36kW", "Provided"]),
+  gates: z.boolean().default(false),
+  security: z.boolean().default(false),
+});
+
+type InquiryFormValues = z.infer<typeof formSchema>;
+
+interface InquiryEditFormProps {
+  inquiry: Inquiry;
+  onSubmit: (inquiryId: string, values: InquiryFormValues) => void;
+  onClose: () => void;
+}
+
+export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSubmit, onClose }) => {
+  const form = useForm<InquiryFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      school: inquiry.school,
+      fraternity: inquiry.fraternity,
+      mainContact: inquiry.mainContact,
+      phoneNumber: inquiry.phoneNumber.replace(/\D/g, ''),
+      addressOfEvent: inquiry.addressOfEvent,
+      capacity: inquiry.capacity,
+      budget: inquiry.budget,
+      stageBuild: inquiry.stageBuild,
+      power: inquiry.power,
+      gates: inquiry.gates,
+      security: inquiry.security,
+    },
+  });
+
+  function handleSubmit(values: InquiryFormValues) {
+    onSubmit(inquiry.id, values);
+    onClose();
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="school"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">School</FormLabel>
+              <FormControl>
+                <Input {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="fraternity"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Fraternity</FormLabel>
+              <FormControl>
+                <Input {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="mainContact"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Main Contact</FormLabel>
+              <FormControl>
+                <Input {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="phoneNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Phone Number</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={formatPhoneNumber(field.value)}
+                  onChange={(e) => {
+                    const rawValue = e.target.value.replace(/\D/g, '');
+                    if (rawValue.length <= 10) {
+                      field.onChange(rawValue);
+                    }
+                  }}
+                  className="bg-input text-foreground border-border"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="addressOfEvent"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Address of Event</FormLabel>
+              <FormControl>
+                <Textarea {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="capacity"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Capacity</FormLabel>
+              <FormControl>
+                <Input type="number" {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="budget"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Budget ($)</FormLabel>
+              <FormControl>
+                <Input type="number" {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="stageBuild"
+            render={({ field }) => (
+              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                <FormLabel className="block font-semibold text-black dark:text-white">Stage Build</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="bg-input text-foreground border-border">
+                      <SelectValue placeholder="Select stage type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-popover text-popover-foreground border-border">
+                    <SelectItem value="None">None</SelectItem>
+                    <SelectItem value="Base Stage">Base Stage</SelectItem>
+                    <SelectItem value="Totem Stage">Totem Stage</SelectItem>
+                    <SelectItem value="SL 100">SL 100</SelectItem>
+                    <SelectItem value="SL 75">SL 75</SelectItem>
+                    <SelectItem value="SL260">SL260</SelectItem>
+                    <SelectItem value="Custom Rig">Custom Rig</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="power"
+            render={({ field }) => (
+              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                <FormLabel className="block font-semibold text-black dark:text-white">Power</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="bg-input text-foreground border-border">
+                      <SelectValue placeholder="Select power type" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="bg-popover text-popover-foreground border-border">
+                    <SelectItem value="None">None</SelectItem>
+                    <SelectItem value="Gas Generators">Gas Generators</SelectItem>
+                    <SelectItem value="20kW Diesel">20kW Diesel</SelectItem>
+                    <SelectItem value="36kW">36kW</SelectItem>
+                    <SelectItem value="Provided">Provided</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="gates"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="block font-semibold text-black dark:text-white">Gates</FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="security"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel className="block font-semibold text-black dark:text-white">Security</FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
+        </div>
+        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</Button>
+      </form>
+    </Form>
+  );
+};

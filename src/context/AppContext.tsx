@@ -13,6 +13,7 @@ interface AppContextType {
   updateEventTask: (eventId: string, taskId: string) => void;
   updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
   addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore'>) => void;
+  updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void; // New function
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -154,6 +155,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const updateInquiry = (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => {
+    setInquiries((prevInquiries) =>
+      prevInquiries.map((inq) => {
+        if (inq.id === inquiryId) {
+          // Preserve existing tasks and progress, only update other fields
+          return { ...inq, ...updatedInquiryData };
+        }
+        return inq;
+      })
+    );
+    toast.success("Inquiry updated successfully!");
+  };
+
   const updateInquiryTask = (inquiryId: string, taskId: string) => {
     setInquiries((prevInquiries) =>
       prevInquiries.map((inq) => {
@@ -273,6 +287,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateEventTask,
         updateClient,
         addClient,
+        updateInquiry, // Provide the new function
       }}
     >
       {children}

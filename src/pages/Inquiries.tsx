@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, Search } from "lucide-react";
+import { PlusCircle, Search, Pencil } from "lucide-react"; // Import Pencil icon
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -12,22 +12,37 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { InquiryForm } from "@/components/InquiryForm";
+import { InquiryEditForm } from "@/components/InquiryEditForm"; // Import InquiryEditForm
 import { useAppContext } from "@/context/AppContext";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"; // Import Accordion components
+} from "@/components/ui/accordion";
+import { Inquiry } from "@/types/app"; // Import Inquiry type
 
 const InquiriesPage = () => {
-  const { inquiries, addInquiry, updateInquiryTask } = useAppContext();
-  const [isAddInquiryDialogOpen, setIsAddInquiryDialogOpen] = useState(false); // For the main "Add Inquiry" button
+  const { inquiries, addInquiry, updateInquiryTask, updateInquiry } = useAppContext();
+  const [isAddInquiryDialogOpen, setIsAddInquiryDialogOpen] = useState(false);
+  const [isEditInquiryDialogOpen, setIsEditInquiryDialogOpen] = useState(false); // State for edit dialog
+  const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null); // State for selected inquiry to edit
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleMainFormSubmit = (newInquiryData: Parameters<typeof addInquiry>[0]) => {
     addInquiry(newInquiryData);
     setIsAddInquiryDialogOpen(false);
+  };
+
+  const handleEditClick = (inquiry: Inquiry) => {
+    setSelectedInquiry(inquiry);
+    setIsEditInquiryDialogOpen(true);
+  };
+
+  const handleInquiryUpdate = (inquiryId: string, updatedValues: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => {
+    updateInquiry(inquiryId, updatedValues);
+    setIsEditInquiryDialogOpen(false);
+    setSelectedInquiry(null);
   };
 
   const filteredInquiries = useMemo(() => {
@@ -90,9 +105,21 @@ const InquiriesPage = () => {
                       <CardTitle className="text-lg font-medium text-card-foreground flex-shrink-0">
                         {inquiry.fraternity} - {inquiry.school}
                       </CardTitle>
-                      <div className="flex items-center gap-2 flex-grow justify-end"> {/* Added flex items-center and gap-2 */}
-                        <span className="text-sm font-medium text-white">{Math.round(inquiry.progress)}%</span> {/* Percentage text */}
+                      <div className="flex items-center gap-2 flex-grow justify-end">
+                        <span className="text-sm font-medium text-white">{Math.round(inquiry.progress)}%</span>
                         <Progress value={inquiry.progress} className="w-1/2 h-2" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent accordion from toggling
+                            handleEditClick(inquiry);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Edit Inquiry</span>
+                        </Button>
                       </div>
                     </div>
                   </AccordionTrigger>
@@ -109,7 +136,7 @@ const InquiriesPage = () => {
                     </div>
 
                     <div className="space-y-2 mt-4">
-                      <h3 className="font-semibold text-white">Tasks:</h3> {/* Changed to "Tasks:" for clarity */}
+                      <h3 className="font-semibold text-white">Tasks:</h3>
                       <div className="grid grid-cols-1 gap-2 mt-2">
                         {inquiry.tasks.map((task) => (
                           <div key={task.id} className="flex items-center space-x-2">
@@ -134,6 +161,21 @@ const InquiriesPage = () => {
             ))}
           </Accordion>
         </div>
+      )}
+
+      {selectedInquiry && (
+        <Dialog open={isEditInquiryDialogOpen} onOpenChange={setIsEditInquiryDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+            <DialogHeader>
+              <DialogTitle className="text-white">Edit Inquiry: {selectedInquiry.fraternity} - {selectedInquiry.school}</DialogTitle>
+            </DialogHeader>
+            <InquiryEditForm
+              inquiry={selectedInquiry}
+              onSubmit={handleInquiryUpdate}
+              onClose={() => setIsEditInquiryDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
