@@ -31,6 +31,7 @@ interface Inquiry {
   gates: boolean;
   security: boolean;
   co2Tanks: number; // Added CO2 Tanks
+  cdjs: number; // Added CDJs
   tasks: InquiryTask[];
   progress: number; // 0-100
 }

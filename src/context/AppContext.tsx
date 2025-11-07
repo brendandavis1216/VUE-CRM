@@ -75,7 +75,8 @@ const initialInquiries: Inquiry[] = [
     power: "None",
     gates: true,
     security: false,
-    co2Tanks: 0, // Added default for initial inquiry
+    co2Tanks: 0,
+    cdjs: 0, // Added CDJs to initial inquiry
     tasks: [
       { id: "task1", name: "Rendering", completed: false },
       { id: "task2", name: "Contract", completed: false },
@@ -202,6 +203,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             // CO2 Tanks: If CO2 tanks are needed (quantity > 0), add a task for sourcing them.
             if (inq.co2Tanks > 0) {
                 newEventTasks.push({ id: `event-task-co2-${Date.now()}`, name: `Source ${inq.co2Tanks} CO2 Tanks`, completed: false });
+            }
+
+            // CDJs: If CDJs are needed (quantity > 2), add a task for sourcing them.
+            if (inq.cdjs > 2) {
+                newEventTasks.push({ id: `event-task-cdjs-${Date.now()}`, name: `Source ${inq.cdjs} CDJs`, completed: false });
             }
 
             // Add a default task if no specific ones are generated (e.g., if everything is provided)

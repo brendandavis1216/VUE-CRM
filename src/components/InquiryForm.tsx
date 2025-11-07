@@ -32,6 +32,7 @@ const formSchema = z.object({
   gates: z.boolean().default(false),
   security: z.boolean().default(false),
   co2Tanks: z.coerce.number().min(0, { message: "CO2 Tanks cannot be negative." }).default(0), // Added CO2 Tanks
+  cdjs: z.coerce.number().min(0, { message: "CDJs cannot be negative." }).default(0), // Added CDJs
 });
 
 type InquiryFormValues = z.infer<typeof formSchema>;
@@ -58,6 +59,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
       gates: false,
       security: false,
       co2Tanks: 0, // Default for new inquiries
+      cdjs: 0, // Default for new inquiries
       ...defaultValues, // Spread defaultValues last to override initial defaults if provided
     },
   });
@@ -246,7 +248,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
               </FormItem>
             )}
           />
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4"> {/* Removed col-span-2 */}
+          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
             <FormControl>
               <Checkbox
                 checked={isPowerProvidedChecked}
@@ -265,6 +267,19 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
                 <FormLabel className="block font-semibold text-black dark:text-white">CO2 Tanks</FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="e.g., 4" {...field} className="bg-input text-foreground border-border" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="cdjs"
+            render={({ field }) => (
+              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                <FormLabel className="block font-semibold text-black dark:text-white">CDJs</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="e.g., 3" {...field} className="bg-input text-foreground border-border" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
