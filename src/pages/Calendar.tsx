@@ -13,7 +13,10 @@ const CalendarPage = () => {
   const { events } = useAppContext();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  const eventDays = events.map(event => event.eventDate);
+  // Filter out any invalid dates before passing them to modifiers
+  const eventDays = events
+    .map(event => event.eventDate)
+    .filter(date => date instanceof Date && !isNaN(date.getTime()));
 
   const modifiers = {
     event: eventDays,

@@ -39,20 +39,32 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
     // Special handling for events and inquiries to parse Date objects
     if (key === "appEvents" && Array.isArray(storedData)) {
       return storedData.map(event => {
-        const date = new Date(event.eventDate);
-        return {
-          ...event,
-          eventDate: isNaN(date.getTime()) ? new Date() : date, // Default to new Date() if invalid
-        };
+        let date: Date;
+        if (typeof event.eventDate === 'string') {
+          date = new Date(event.eventDate);
+        } else {
+          date = new Date(); // Default if not a string
+        }
+        if (isNaN(date.getTime())) {
+          console.warn(`Invalid eventDate found for event ID ${event.id || 'unknown'}. Defaulting to current date.`);
+          return { ...event, eventDate: new Date() };
+        }
+        return { ...event, eventDate: date };
       }) as T;
     }
     if (key === "appInquiries" && Array.isArray(storedData)) {
       return storedData.map(inquiry => {
-        const date = new Date(inquiry.inquiryDate);
-        return {
-          ...inquiry,
-          inquiryDate: isNaN(date.getTime()) ? new Date() : date, // Default to new Date() if invalid
-        };
+        let date: Date;
+        if (typeof inquiry.inquiryDate === 'string') {
+          date = new Date(inquiry.inquiryDate);
+        } else {
+          date = new Date(); // Default if not a string
+        }
+        if (isNaN(date.getTime())) {
+          console.warn(`Invalid inquiryDate found for inquiry ID ${inquiry.id || 'unknown'}. Defaulting to current date.`);
+          return { ...inquiry, inquiryDate: new Date() };
+        }
+        return { ...inquiry, inquiryDate: date };
       }) as T;
     }
     return storedData;
