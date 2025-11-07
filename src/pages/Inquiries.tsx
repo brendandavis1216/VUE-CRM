@@ -109,7 +109,7 @@ const InquiriesPage = () => {
                     </div>
 
                     <div className="space-y-2 mt-4">
-                      <h3 className="font-semibold text-white">Progress: {Math.round(inquiry.progress)}%</h3>
+                      <h3 className="font-semibold text-white">Tasks:</h3> {/* Changed to "Tasks:" for clarity */}
                       <div className="grid grid-cols-1 gap-2 mt-2">
                         {inquiry.tasks.map((task) => (
                           <div key={task.id} className="flex items-center space-x-2">
