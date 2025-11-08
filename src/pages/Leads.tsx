@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, Upload, Pencil, Trash2, MoreHorizontal } from "lucide-react"; // Import MoreHorizontal icon
+import { Upload, Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,23 +22,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"; // Import AlertDialog components
+} from "@/components/ui/alert-dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // Import DropdownMenu components
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"; // Import Accordion components
 
 const LeadsPage = () => {
   const { leads, fetchLeads, updateLead, deleteAllLeads, deleteLead } = useAppContext();
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false); // Renamed for clarity
-  const [isDeleteIndividualDialogOpen, setIsDeleteIndividualDialogOpen] = useState(false); // State for individual delete confirmation
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
+  const [isDeleteIndividualDialogOpen, setIsDeleteIndividualDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null); // State to hold lead for individual deletion
+  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
 
   useEffect(() => {
     fetchLeads();
@@ -54,7 +53,6 @@ const LeadsPage = () => {
     const validStatuses: LeadStatus[] = ['Interested', 'General', 'Not Interested'];
 
     leads.forEach(lead => {
-      // Ensure lead.status is a valid LeadStatus, default to 'General' if not
       const status: LeadStatus = validStatuses.includes(lead.status)
         ? lead.status
         : 'General';
@@ -81,7 +79,7 @@ const LeadsPage = () => {
 
   const handleDeleteAllLeads = async () => {
     await deleteAllLeads();
-    setIsDeleteAllDialogOpen(false); // Close the dialog after deletion
+    setIsDeleteAllDialogOpen(false);
   };
 
   const handleConfirmDeleteIndividualLead = async () => {
@@ -99,62 +97,61 @@ const LeadsPage = () => {
         <p className="text-muted-foreground">No leads in this category.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {leadsList.map((lead) => (
-            <Card key={lead.id} className="bg-card text-card-foreground border-border">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-medium">{lead.name}</CardTitle>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+          <Accordion type="single" collapsible className="w-full">
+            {leadsList.map((lead) => (
+              <Card key={lead.id} className="mb-4 bg-card text-card-foreground border-border">
+                <AccordionItem value={lead.id} className="border-none">
+                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
+                    <CardTitle className="text-lg font-medium text-card-foreground">{lead.name}</CardTitle>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                      onClick={(e) => e.stopPropagation()} // Prevent card click if any
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent accordion from toggling
+                        handleEditClick(lead);
+                      }}
                     >
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">More actions</span>
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Edit Lead</span>
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="bg-popover text-popover-foreground border-border">
-                    <DropdownMenuItem onClick={() => handleEditClick(lead)}>
-                      <Pencil className="mr-2 h-4 w-4" /> Edit Lead
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
+                  </AccordionTrigger>
+                  <AccordionContent className="p-4 pt-0 text-sm text-card-foreground space-y-2">
+                    {lead.school && <p><strong>School:</strong> {lead.school}</p>}
+                    {lead.fraternity && <p><strong>Fraternity:</strong> {lead.fraternity}</p>}
+                    {lead.phone_number && <p><strong>Phone:</strong> <a href={`tel:${lead.phone_number}`} className="text-blue-400 hover:underline">{formatPhoneNumber(lead.phone_number)}</a></p>}
+                    {lead.instagram_handle && <p><strong>Instagram:</strong> <a href={`https://www.instagram.com/${lead.instagram_handle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{lead.instagram_handle}</a></p>}
+                    {lead.election_date && <p><strong>Election Date:</strong> {lead.election_date}</p>}
+                    {lead.notes && <p><strong>Notes:</strong> {lead.notes}</p>}
+                    <div className="flex items-center gap-2 mt-2">
+                      <Label htmlFor={`status-${lead.id}`} className="text-white">Status:</Label>
+                      <Select value={lead.status} onValueChange={(value: LeadStatus) => handleStatusChange(lead.id, value)}>
+                        <SelectTrigger id={`status-${lead.id}`} className="w-[180px] bg-input text-foreground border-border">
+                          <SelectValue placeholder="Change status" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover text-popover-foreground border-border">
+                          <SelectItem value="General">General</SelectItem>
+                          <SelectItem value="Interested">Interested</SelectItem>
+                          <SelectItem value="Not Interested">Not Interested</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="mt-4 w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       onClick={() => {
                         setLeadToDelete(lead);
                         setIsDeleteIndividualDialogOpen(true);
                       }}
                     >
                       <Trash2 className="mr-2 h-4 w-4" /> Delete Lead
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {lead.school && <p><strong>School:</strong> {lead.school}</p>}
-                {lead.fraternity && <p><strong>Fraternity:</strong> {lead.fraternity}</p>}
-                {lead.phone_number && <p><strong>Phone:</strong> <a href={`tel:${lead.phone_number}`} className="text-blue-400 hover:underline">{formatPhoneNumber(lead.phone_number)}</a></p>}
-                {lead.instagram_handle && <p><strong>Instagram:</strong> <a href={`https://www.instagram.com/${lead.instagram_handle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{lead.instagram_handle}</a></p>}
-                {lead.election_date && <p><strong>Election Date:</strong> {lead.election_date}</p>} {/* Display as string */}
-                {lead.notes && <p><strong>Notes:</strong> {lead.notes}</p>}
-                <div className="flex items-center gap-2 mt-2">
-                  <Label htmlFor={`status-${lead.id}`} className="text-white">Status:</Label>
-                  <Select value={lead.status} onValueChange={(value: LeadStatus) => handleStatusChange(lead.id, value)}>
-                    <SelectTrigger id={`status-${lead.id}`} className="w-[180px] bg-input text-foreground border-border">
-                      <SelectValue placeholder="Change status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover text-popover-foreground border-border">
-                      <SelectItem value="General">General</SelectItem>
-                      <SelectItem value="Interested">Interested</SelectItem>
-                      <SelectItem value="Not Interested">Not Interested</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    </Button>
+                  </AccordionContent>
+                </AccordionItem>
+              </Card>
+            ))}
+          </Accordion>
         </div>
       )}
     </div>
