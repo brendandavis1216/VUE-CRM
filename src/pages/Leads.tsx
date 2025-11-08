@@ -11,7 +11,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Lead, LeadStatus } from "@/types/app";
 import { LeadCSVUpload } from "@/components/LeadCSVUpload";
 import { LeadEditForm } from "@/components/LeadEditForm";
-import { formatPhoneNumber, stringToHslColor } from "@/lib/utils";
+import { formatPhoneNumber } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +36,27 @@ import { Separator } from "@/components/ui/separator";
 type SortBy = 'none' | 'name' | 'school' | 'fraternity' | 'status';
 type SortOrder = 'asc' | 'desc';
 
+// Helper functions for localStorage
+const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
+  if (typeof window === 'undefined') return defaultValue;
+  try {
+    const storedValue = localStorage.getItem(key);
+    return storedValue ? JSON.parse(storedValue) : defaultValue;
+  } catch (error) {
+    console.error(`Error loading ${key} from localStorage:`, error);
+    return defaultValue;
+  }
+};
+
+const saveToLocalStorage = <T>(key: string, value: T) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`Error saving ${key} to localStorage:`, error);
+  }
+};
+
 const LeadsPage = () => {
   const { leads, fetchLeads, updateLead, deleteAllLeads, deleteLead, addInquiry } = useAppContext();
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -48,11 +69,11 @@ const LeadsPage = () => {
   const [isStartInquiryDialogOpen, setIsStartInquiryDialogOpen] = useState(false);
   const [leadForInquiry, setLeadForInquiry] = useState<Lead | null>(null);
 
-  // State for filtering and sorting
-  const [filterSchool, setFilterSchool] = useState("");
-  const [filterFraternity, setFilterFraternity] = useState("");
-  const [sortBy, setSortBy] = useState<SortBy>('none');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  // State for filtering and sorting, initialized from localStorage
+  const [filterSchool, setFilterSchool] = useState<string>(() => loadFromLocalStorage('leadsFilterSchool', ''));
+  const [filterFraternity, setFilterFraternity] = useState<string>(() => loadFromLocalStorage('leadsFilterFraternity', ''));
+  const [sortBy, setSortBy] = useState<SortBy>(() => loadFromLocalStorage('leadsSortBy', 'none'));
+  const [sortOrder, setSortOrder] = useState<SortOrder>(() => loadFromLocalStorage('leadsSortOrder', 'asc'));
 
   useEffect(() => {
     fetchLeads();
@@ -68,6 +89,12 @@ const LeadsPage = () => {
     setFilterFraternity(newFilterFraternity);
     setSortBy(newSortBy);
     setSortOrder(newSortOrder);
+
+    // Save to localStorage
+    saveToLocalStorage('leadsFilterSchool', newFilterSchool);
+    saveToLocalStorage('leadsFilterFraternity', newFilterFraternity);
+    saveToLocalStorage('leadsSortBy', newSortBy);
+    saveToLocalStorage('leadsSortOrder', newSortOrder);
   };
 
   const filteredAndSortedLeads = useMemo(() => {
