@@ -8,13 +8,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const GOOGLE_CLIENT_ID = Deno.env.get('VITE_GOOGLE_CLIENT_ID');
+// Correctly access environment variables without the VITE_ prefix for Edge Functions
+const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID');
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+const SUPABASE_JWT_SECRET = Deno.env.get('SUPABASE_JWT_SECRET'); // Also ensure JWT secret is fetched
 
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_JWT_SECRET) {
   console.error('Missing environment variables for Google Calendar integration.');
+  // Return a proper error response instead of exiting, so the client gets feedback
+  serve(async () => new Response(JSON.stringify({ error: 'Server configuration error: Missing environment variables' }), {
+    status: 500,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  }));
+  // Exit after serving the error response
   Deno.exit(1);
 }
 
@@ -41,7 +49,7 @@ serve(async (req) => {
       const token = authHeader.replace('Bearer ', '');
       const { payload } = await jose.jwtVerify(
         token,
-        jose.base64url.decode(Deno.env.get('SUPABASE_JWT_SECRET')!)
+        jose.base64url.decode(SUPABASE_JWT_SECRET!) // Use the fetched SUPABASE_JWT_SECRET
       );
       userId = payload.sub as string;
     } catch (e) {
