@@ -52,11 +52,13 @@ serve(async (req) => {
   console.log('DEBUG: Received path in Edge Function:', path);
 
   const authHeader = req.headers.get('Authorization');
+  console.log('DEBUG: Authorization Header:', authHeader ? 'Present' : 'Missing');
   let userId: string | null = null;
 
   if (authHeader) {
     try {
       const token = authHeader.replace('Bearer ', '');
+      console.log('DEBUG: Extracted Token (first 20 chars):', token.substring(0, 20) + '...');
       const { payload } = await jose.jwtVerify(
         token,
         jwtVerificationKey, // Use the pre-encoded key
@@ -65,6 +67,7 @@ serve(async (req) => {
         }
       );
       userId = payload.sub as string;
+      console.log('DEBUG: JWT Verified. User ID:', userId);
     } catch (e) {
       console.error('JWT verification failed:', e);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -72,6 +75,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+  } else {
+    console.log('DEBUG: No Authorization header found. User is not authenticated via JWT.');
   }
 
   const supabaseClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
@@ -140,6 +145,7 @@ serve(async (req) => {
   switch (path) {
     case '/auth': {
       if (!userId) {
+        console.log('DEBUG: /auth endpoint: userId is null, returning Unauthorized.');
         return new Response(JSON.stringify({ error: 'User not authenticated' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
