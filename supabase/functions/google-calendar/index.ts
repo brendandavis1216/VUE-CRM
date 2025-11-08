@@ -18,7 +18,7 @@ console.log(`GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
 console.log(`GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_URL: ${SUPABASE_URL ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'}`);
-console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET' : 'NOT SET'}`);
+console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET (length: ' + JWT_SECRET.length + ')' : 'NOT SET'}`); // Added length check here
 
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY || !JWT_SECRET) {
   console.error('Missing environment variables for Google Calendar integration. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY, and JWT_SECRET are set as Supabase secrets.');
