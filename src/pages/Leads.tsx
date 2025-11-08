@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Upload, Pencil, Trash2, ChevronDown } from "lucide-react";
+import { Upload, Pencil, Trash2, ChevronDown, PlusCircle } from "lucide-react"; // Import PlusCircle for the new button
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,18 +29,23 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { LeadFilterSort } from "@/components/LeadFilterSort"; // Import the new component
+import { LeadFilterSort } from "@/components/LeadFilterSort";
+import { InquiryForm } from "@/components/InquiryForm"; // Import InquiryForm
 
 type SortBy = 'none' | 'name' | 'school' | 'fraternity' | 'status';
 type SortOrder = 'asc' | 'desc';
 
 const LeadsPage = () => {
-  const { leads, fetchLeads, updateLead, deleteAllLeads, deleteLead } = useAppContext();
+  const { leads, fetchLeads, updateLead, deleteAllLeads, deleteLead, addInquiry } = useAppContext();
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteIndividualDialogOpen, setIsDeleteIndividualDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+
+  // State for starting inquiry from a lead
+  const [isStartInquiryDialogOpen, setIsStartInquiryDialogOpen] = useState(false);
+  const [leadForInquiry, setLeadForInquiry] = useState<Lead | null>(null);
 
   // State for filtering and sorting
   const [filterSchool, setFilterSchool] = useState("");
@@ -124,7 +129,7 @@ const LeadsPage = () => {
 
     const validStatuses: LeadStatus[] = ['Interested', 'General', 'Not Interested'];
 
-    filteredAndSortedLeads.forEach(lead => { // Use filteredAndSortedLeads here
+    filteredAndSortedLeads.forEach(lead => {
       const status: LeadStatus = validStatuses.includes(lead.status)
         ? lead.status
         : 'General';
@@ -132,7 +137,7 @@ const LeadsPage = () => {
     });
 
     return groups;
-  }, [filteredAndSortedLeads]); // Depend on filteredAndSortedLeads
+  }, [filteredAndSortedLeads]);
 
   const handleEditClick = (lead: Lead) => {
     setSelectedLead(lead);
@@ -155,6 +160,23 @@ const LeadsPage = () => {
       setIsDeleteIndividualDialogOpen(false);
       setLeadToDelete(null);
     }
+  };
+
+  const handleStartInquiryClick = (lead: Lead) => {
+    setLeadForInquiry(lead);
+    setIsStartInquiryDialogOpen(true);
+  };
+
+  const handleInquirySubmit = (newInquiryData: Parameters<typeof addInquiry>[0]) => {
+    if (leadForInquiry) {
+      // Pass leadForInquiry.id as existingClientId if you want to link the inquiry to a client derived from this lead
+      // For now, addInquiry will create a new client if one doesn't exist based on the inquiry data.
+      addInquiry(newInquiryData);
+    } else {
+      addInquiry(newInquiryData);
+    }
+    setIsStartInquiryDialogOpen(false);
+    setLeadForInquiry(null);
   };
 
   const renderLeadSection = (status: LeadStatus, title: string, leadsList: Lead[]) => (
@@ -207,9 +229,17 @@ const LeadsPage = () => {
                       </Select>
                     </div>
                     <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-4 w-full bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                      onClick={() => handleStartInquiryClick(lead)}
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" /> Start Inquiry
+                    </Button>
+                    <Button
                       variant="destructive"
                       size="sm"
-                      className="mt-4 w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      className="mt-2 w-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       onClick={() => {
                         setLeadToDelete(lead);
                         setIsDeleteIndividualDialogOpen(true);
@@ -300,6 +330,26 @@ const LeadsPage = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+      )}
+
+      {leadForInquiry && (
+        <Dialog open={isStartInquiryDialogOpen} onOpenChange={setIsStartInquiryDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+            <DialogHeader>
+              <DialogTitle className="text-white">Start New Inquiry for {leadForInquiry.name}</DialogTitle>
+            </DialogHeader>
+            <InquiryForm
+              onSubmit={handleInquirySubmit}
+              onClose={() => setIsStartInquiryDialogOpen(false)}
+              defaultValues={{
+                school: leadForInquiry.school || "",
+                fraternity: leadForInquiry.fraternity || "",
+                mainContact: leadForInquiry.name,
+                phoneNumber: leadForInquiry.phone_number || "",
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
