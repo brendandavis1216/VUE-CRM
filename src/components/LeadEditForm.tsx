@@ -16,10 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"; // Import Popover components
-import { Calendar } from "@/components/ui/calendar"; // Import Calendar component
-import { CalendarIcon } from "lucide-react"; // Import CalendarIcon
-import { format } from "date-fns"; // Import format for date display
 import { cn, formatPhoneNumber } from "@/lib/utils"; // Import cn and formatPhoneNumber
 import { Lead, LeadStatus } from "@/types/app";
 
@@ -31,7 +27,7 @@ const formSchema = z.object({
   instagram_handle: z.string().optional().or(z.literal("")), // New field
   status: z.enum(["General", "Interested", "Not Interested"]),
   notes: z.string().optional().or(z.literal("")),
-  election_date: z.date().optional().nullable(), // New field, optional date
+  election_date: z.string().optional().or(z.literal("")), // Changed to string
 });
 
 type LeadFormValues = z.infer<typeof formSchema>;
@@ -53,7 +49,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
       instagram_handle: lead.instagram_handle || "", // Set default
       status: lead.status,
       notes: lead.notes || "",
-      election_date: lead.election_date ? new Date(lead.election_date) : null, // Parse date string
+      election_date: lead.election_date || "", // Set default as string
     },
   });
 
@@ -66,7 +62,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
       instagram_handle: values.instagram_handle || undefined, // Pass new field
       status: values.status,
       notes: values.notes || undefined,
-      election_date: values.election_date ? format(values.election_date, 'yyyy-MM-dd') : undefined, // Format date back to string
+      election_date: values.election_date || undefined, // Pass as string
     });
     onClose();
   }
@@ -175,36 +171,11 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
           control={form.control}
           name="election_date"
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem>
               <FormLabel className="text-white">Election Date</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "w-full pl-3 text-left font-normal bg-input text-foreground border-border",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-popover text-popover-foreground border-border" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value || undefined}
-                    onSelect={field.onChange}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+              <FormControl>
+                <Input placeholder="e.g., November 2024" {...field} className="bg-input text-foreground border-border" />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

@@ -12,7 +12,6 @@ import Papa from "papaparse";
 import { Lead } from "@/types/app";
 import { useAppContext } from "@/context/AppContext";
 import { toast } from "sonner";
-import { format } from "date-fns"; // Import format from date-fns
 
 interface LeadCSVUploadProps {
   onUploadSuccess: () => void;
@@ -27,23 +26,8 @@ interface ParsedLeadRow {
   instagram_handle?: string | null;
   status?: string;
   notes?: string | null;
-  election_date?: string | null; // This will store 'YYYY-MM-DD' or null
+  election_date?: string | null; // This will now store the raw string or null
 }
-
-// Helper function to parse flexible date strings
-const parseFlexibleDate = (dateString: string | null | undefined): string | null => {
-  if (!dateString) return null;
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return null; // Invalid date
-    }
-    return format(date, 'yyyy-MM-dd'); // Format to YYYY-MM-DD
-  } catch (e) {
-    console.warn(`Could not parse date string: "${dateString}"`, e);
-    return null;
-  }
-};
 
 export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, onClose }) => {
   const { addLeads } = useAppContext();
@@ -95,7 +79,7 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
           instagram_handle: row.instagram_handle || null, // Convert empty string to null
           status: row.status || 'General', // Default status
           notes: row.notes || null, // Convert empty string to null
-          election_date: parseFlexibleDate(row.election_date), // Use the new flexible date parser
+          election_date: row.election_date || null, // Directly assign as string or null
         })).filter(row => row.name.trim() !== ''); // Filter out rows with empty names
 
         if (data.length === 0) {
