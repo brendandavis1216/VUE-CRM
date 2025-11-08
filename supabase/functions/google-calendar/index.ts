@@ -13,17 +13,13 @@ const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID');
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-const SUPABASE_JWT_SECRET = Deno.env.get('SUPABASE_JWT_SECRET'); // Also ensure JWT secret is fetched
+const SUPABASE_JWT_SECRET = Deno.env.get('SUPABASE_JWT_SECRET');
 
+// CRITICAL: Check for missing environment variables at the top level
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_JWT_SECRET) {
-  console.error('Missing environment variables for Google Calendar integration.');
-  // Return a proper error response instead of exiting, so the client gets feedback
-  serve(async () => new Response(JSON.stringify({ error: 'Server configuration error: Missing environment variables' }), {
-    status: 500,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  }));
-  // Exit after serving the error response
-  Deno.exit(1);
+  console.error('Missing environment variables for Google Calendar integration. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_JWT_SECRET are set as Supabase secrets.');
+  // Throw an error to prevent the function from running with missing critical config
+  throw new Error('Server configuration error: Missing environment variables for Google Calendar integration.');
 }
 
 const oAuth2Client = new google.auth.OAuth2(
@@ -49,7 +45,7 @@ serve(async (req) => {
       const token = authHeader.replace('Bearer ', '');
       const { payload } = await jose.jwtVerify(
         token,
-        jose.base64url.decode(SUPABASE_JWT_SECRET!) // Use the fetched SUPABASE_JWT_SECRET
+        jose.base64url.decode(SUPABASE_JWT_SECRET!)
       );
       userId = payload.sub as string;
     } catch (e) {
