@@ -493,9 +493,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
 
     const leadsWithUserId = newLeadsData.map(lead => ({
-      ...lead,
-      user_id: user.id,
+      name: lead.name,
+      phone_number: lead.phone_number,
+      school: lead.school,
+      fraternity: lead.fraternity,
+      instagram_handle: lead.instagram_handle,
       status: lead.status || 'General', // Ensure status defaults to 'General'
+      notes: lead.notes,
+      election_date: lead.election_date,
+      user_id: user.id,
     }));
 
     const { data, error } = await supabase
