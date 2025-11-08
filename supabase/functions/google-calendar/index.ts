@@ -16,6 +16,14 @@ const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 const SUPABASE_JWT_SECRET = Deno.env.get('SUPABASE_JWT_SECRET');
 
 // CRITICAL: Check for missing environment variables at the top level
+// Adding explicit logging for debugging
+console.log('Edge Function Environment Variables:');
+console.log(`GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
+console.log(`GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
+console.log(`SUPABASE_URL: ${SUPABASE_URL ? 'SET' : 'NOT SET'}`);
+console.log(`SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'}`);
+console.log(`SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET ? 'SET' : 'NOT SET'}`); // DO NOT log the actual secret value
+
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_JWT_SECRET) {
   console.error('Missing environment variables for Google Calendar integration. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_JWT_SECRET are set as Supabase secrets.');
   // Throw an error to prevent the function from running with missing critical config
