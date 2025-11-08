@@ -36,8 +36,8 @@ serve(async (req) => {
   }
 
   const url = new URL(req.url);
-  const path = url.pathname.replace('/functions/v1/google-calendar', '');
-  console.log('DEBUG: Received path in Edge Function:', path); // Added debug log here
+  // Adjusted path replacement to correctly get '/auth' from '/google-calendar/auth'
+  const path = url.pathname.replace('/google-calendar', ''); 
 
   const authHeader = req.headers.get('Authorization');
   let userId: string | null = null;
