@@ -26,7 +26,7 @@ if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANO
 }
 
 const REDIRECT_URI = `${SUPABASE_URL}/functions/v1/google-calendar/callback`;
-console.log('DEBUG: Constructed REDIRECT_URI:', REDIRECT_URI); // Added debug log here
+console.log('DEBUG: Constructed REDIRECT_URI:', REDIRECT_URI);
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -108,7 +108,6 @@ serve(async (req) => {
         access_token: newTokens.access_token,
         expires_at: expiresAt.toISOString(),
         updated_at: new Date().toISOString(),
-        // refresh_token is often not returned on refresh, so we don't update it unless explicitly provided
         ...(newTokens.refresh_token && { refresh_token: newTokens.refresh_token }),
       })
       .eq('user_id', uid);
@@ -120,7 +119,7 @@ serve(async (req) => {
 
     return {
       access_token: newTokens.access_token,
-      refresh_token: newTokens.refresh_token || refreshToken, // Use new if provided, else old
+      refresh_token: newTokens.refresh_token || refreshToken,
       expires_at: expiresAt,
     };
   };
@@ -134,10 +133,15 @@ serve(async (req) => {
         });
       }
 
+      const { clientOrigin } = await req.json(); // Get clientOrigin from request body
+
       const scopes = [
         'https://www.googleapis.com/auth/calendar.events',
         'https://www.googleapis.com/auth/calendar.readonly',
       ];
+
+      // Encode both userId and clientOrigin into the state parameter
+      const statePayload = btoa(JSON.stringify({ userId, clientOrigin }));
 
       const params = new URLSearchParams({
         client_id: GOOGLE_CLIENT_ID!,
@@ -146,7 +150,7 @@ serve(async (req) => {
         scope: scopes.join(' '),
         access_type: 'offline',
         prompt: 'consent',
-        state: userId,
+        state: statePayload, // Use the encoded state
       });
 
       const authorizeUrl = `${GOOGLE_AUTH_URL}?${params.toString()}`;
@@ -162,6 +166,20 @@ serve(async (req) => {
 
       if (!code || !state) {
         return new Response(JSON.stringify({ error: 'Missing code or state parameter' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      let userIdFromState: string;
+      let clientOriginFromState: string;
+      try {
+        const decodedState = JSON.parse(atob(state));
+        userIdFromState = decodedState.userId;
+        clientOriginFromState = decodedState.clientOrigin;
+      } catch (e) {
+        console.error('Error decoding state parameter:', e);
+        return new Response(JSON.stringify({ error: 'Invalid state parameter' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -194,7 +212,7 @@ serve(async (req) => {
         const { data: existingTokens, error: fetchError } = await supabaseClient
           .from('user_google_tokens')
           .select('id')
-          .eq('user_id', state)
+          .eq('user_id', userIdFromState)
           .single();
 
         if (fetchError && fetchError.code !== 'PGRST116') {
@@ -213,14 +231,14 @@ serve(async (req) => {
               token_type: tokens.token_type,
               updated_at: new Date().toISOString(),
             })
-            .eq('user_id', state);
+            .eq('user_id', userIdFromState);
 
           if (updateError) throw updateError;
         } else {
           const { error: insertError } = await supabaseClient
             .from('user_google_tokens')
             .insert({
-              user_id: state,
+              user_id: userIdFromState,
               access_token: tokens.access_token,
               refresh_token: tokens.refresh_token,
               expires_at: expiresAt.toISOString(),
@@ -231,10 +249,11 @@ serve(async (req) => {
           if (insertError) throw insertError;
         }
 
+        // Redirect back to the client application's origin
         return new Response(null, {
           status: 302,
           headers: {
-            Location: `${url.origin}/calendar?google_auth_success=true`,
+            Location: `${clientOriginFromState}/calendar?google_auth_success=true`,
             ...corsHeaders,
           },
         });

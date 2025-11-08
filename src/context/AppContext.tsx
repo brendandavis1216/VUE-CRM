@@ -598,6 +598,8 @@ const initiateGoogleCalendarAuth = useCallback(async () => {
   }
 
   const jwt = data.session.access_token;
+  const clientOrigin = window.location.origin; // Get the client's origin
+
   try {
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/google-calendar/auth`, {
       method: 'POST',
@@ -605,8 +607,7 @@ const initiateGoogleCalendarAuth = useCallback(async () => {
         Authorization: `Bearer ${jwt}`,
         'Content-Type': 'application/json',
       },
-      // The redirectUri is handled by the Edge Function itself, no need to send it here.
-      // The Edge Function will use the SUPABASE_URL/functions/v1/google-calendar/callback
+      body: JSON.stringify({ clientOrigin }), // Send clientOrigin in the body
     });
 
     if (!res.ok) {
