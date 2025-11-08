@@ -1,5 +1,3 @@
-import 'node:util'; // Ensure Node.js util polyfills are loaded for compatibility
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import * as jose from 'https://esm.sh/jose@5.6.3';
@@ -48,7 +46,7 @@ serve(async (req) => {
       const token = authHeader.replace('Bearer ', '');
       const { payload } = await jose.jwtVerify(
         token,
-        jose.base64url.decode(JWT_SECRET!)
+        new TextEncoder().encode(JWT_SECRET!) // Changed this line
       );
       userId = payload.sub as string;
     } catch (e) {
