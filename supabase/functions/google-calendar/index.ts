@@ -16,7 +16,6 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Move environment variable checks inside the serve function
   const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_OAUTH_CLIENT_ID');
   const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET');
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -174,10 +173,14 @@ serve(async (req) => {
     }
 
     case '/callback': {
+      console.log('DEBUG: Entering /callback endpoint.');
       const code = url.searchParams.get('code');
       const state = url.searchParams.get('state');
 
+      console.log(`DEBUG: Callback - Code: ${code ? 'Present' : 'Missing'}, State: ${state ? 'Present' : 'Missing'}`);
+
       if (!code || !state) {
+        console.error('ERROR: Missing code or state parameter in callback.');
         return new Response(JSON.stringify({ error: 'Missing code or state parameter' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -190,8 +193,9 @@ serve(async (req) => {
         const decodedState = JSON.parse(atob(state));
         userIdFromState = decodedState.userId;
         clientOriginFromState = decodedState.clientOrigin;
+        console.log(`DEBUG: Callback - Decoded state: userId=${userIdFromState}, clientOrigin=${clientOriginFromState}`);
       } catch (e) {
-        console.error('Error decoding state parameter:', e);
+        console.error('ERROR: Error decoding state parameter in callback:', e);
         return new Response(JSON.stringify({ error: 'Invalid state parameter' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -199,6 +203,7 @@ serve(async (req) => {
       }
 
       try {
+        console.log('DEBUG: Callback - Attempting to exchange code for tokens with Google.');
         const params = new URLSearchParams({
           client_id: GOOGLE_CLIENT_ID!,
           client_secret: GOOGLE_CLIENT_SECRET!,
@@ -213,32 +218,36 @@ serve(async (req) => {
           body: params.toString(),
         });
 
+        console.log(`DEBUG: Callback - Google Token Exchange Response Status: ${response.status}`);
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('Error exchanging code for tokens:', errorData);
+          console.error('ERROR: Error exchanging code for tokens with Google:', errorData);
           throw new Error(`Failed to get tokens: ${errorData.error_description || response.statusText}`);
         }
 
         const tokens = await response.json();
+        console.log('DEBUG: Callback - Successfully received tokens from Google.');
         const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
 
+        console.log(`DEBUG: Callback - Checking for existing tokens for user ${userIdFromState}.`);
         const { data: existingTokens, error: fetchError } = await supabaseClient
           .from('user_google_tokens')
-          .select('id')
+          .select('id, refresh_token') // Select refresh_token as well for update logic
           .eq('user_id', userIdFromState)
           .single();
 
-        if (fetchError && fetchError.code !== 'PGRST116') {
-          console.error('Error checking existing tokens:', fetchError);
+        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means "no rows found"
+          console.error('ERROR: Error checking existing tokens in DB:', fetchError);
           throw fetchError;
         }
 
         if (existingTokens) {
+          console.log('DEBUG: Callback - Existing tokens found, attempting to update.');
           const { error: updateError } = await supabaseClient
             .from('user_google_tokens')
             .update({
               access_token: tokens.access_token,
-              refresh_token: tokens.refresh_token || existingTokens.refresh_token,
+              refresh_token: tokens.refresh_token || existingTokens.refresh_token, // Preserve existing refresh token if new one isn't provided
               expires_at: expiresAt.toISOString(),
               scope: tokens.scope,
               token_type: tokens.token_type,
@@ -246,8 +255,13 @@ serve(async (req) => {
             })
             .eq('user_id', userIdFromState);
 
-          if (updateError) throw updateError;
+          if (updateError) {
+            console.error('ERROR: Error updating tokens in DB:', updateError);
+            throw updateError;
+          }
+          console.log('DEBUG: Callback - Tokens updated successfully in DB.');
         } else {
+          console.log('DEBUG: Callback - No existing tokens found, attempting to insert new tokens.');
           const { error: insertError } = await supabaseClient
             .from('user_google_tokens')
             .insert({
@@ -259,9 +273,14 @@ serve(async (req) => {
               token_type: tokens.token_type,
             });
 
-          if (insertError) throw insertError;
+          if (insertError) {
+            console.error('ERROR: Error inserting tokens into DB:', insertError);
+            throw insertError;
+          }
+          console.log('DEBUG: Callback - New tokens inserted successfully into DB.');
         }
 
+        console.log(`DEBUG: Callback - Redirecting to client origin: ${clientOriginFromState}/calendar?google_auth_success=true`);
         return new Response(null, {
           status: 302,
           headers: {
@@ -270,7 +289,7 @@ serve(async (req) => {
           },
         });
       } catch (error) {
-        console.error('Error in Google callback:', error);
+        console.error('ERROR: Unhandled error in Google callback:', error);
         return new Response(JSON.stringify({ error: `Failed to authenticate with Google: ${error instanceof Error ? error.message : String(error)}` }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
