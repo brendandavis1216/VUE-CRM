@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Upload, Pencil, Trash2 } from "lucide-react";
+import { Upload, Pencil, Trash2, ChevronDown } from "lucide-react"; // Import ChevronDown icon
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,7 +28,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"; // Import Accordion components
+} from "@/components/ui/accordion";
 
 const LeadsPage = () => {
   const { leads, fetchLeads, updateLead, deleteAllLeads, deleteLead } = useAppContext();
@@ -101,20 +101,24 @@ const LeadsPage = () => {
             {leadsList.map((lead) => (
               <Card key={lead.id} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={lead.id} className="border-none">
-                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
+                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline [&>svg]:hidden group"> {/* Hide default SVG chevron */}
                     <CardTitle className="text-lg font-medium text-card-foreground">{lead.name}</CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent accordion from toggling
-                        handleEditClick(lead);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                      <span className="sr-only">Edit Lead</span>
-                    </Button>
+                    <div className="flex items-center gap-2"> {/* Group edit button and custom chevron */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion from toggling
+                          handleEditClick(lead);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Edit Lead</span>
+                      </Button>
+                      {/* Custom Chevron for the accordion toggle */}
+                      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                    </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground space-y-2">
                     {lead.school && <p><strong>School:</strong> {lead.school}</p>}
