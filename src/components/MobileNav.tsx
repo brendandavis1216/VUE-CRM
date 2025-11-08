@@ -9,9 +9,9 @@ export const MobileNav = () => {
   const navItems = [
     { name: "Clients", icon: Users, path: "/clients" },
     { name: "Inquiries", icon: BriefcaseBusiness, path: "/inquiries" },
-    { name: "Leads", icon: Lightbulb, path: "/leads" }, // New Leads item
     { name: "Events", icon: ClipboardList, path: "/events" },
     { name: "Calendar", icon: CalendarDays, path: "/calendar" },
+    { name: "Leads", icon: Lightbulb, path: "/leads" }, // Moved Leads item
     { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   ];
 
