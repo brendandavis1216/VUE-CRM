@@ -101,17 +101,12 @@
   }
 }
 
-/* More aggressive override for all text within the custom theme */
-.supabase-auth-ui-custom-theme * {
-  color: hsl(0 0% 100%) !important;
-}
-
 /* Custom override for Supabase Auth UI input placeholders */
 .supabase-auth-ui-custom-theme input::placeholder {
   color: hsl(0 0% 100%) !important; /* Force placeholder text to white */
 }
 
-/* Custom override for Supabase Auth UI labels */
-.supabase-auth-ui-custom-theme form label {
-  color: hsl(0 0% 100%) !important;
+/* Highly specific override for Supabase Auth UI labels */
+.supabase-auth-ui-custom-theme label {
+  color: white !important;
 }
