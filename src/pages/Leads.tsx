@@ -11,7 +11,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Lead, LeadStatus } from "@/types/app";
 import { LeadCSVUpload } from "@/components/LeadCSVUpload";
 import { LeadEditForm } from "@/components/LeadEditForm";
-import { formatPhoneNumber, stringToHslColor } from "@/lib/utils"; // Import stringToHslColor
+import { formatPhoneNumber, stringToHslColor } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/accordion";
 import { LeadFilterSort } from "@/components/LeadFilterSort";
 import { InquiryForm } from "@/components/InquiryForm";
-import { Separator } from "@/components/ui/separator"; // Import Separator
+import { Separator } from "@/components/ui/separator";
 
 type SortBy = 'none' | 'name' | 'school' | 'fraternity' | 'status';
 type SortOrder = 'asc' | 'desc';
@@ -121,7 +121,7 @@ const LeadsPage = () => {
     return currentLeads;
   }, [leads, filterSchool, filterFraternity, sortBy, sortOrder]);
 
-  const groupedLeadsByStatus = useMemo(() => { // Renamed to avoid conflict with school grouping
+  const groupedLeadsByStatus = useMemo(() => {
     const groups: { [key in LeadStatus]: Lead[] } = {
       'Interested': [],
       'General': [],
@@ -141,7 +141,7 @@ const LeadsPage = () => {
   }, [filteredAndSortedLeads]);
 
   const groupedLeadsBySchool = useMemo(() => {
-    if (sortBy !== 'school') return {}; // Only group by school if explicitly sorted by school
+    if (sortBy !== 'school') return {};
 
     const groups: { [schoolName: string]: Lead[] } = {};
     filteredAndSortedLeads.forEach(lead => {
@@ -310,7 +310,7 @@ const LeadsPage = () => {
             <div className="space-y-8">
               {Object.entries(groupedLeadsBySchool).map(([schoolName, schoolLeads]) => (
                 <div key={schoolName} className="space-y-4">
-                  <h2 className="text-2xl font-bold mb-2" style={{ color: stringToHslColor(schoolName, 70, 70) }}>{schoolName}</h2>
+                  <h2 className="text-2xl font-bold mb-2" style={{ color: 'hsl(0, 100%, 50%)' }}>{schoolName}</h2>
                   <Separator className="my-4 bg-border" />
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {renderLeadCards(schoolLeads)}
