@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { format, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks, eachDayOfInterval, getMonth, getYear, setMonth, setYear, startOfMonth, parseISO } from "date-fns";
+import { format, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks, eachDayOfInterval, getMonth, getYear, setMonth, setYear, startOfMonth, parseISO, startOfDay, endOfDay } from "date-fns";
 import { ChevronLeft, ChevronRight, CalendarPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,8 +91,8 @@ const CalendarPage = () => {
       setSearchParams(searchParams, { replace: true });
       // Re-fetch Google events after successful connection
       fetchGoogleCalendarEvents({
-        timeMin: format(currentWeekStart, 'yyyy-MM-dd'),
-        timeMax: format(endOfWeek(currentWeekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+        timeMin: startOfDay(currentWeekStart).toISOString(),
+        timeMax: endOfDay(endOfWeek(currentWeekStart, { weekStartsOn: 1 })).toISOString(),
       });
     }
   }, [searchParams, setSearchParams, fetchGoogleCalendarEvents, currentWeekStart]);
@@ -101,8 +101,8 @@ const CalendarPage = () => {
   useEffect(() => {
     if (session) {
       fetchGoogleCalendarEvents({
-        timeMin: format(currentWeekStart, 'yyyy-MM-dd'),
-        timeMax: format(endOfWeek(currentWeekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+        timeMin: startOfDay(currentWeekStart).toISOString(), // Use startOfDay and toISOString
+        timeMax: endOfDay(endOfWeek(currentWeekStart, { weekStartsOn: 1 })).toISOString(), // Use endOfDay and toISOString
       });
     }
   }, [session, currentWeekStart, fetchGoogleCalendarEvents]);
