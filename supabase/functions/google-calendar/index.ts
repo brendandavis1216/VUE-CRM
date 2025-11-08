@@ -2,7 +2,7 @@ import 'node:util'; // Ensure Node.js util polyfills are loaded for compatibilit
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import { google } from 'https://esm.sh/googleapis@140.0.0/build/src/index.js';
+import { google } from 'https://esm.sh/googleapis@105.0.0'; // Changed version and simplified path
 import * as jose from 'https://esm.sh/jose@5.6.3';
 
 const corsHeaders = {
