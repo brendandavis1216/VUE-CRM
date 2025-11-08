@@ -25,17 +25,6 @@ if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANO
   throw new Error('Server configuration error: Missing environment variables for Google Calendar integration.');
 }
 
-// Decode the Base64 JWT_SECRET into a Uint8Array for jose.jwtVerify
-let decodedJwtSecret: Uint8Array;
-try {
-  decodedJwtSecret = new Uint8Array(Array.from(atob(JWT_SECRET!), c => c.charCodeAt(0)));
-  console.log(`Decoded JWT_SECRET length: ${decodedJwtSecret.length}`);
-} catch (e) {
-  console.error('Error decoding JWT_SECRET from Base64:', e);
-  throw new Error('Invalid JWT_SECRET format. It must be a valid Base64 string.');
-}
-
-
 const REDIRECT_URI = `${SUPABASE_URL}/functions/v1/google-calendar/callback`;
 console.log('DEBUG: Constructed REDIRECT_URI:', REDIRECT_URI);
 
@@ -58,9 +47,13 @@ serve(async (req) => {
   if (authHeader) {
     try {
       const token = authHeader.replace('Bearer ', '');
+      // Use TextEncoder to convert the plain string JWT_SECRET to Uint8Array
+      const secretKey = new TextEncoder().encode(JWT_SECRET!);
+      console.log(`DEBUG: JWT_SECRET prepared as Uint8Array for verification (length: ${secretKey.length})`);
+
       const { payload } = await jose.jwtVerify(
         token,
-        decodedJwtSecret // Use the decoded secret here
+        secretKey
       );
       userId = payload.sub as string;
     } catch (e) {
