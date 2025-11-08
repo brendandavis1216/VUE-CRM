@@ -32,6 +32,18 @@ const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_CALENDAR_API_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
 
+// Prepare the JWT secret key once outside the serve function
+let jwtVerificationKey: Uint8Array;
+try {
+  jwtVerificationKey = new TextEncoder().encode(JWT_SECRET!);
+  console.log(`DEBUG: JWT_SECRET encoded to Uint8Array for verification. Byte length: ${jwtVerificationKey.byteLength}`);
+  // Log a slice of the key to ensure it's not empty or malformed
+  console.log(`DEBUG: First 10 bytes of JWT_SECRET: ${Array.from(jwtVerificationKey.slice(0, 10)).join(',')}`);
+} catch (e) {
+  console.error('Error encoding JWT_SECRET:', e);
+  throw new Error('Failed to encode JWT_SECRET for verification.');
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,13 +59,12 @@ serve(async (req) => {
   if (authHeader) {
     try {
       const token = authHeader.replace('Bearer ', '');
-      // Use TextEncoder to convert the plain string JWT_SECRET to Uint8Array
-      const secretKey = new TextEncoder().encode(JWT_SECRET!);
-      console.log(`DEBUG: JWT_SECRET prepared as Uint8Array for verification (length: ${secretKey.length})`);
-
       const { payload } = await jose.jwtVerify(
         token,
-        secretKey
+        jwtVerificationKey, // Use the pre-encoded key
+        {
+          algorithms: ['HS256'], // Explicitly specify the algorithm
+        }
       );
       userId = payload.sub as string;
     } catch (e) {
