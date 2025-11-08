@@ -1,13 +1,16 @@
 "use client";
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { Client, Inquiry, Event, InquiryTask, EventTask } from "@/types/app";
+import { Client, Inquiry, Event, InquiryTask, EventTask, Lead, LeadStatus } from "@/types/app";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useSession } from "@/components/SessionContextProvider";
 
 interface AppContextType {
   clients: Client[];
   inquiries: Inquiry[];
   events: Event[];
+  leads: Lead[]; // Added leads
   addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => void;
   updateInquiryTask: (inquiryId: string, taskId: string) => void;
   updateEventTask: (eventId: string, taskId: string) => void;
@@ -15,6 +18,9 @@ interface AppContextType {
   addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => void;
   updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void;
   updateEvent: (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => void;
+  fetchLeads: () => Promise<void>; // Function to fetch leads
+  addLeads: (newLeads: Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at'>[]) => Promise<void>; // Function to add multiple leads
+  updateLead: (leadId: string, updatedLeadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>) => Promise<void>; // Function to update a lead
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -55,7 +61,7 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
         }
 
         // Filter out any old "Final Payment Received" tasks
-        currentEvent.tasks = currentEvent.tasks.filter(task => task.name !== 'Final Payment Received');
+        currentEvent.tasks = currentEvent.tasks.filter(task => task.name !== 'Paid(Full)'); // Changed from 'Final Payment Received' to 'Paid(Full)'
 
         // Ensure 'Paid(Full)' task exists for all events
         if (!currentEvent.tasks.some(task => task.name === 'Paid(Full)')) {
@@ -189,8 +195,10 @@ const initialInquiries: Inquiry[] = [
 ];
 
 const initialEvents: Event[] = [];
+const initialLeads: Lead[] = []; // Initial empty leads array
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { user } = useSession(); // Get user from session context
   const [clients, setClients] = useState<Client[]>(() =>
     loadStateFromLocalStorage("appClients", initialClients)
   );
@@ -200,6 +208,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [events, setEvents] = useState<Event[]>(() =>
     loadStateFromLocalStorage("appEvents", initialEvents)
   );
+  const [leads, setLeads] = useState<Lead[]>(initialLeads); // State for leads
 
   // Use useEffect to save state whenever it changes
   useEffect(() => {
@@ -213,6 +222,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     saveStateToLocalStorage("appEvents", events);
   }, [events]);
+
+  // Fetch leads when component mounts or user changes
+  useEffect(() => {
+    if (user) {
+      fetchLeads();
+    } else {
+      setLeads([]); // Clear leads if no user is logged in
+    }
+  }, [user]);
 
   const calculateProgress = (tasks: InquiryTask[] | EventTask[]) => {
     if (tasks.length === 0) return 0;
@@ -451,12 +469,81 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     toast.success("New client added successfully!");
   };
 
+  // --- Leads Management Functions ---
+  const fetchLeads = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error("Error fetching leads:", error);
+      toast.error("Failed to fetch leads.");
+    } else {
+      setLeads(data as Lead[]);
+    }
+  };
+
+  const addLeads = async (newLeadsData: Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at'>[]) => {
+    if (!user) {
+      toast.error("You must be logged in to add leads.");
+      return;
+    }
+
+    const leadsWithUserId = newLeadsData.map(lead => ({
+      ...lead,
+      user_id: user.id,
+      status: lead.status || 'General', // Ensure status defaults to 'General'
+    }));
+
+    const { data, error } = await supabase
+      .from('leads')
+      .insert(leadsWithUserId)
+      .select();
+
+    if (error) {
+      console.error("Error adding leads:", error);
+      toast.error("Failed to add leads.");
+    } else {
+      setLeads((prev) => [...prev, ...(data as Lead[])]);
+      toast.success(`${data.length} leads added successfully!`);
+    }
+  };
+
+  const updateLead = async (leadId: string, updatedLeadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>) => {
+    if (!user) {
+      toast.error("You must be logged in to update leads.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('leads')
+      .update({ ...updatedLeadData, updated_at: new Date().toISOString() })
+      .eq('id', leadId)
+      .eq('user_id', user.id) // Ensure user can only update their own leads
+      .select();
+
+    if (error) {
+      console.error("Error updating lead:", error);
+      toast.error("Failed to update lead.");
+    } else if (data && data.length > 0) {
+      setLeads((prev) =>
+        prev.map((lead) => (lead.id === leadId ? (data[0] as Lead) : lead))
+      );
+      toast.success("Lead updated successfully!");
+    } else {
+      toast.error("Lead not found or you don't have permission to update it.");
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
         clients,
         inquiries,
         events,
+        leads, // Provide leads
         addInquiry,
         updateInquiryTask,
         updateEventTask,
@@ -464,6 +551,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addClient,
         updateInquiry,
         updateEvent,
+        fetchLeads, // Provide fetchLeads
+        addLeads,   // Provide addLeads
+        updateLead, // Provide updateLead
       }}
     >
       {children}

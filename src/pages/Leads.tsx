@@ -1,14 +1,144 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { PlusCircle, Upload, Pencil } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAppContext } from "@/context/AppContext";
+import { Lead, LeadStatus } from "@/types/app";
+import { LeadCSVUpload } from "@/components/LeadCSVUpload";
+import { LeadEditForm } from "@/components/LeadEditForm";
+import { formatPhoneNumber } from "@/lib/utils";
 
 const LeadsPage = () => {
+  const { leads, fetchLeads, updateLead } = useAppContext();
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
+
+  const groupedLeads = useMemo(() => {
+    const groups: { [key in LeadStatus]: Lead[] } = {
+      'Interested': [],
+      'General': [],
+      'Not Interested': [],
+    };
+
+    leads.forEach(lead => {
+      groups[lead.status].push(lead);
+    });
+
+    return groups;
+  }, [leads]);
+
+  const handleEditClick = (lead: Lead) => {
+    setSelectedLead(lead);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleLeadUpdate = async (leadId: string, updatedValues: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>) => {
+    await updateLead(leadId, updatedValues);
+    setIsEditDialogOpen(false);
+    setSelectedLead(null);
+  };
+
+  const handleStatusChange = async (leadId: string, newStatus: LeadStatus) => {
+    await updateLead(leadId, { status: newStatus });
+  };
+
+  const renderLeadSection = (status: LeadStatus, title: string, leadsList: Lead[]) => (
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold text-white">{title}</h2>
+      {leadsList.length === 0 ? (
+        <p className="text-muted-foreground">No leads in this category.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {leadsList.map((lead) => (
+            <Card key={lead.id} className="bg-card text-card-foreground border-border">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-lg font-medium">{lead.name}</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                  onClick={() => handleEditClick(lead)}
+                >
+                  <Pencil className="h-4 w-4" />
+                  <span className="sr-only">Edit Lead</span>
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                {lead.school && <p><strong>School:</strong> {lead.school}</p>}
+                {lead.fraternity && <p><strong>Fraternity:</strong> {lead.fraternity}</p>}
+                {lead.email && <p><strong>Email:</strong> <a href={`mailto:${lead.email}`} className="text-blue-400 hover:underline">{lead.email}</a></p>}
+                {lead.phone_number && <p><strong>Phone:</strong> <a href={`tel:${lead.phone_number}`} className="text-blue-400 hover:underline">{formatPhoneNumber(lead.phone_number)}</a></p>}
+                {lead.notes && <p><strong>Notes:</strong> {lead.notes}</p>}
+                <div className="flex items-center gap-2 mt-2">
+                  <Label htmlFor={`status-${lead.id}`} className="text-white">Status:</Label>
+                  <Select value={lead.status} onValueChange={(value: LeadStatus) => handleStatusChange(lead.id, value)}>
+                    <SelectTrigger id={`status-${lead.id}`} className="w-[180px] bg-input text-foreground border-border">
+                      <SelectValue placeholder="Change status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover text-popover-foreground border-border">
+                      <SelectItem value="General">General</SelectItem>
+                      <SelectItem value="Interested">Interested</SelectItem>
+                      <SelectItem value="Not Interested">Not Interested</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div className="p-4 space-y-4">
-      <h1 className="text-3xl font-bold text-white text-center mb-4">Leads</h1>
-      <p className="text-center text-muted-foreground">
-        This is where your leads will be managed.
-      </p>
+    <div className="p-4 space-y-8">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold text-white">Leads</h1>
+        <div className="flex gap-2">
+          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                <Upload className="mr-2 h-4 w-4" /> Upload CSV
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] bg-card text-card-foreground border-border">
+              <DialogHeader>
+                <DialogTitle className="text-white">Upload Leads from CSV</DialogTitle>
+              </DialogHeader>
+              <LeadCSVUpload onUploadSuccess={fetchLeads} onClose={() => setIsUploadDialogOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {renderLeadSection('Interested', 'Interested', groupedLeads.Interested)}
+      {renderLeadSection('General', 'General', groupedLeads.General)}
+      {renderLeadSection('Not Interested', 'Not Interested', groupedLeads['Not Interested'])}
+
+      {selectedLead && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+            <DialogHeader>
+              <DialogTitle className="text-white">Edit Lead: {selectedLead.name}</DialogTitle>
+            </DialogHeader>
+            <LeadEditForm
+              lead={selectedLead}
+              onSubmit={handleLeadUpdate}
+              onClose={() => setIsEditDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
