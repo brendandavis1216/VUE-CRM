@@ -107,6 +107,6 @@
 }
 
 /* Highly specific override for Supabase Auth UI labels */
-.supabase-auth-ui-custom-theme label {
+.supabase-auth-ui-custom-theme form > div > label {
   color: white !important;
 }
