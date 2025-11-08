@@ -18,12 +18,23 @@ console.log(`GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
 console.log(`GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_URL: ${SUPABASE_URL ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'}`);
-console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET (length: ' + JWT_SECRET.length + ')' : 'NOT SET'}`); // Added length check here
+console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET (length: ' + JWT_SECRET.length + ')' : 'NOT SET'}`);
 
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY || !JWT_SECRET) {
   console.error('Missing environment variables for Google Calendar integration. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY, and JWT_SECRET are set as Supabase secrets.');
   throw new Error('Server configuration error: Missing environment variables for Google Calendar integration.');
 }
+
+// Decode the Base64 JWT_SECRET into a Uint8Array for jose.jwtVerify
+let decodedJwtSecret: Uint8Array;
+try {
+  decodedJwtSecret = new Uint8Array(Array.from(atob(JWT_SECRET!), c => c.charCodeAt(0)));
+  console.log(`Decoded JWT_SECRET length: ${decodedJwtSecret.length}`);
+} catch (e) {
+  console.error('Error decoding JWT_SECRET from Base64:', e);
+  throw new Error('Invalid JWT_SECRET format. It must be a valid Base64 string.');
+}
+
 
 const REDIRECT_URI = `${SUPABASE_URL}/functions/v1/google-calendar/callback`;
 console.log('DEBUG: Constructed REDIRECT_URI:', REDIRECT_URI);
@@ -49,7 +60,7 @@ serve(async (req) => {
       const token = authHeader.replace('Bearer ', '');
       const { payload } = await jose.jwtVerify(
         token,
-        new TextEncoder().encode(JWT_SECRET!)
+        decodedJwtSecret // Use the decoded secret here
       );
       userId = payload.sub as string;
     } catch (e) {
