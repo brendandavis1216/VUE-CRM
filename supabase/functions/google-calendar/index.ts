@@ -20,19 +20,22 @@ serve(async (req) => {
   const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET');
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
   const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'); // Get service role key
 
   console.log('Edge Function Environment Variables:');
   console.log(`GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
   console.log(`GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
   console.log(`SUPABASE_URL: ${SUPABASE_URL ? 'SET' : 'NOT SET'}`);
   console.log(`SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'}`);
+  console.log(`SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET'}`);
 
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
     const missingVars = [];
     if (!GOOGLE_CLIENT_ID) missingVars.push('GOOGLE_OAUTH_CLIENT_ID');
     if (!GOOGLE_CLIENT_SECRET) missingVars.push('GOOGLE_OAUTH_CLIENT_SECRET');
     if (!SUPABASE_URL) missingVars.push('SUPABASE_URL');
     if (!SUPABASE_ANON_KEY) missingVars.push('SUPABASE_ANON_KEY');
+    if (!SUPABASE_SERVICE_ROLE_KEY) missingVars.push('SUPABASE_SERVICE_ROLE_KEY');
 
     const errorMessage = `Server configuration error: Missing environment variables for Google Calendar integration: ${missingVars.join(', ')}. Please ensure these are set as Supabase secrets.`;
     console.error(errorMessage);
@@ -53,9 +56,14 @@ serve(async (req) => {
   console.log('DEBUG: Authorization Header:', authHeader ? 'Present' : 'Missing');
   let userId: string | null = null;
 
+  // Client for operations requiring user JWT (e.g., /auth, /events)
   const supabaseClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
     global: { headers: { Authorization: authHeader } },
   });
+
+  // Client for operations requiring service role (e.g., /callback)
+  const supabaseAdminClient = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+
 
   if (authHeader) {
     try {
@@ -78,7 +86,8 @@ serve(async (req) => {
   }
 
   const getUserGoogleTokens = async (uid: string) => {
-    const { data, error } = await supabaseClient
+    // Use supabaseAdminClient for fetching tokens, as it bypasses RLS for SELECT
+    const { data, error } = await supabaseAdminClient
       .from('user_google_tokens')
       .select('*')
       .eq('user_id', uid)
@@ -114,7 +123,8 @@ serve(async (req) => {
     const newTokens = await response.json();
     const expiresAt = new Date(Date.now() + (newTokens.expires_in * 1000));
 
-    const { error: updateError } = await supabaseClient
+    // Use supabaseAdminClient for updating tokens
+    const { error: updateError } = await supabaseAdminClient
       .from('user_google_tokens')
       .update({
         access_token: newTokens.access_token,
@@ -237,7 +247,8 @@ serve(async (req) => {
         const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
 
         console.log(`DEBUG: Callback - Checking for existing tokens for user ${userIdFromState}.`);
-        const { data: existingTokens, error: fetchError } = await supabaseClient
+        // Use supabaseAdminClient for DB operations in the callback
+        const { data: existingTokens, error: fetchError } = await supabaseAdminClient
           .from('user_google_tokens')
           .select('id, refresh_token') // Select refresh_token as well for update logic
           .eq('user_id', userIdFromState)
@@ -250,7 +261,7 @@ serve(async (req) => {
 
         if (existingTokens) {
           console.log('DEBUG: Callback - Existing tokens found, attempting to update.');
-          const { error: updateError } = await supabaseClient
+          const { error: updateError } = await supabaseAdminClient
             .from('user_google_tokens')
             .update({
               access_token: tokens.access_token,
@@ -269,7 +280,7 @@ serve(async (req) => {
           console.log('DEBUG: Callback - Tokens updated successfully in DB.');
         } else {
           console.log('DEBUG: Callback - No existing tokens found, attempting to insert new tokens.');
-          const { error: insertError } = await supabaseClient
+          const { error: insertError } = await supabaseAdminClient
             .from('user_google_tokens')
             .insert({
               user_id: userIdFromState,
