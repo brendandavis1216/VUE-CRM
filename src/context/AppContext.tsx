@@ -21,6 +21,7 @@ interface AppContextType {
   fetchLeads: () => Promise<void>; // Function to fetch leads
   addLeads: (newLeads: Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at'>[]) => Promise<void>; // Function to add multiple leads
   updateLead: (leadId: string, updatedLeadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>) => Promise<void>; // Function to update a lead
+  deleteAllLeads: () => Promise<void>; // New: Function to delete all leads
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -537,6 +538,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const deleteAllLeads = async () => {
+    if (!user) {
+      toast.error("You must be logged in to delete leads.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from('leads')
+      .delete()
+      .eq('user_id', user.id); // Ensure only current user's leads are deleted
+
+    if (error) {
+      console.error("Error deleting all leads:", error);
+      toast.error("Failed to delete all leads.");
+    } else {
+      setLeads([]); // Clear local state
+      toast.success("All leads deleted successfully!");
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -554,6 +575,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         fetchLeads, // Provide fetchLeads
         addLeads,   // Provide addLeads
         updateLead, // Provide updateLead
+        deleteAllLeads, // Provide deleteAllLeads
       }}
     >
       {children}

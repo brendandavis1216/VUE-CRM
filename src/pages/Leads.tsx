@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, Upload, Pencil } from "lucide-react";
+import { PlusCircle, Upload, Pencil, Trash2 } from "lucide-react"; // Import Trash2 icon
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,11 +13,23 @@ import { LeadCSVUpload } from "@/components/LeadCSVUpload";
 import { LeadEditForm } from "@/components/LeadEditForm";
 import { formatPhoneNumber } from "@/lib/utils";
 import { format } from "date-fns"; // Import format for date display
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"; // Import AlertDialog components
 
 const LeadsPage = () => {
-  const { leads, fetchLeads, updateLead } = useAppContext();
+  const { leads, fetchLeads, updateLead, deleteAllLeads } = useAppContext();
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // State for delete confirmation dialog
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   useEffect(() => {
@@ -57,6 +69,11 @@ const LeadsPage = () => {
 
   const handleStatusChange = async (leadId: string, newStatus: LeadStatus) => {
     await updateLead(leadId, { status: newStatus });
+  };
+
+  const handleDeleteAllLeads = async () => {
+    await deleteAllLeads();
+    setIsDeleteDialogOpen(false); // Close the dialog after deletion
   };
 
   const renderLeadSection = (status: LeadStatus, title: string, leadsList: Lead[]) => (
@@ -127,6 +144,31 @@ const LeadsPage = () => {
               <LeadCSVUpload onUploadSuccess={fetchLeads} onClose={() => setIsUploadDialogOpen(false)} />
             </DialogContent>
           </Dialog>
+
+          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                <Trash2 className="mr-2 h-4 w-4" /> Delete All
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-card text-card-foreground border-border">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-white">Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription className="text-muted-foreground">
+                  This action cannot be undone. This will permanently delete all your leads from the database.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="bg-secondary text-secondary-foreground hover:bg-secondary/80">Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAllLeads}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete All Leads
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
