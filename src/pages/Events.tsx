@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
-import { Search, Pencil } from "lucide-react";
+import { Search, Pencil, CalendarPlus } from "lucide-react"; // Import CalendarPlus icon
 import {
   Accordion,
   AccordionContent,
@@ -21,9 +21,11 @@ import { EventEditForm } from "@/components/EventEditForm";
 import { Event } from "@/types/app";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom"; // Import useSearchParams
+import { useSession } from "@/components/SessionContextProvider"; // Import useSession
 
 const EventsPage = () => {
-  const { events, updateEventTask, updateEvent } = useAppContext();
+  const { events, updateEventTask, updateEvent, createGoogleCalendarEvent, googleCalendarEvents } = useAppContext();
+  const { session } = useSession(); // Get session to check if user is logged in
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -63,6 +65,10 @@ const EventsPage = () => {
     updateEvent(eventId, updatedValues);
     setIsEditEventDialogOpen(false);
     setSelectedEvent(null);
+  };
+
+  const handleAddToGoogleCalendar = async (event: Event) => {
+    await createGoogleCalendarEvent(event);
   };
 
   const { upcomingEvents, pastEvents } = useMemo(() => {
@@ -105,6 +111,12 @@ const EventsPage = () => {
         >
           {eventList.map((event) => {
             const finalPaymentTask = event.tasks.find(task => task.name === "Paid(Full)");
+            // Check if this app event already exists in Google Calendar events
+            const isAddedToGoogleCalendar = googleCalendarEvents.some(gEvent => 
+              gEvent.summary === (event.eventName || `${event.fraternity} - ${event.school}`) &&
+              new Date(gEvent.start.dateTime || gEvent.start.date!).getTime() === event.eventDate.getTime()
+            );
+
             return (
               <Card key={event.id} id={`event-${event.id}`} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={event.id} className="border-none">
@@ -174,6 +186,21 @@ const EventsPage = () => {
                           ))}
                       </div>
                     </div>
+                    {session && ( // Only show button if user is logged in
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "mt-4 w-full",
+                          isAddedToGoogleCalendar ? "bg-green-600 text-white hover:bg-green-700" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        )}
+                        onClick={() => handleAddToGoogleCalendar(event)}
+                        disabled={isAddedToGoogleCalendar} // Disable if already added
+                      >
+                        <CalendarPlus className="mr-2 h-4 w-4" />
+                        {isAddedToGoogleCalendar ? "Added to Google Calendar" : "Add to Google Calendar"}
+                      </Button>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
               </Card>

@@ -5,6 +5,7 @@ import { Client, Inquiry, Event, InquiryTask, EventTask, Lead, LeadStatus, Googl
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/components/SessionContextProvider";
+import { addHours } from "date-fns"; // Import addHours
 
 interface AppContextType {
   clients: Client[];
@@ -26,6 +27,7 @@ interface AppContextType {
   deleteLead: (leadId: string) => Promise<void>; // New: Function to delete a single lead
   initiateGoogleCalendarAuth: () => Promise<void>; // Function to initiate Google Calendar auth
   fetchGoogleCalendarEvents: ({ timeMin, timeMax }: { timeMin?: string; timeMax?: string }) => Promise<void>; // Function to fetch Google Calendar events
+  createGoogleCalendarEvent: (event: Event) => Promise<void>; // New: Function to create Google Calendar event
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -236,7 +238,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [inquiries]);
 
   useEffect(() => {
-    saveStateToLocalStorage("appEvents", events);
+    saveStateFromLocalStorage("appEvents", events); // Use saveStateFromLocalStorage here
   }, [events]);
 
   // Fetch leads when component mounts or user changes
@@ -695,6 +697,79 @@ const fetchGoogleCalendarEvents = useCallback(async ({ timeMin, timeMax }: { tim
     setGoogleCalendarEvents([]); // Clear events on error
   }
 }, [user]);
+
+const createGoogleCalendarEvent = useCallback(async (event: Event) => {
+  if (!user) {
+    toast.error("You need to be logged in to create Google Calendar events.");
+    return;
+  }
+
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.access_token) {
+    toast.error("Not authenticated with Supabase. Please log in.");
+    return;
+  }
+
+  const jwt = data.session.access_token;
+  const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
+  if (!functionsUrl) {
+    console.error("VITE_SUPABASE_FUNCTIONS_URL is not defined in environment variables.");
+    toast.error("Supabase Functions URL is not configured. Please check your .env file.");
+    return;
+  }
+
+  const eventName = event.eventName || `${event.fraternity} - ${event.school}`;
+  const startTime = event.eventDate;
+  const endTime = addHours(event.eventDate, 2); // Assume 2-hour event for simplicity
+
+  const googleEvent = {
+    summary: eventName,
+    location: event.addressOfEvent,
+    description: `
+      Fraternity: ${event.fraternity}
+      School: ${event.school}
+      Capacity: ${event.capacity}
+      Budget: $${event.budget.toLocaleString()}
+      Stage Build: ${event.stageBuild}
+      Status: ${event.status}
+      Tasks: ${event.tasks.map(task => `${task.name} (${task.completed ? 'Completed' : 'Pending'})`).join(', ')}
+    `,
+    start: {
+      dateTime: startTime.toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+    end: {
+      dateTime: endTime.toISOString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+  };
+
+  try {
+    const res = await fetch(`${functionsUrl}/google-calendar/create-event`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwt}`,
+      },
+      body: JSON.stringify(googleEvent),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(`Failed to create Google Calendar event: ${errorData.error || res.statusText}`);
+    }
+
+    toast.success(`Event "${eventName}" added to Google Calendar!`);
+    // Optionally, re-fetch Google Calendar events to update the local view
+    fetchGoogleCalendarEvents({
+      timeMin: startTime.toISOString(),
+      timeMax: endTime.toISOString(),
+    });
+  } catch (e) {
+    console.error("Error creating Google Calendar event:", e);
+    toast.error(`Failed to add event to Google Calendar: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}, [user, fetchGoogleCalendarEvents]);
 // --- End Google Calendar Integration ---
 
   return (
@@ -719,6 +794,7 @@ const fetchGoogleCalendarEvents = useCallback(async ({ timeMin, timeMax }: { tim
         deleteLead, // Provide deleteLead
         initiateGoogleCalendarAuth, // Provide initiateGoogleCalendarAuth
         fetchGoogleCalendarEvents, // Provide fetchGoogleCalendarEvents
+        createGoogleCalendarEvent, // Provide createGoogleCalendarEvent
       }}
     >
       {children}
