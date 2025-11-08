@@ -12,6 +12,7 @@ import { Lead, LeadStatus } from "@/types/app";
 import { LeadCSVUpload } from "@/components/LeadCSVUpload";
 import { LeadEditForm } from "@/components/LeadEditForm";
 import { formatPhoneNumber } from "@/lib/utils";
+import { format } from "date-fns"; // Import format for date display
 
 const LeadsPage = () => {
   const { leads, fetchLeads, updateLead } = useAppContext();
@@ -78,6 +79,8 @@ const LeadsPage = () => {
                 {lead.fraternity && <p><strong>Fraternity:</strong> {lead.fraternity}</p>}
                 {lead.email && <p><strong>Email:</strong> <a href={`mailto:${lead.email}`} className="text-blue-400 hover:underline">{lead.email}</a></p>}
                 {lead.phone_number && <p><strong>Phone:</strong> <a href={`tel:${lead.phone_number}`} className="text-blue-400 hover:underline">{formatPhoneNumber(lead.phone_number)}</a></p>}
+                {lead.instagram_handle && <p><strong>Instagram:</strong> <a href={`https://www.instagram.com/${lead.instagram_handle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{lead.instagram_handle}</a></p>}
+                {lead.election_date && <p><strong>Election Date:</strong> {format(new Date(lead.election_date), "PPP")}</p>}
                 {lead.notes && <p><strong>Notes:</strong> {lead.notes}</p>}
                 <div className="flex items-center gap-2 mt-2">
                   <Label htmlFor={`status-${lead.id}`} className="text-white">Status:</Label>

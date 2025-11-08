@@ -24,8 +24,10 @@ interface ParsedLeadRow {
   phone_number?: string;
   school?: string;
   fraternity?: string;
+  instagram_handle?: string; // New field
   status?: string; // Will default to 'General' if not provided
   notes?: string;
+  election_date?: string; // New field
 }
 
 export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, onClose }) => {
@@ -73,8 +75,10 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
           phone_number: row.phone_number || undefined,
           school: row.school || undefined,
           fraternity: row.fraternity || undefined,
+          instagram_handle: row.instagram_handle || undefined, // Map new field
           status: row.status || 'General', // Default status
           notes: row.notes || undefined,
+          election_date: row.election_date || undefined, // Map new field
         })).filter(row => row.name.trim() !== ''); // Filter out rows with empty names
 
         if (data.length === 0) {
@@ -103,8 +107,10 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
         phone_number: lead.phone_number,
         school: lead.school,
         fraternity: lead.fraternity,
+        instagram_handle: lead.instagram_handle, // Pass new field
         status: lead.status as Lead['status'], // Cast to LeadStatus
         notes: lead.notes,
+        election_date: lead.election_date, // Pass new field
       })));
       onUploadSuccess();
       onClose();
@@ -126,7 +132,7 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
           className="bg-input text-foreground border-border file:text-primary file:bg-primary-foreground"
         />
         <p className="text-xs text-muted-foreground">
-          Accepted headers: `name` (required), `email`, `phone_number`, `school`, `fraternity`, `status`, `notes`.
+          Accepted headers: `name` (required), `email`, `phone_number`, `school`, `fraternity`, `instagram_handle`, `status`, `notes`, `election_date`.
         </p>
       </div>
 
@@ -147,6 +153,8 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
                 <TableHead className="text-white">School</TableHead>
                 <TableHead className="text-white">Fraternity</TableHead>
                 <TableHead className="text-white">Status</TableHead>
+                <TableHead className="text-white">Instagram</TableHead>
+                <TableHead className="text-white">Election Date</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -156,11 +164,13 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
                   <TableCell className="text-muted-foreground">{lead.school || 'N/A'}</TableCell>
                   <TableCell className="text-muted-foreground">{lead.fraternity || 'N/A'}</TableCell>
                   <TableCell className="text-muted-foreground">{lead.status || 'General'}</TableCell>
+                  <TableCell className="text-muted-foreground">{lead.instagram_handle || 'N/A'}</TableCell>
+                  <TableCell className="text-muted-foreground">{lead.election_date || 'N/A'}</TableCell>
                 </TableRow>
               ))}
               {parsedData.length > 10 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     ... {parsedData.length - 10} more leads
                   </TableCell>
                 </TableRow>

@@ -73,8 +73,10 @@ interface Lead {
   phone_number?: string;
   school?: string;
   fraternity?: string;
+  instagram_handle?: string; // New: Instagram handle
   status: LeadStatus;
   notes?: string;
+  election_date?: string; // New: Election date (as string for simplicity, can be parsed to Date if needed)
   created_at: string;
   updated_at: string;
 }
