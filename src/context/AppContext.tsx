@@ -603,6 +603,13 @@ const initiateGoogleCalendarAuth = useCallback(async () => {
     const accessToken = sessionData.session.access_token;
     const clientOrigin = window.location.origin;
     const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
+    console.log("DEBUG: Value of functionsUrl from import.meta.env:", functionsUrl); // Added debug log
+
+    if (!functionsUrl) {
+      console.error("VITE_SUPABASE_FUNCTIONS_URL is not defined in environment variables.");
+      toast.error("Supabase Functions URL is not configured. Please check your .env file.");
+      return;
+    }
 
     const url = `${functionsUrl}/google-calendar/auth`;
     console.log("Client Origin:", clientOrigin);
