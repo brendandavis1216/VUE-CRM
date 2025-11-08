@@ -2,7 +2,7 @@
 
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Users, ClipboardList, LayoutDashboard, BriefcaseBusiness, CalendarDays } from "lucide-react"; // Import CalendarDays
+import { Users, ClipboardList, LayoutDashboard, BriefcaseBusiness, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const MobileNav = () => {
@@ -10,7 +10,7 @@ export const MobileNav = () => {
     { name: "Clients", icon: Users, path: "/clients" },
     { name: "Inquiries", icon: BriefcaseBusiness, path: "/inquiries" },
     { name: "Events", icon: ClipboardList, path: "/events" },
-    { name: "Calendar", icon: CalendarDays, path: "/calendar" }, // Add Calendar item
+    { name: "Calendar", icon: CalendarDays, path: "/calendar" },
     { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   ];
 
@@ -23,8 +23,9 @@ export const MobileNav = () => {
             to={item.path}
             className={({ isActive }) =>
               cn(
-                "flex flex-col items-center justify-center text-xs font-medium text-muted-foreground transition-colors hover:text-primary",
-                isActive && "text-primary"
+                "flex flex-col items-center justify-center text-xs font-medium transition-colors p-2 rounded-md", // Base styles: padding and rounded corners
+                "text-muted-foreground hover:text-primary", // Default color (white) and hover effect (dark blue/gray)
+                isActive && "text-primary-foreground ring-2 ring-offset-2 ring-offset-background ring-primary" // Active state: white text and outline
               )
             }
           >
