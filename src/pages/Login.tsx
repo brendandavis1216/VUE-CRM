@@ -27,14 +27,14 @@ const Login = () => {
                   defaultButtonBackgroundHover: 'hsl(222.2 47.4% 20%)', // Slightly lighter dark blue/gray for hover
                   inputBackground: 'hsl(var(--secondary))',
                   inputBorder: 'hsl(var(--border))',
-                  inputLabel: 'hsl(0 0% 100%)',
+                  inputLabel: 'hsl(0 0% 100%)', // This should ideally work, but we're adding localization as a fallback
                   inputText: 'hsl(0 0% 100%)',
                   messageText: 'hsl(0 0% 100%)',
                   messageBackground: 'hsl(0 62.8% 30.6%)',
                   anchorTextColor: 'hsl(0 0% 100%)',
                   inputPlaceholder: 'hsl(0 0% 100%)',
                   dividerBackground: 'hsl(var(--border))',
-                  textColor: 'hsl(0 0% 100%)',
+                  textColor: 'hsl(0 0% 100%)', // This should ideally work, but we're adding localization as a fallback
                 },
               },
             },
@@ -42,6 +42,24 @@ const Login = () => {
           theme="dark" // Explicitly set theme to dark
           redirectTo={window.location.origin + '/clients'}
           className="supabase-auth-ui-custom-theme"
+          localization={{
+            variables: {
+              sign_in: {
+                email_label: <span className="text-white">Email address</span>,
+                password_label: <span className="text-white">Your Password</span>,
+              },
+              sign_up: {
+                email_label: <span className="text-white">Email address</span>,
+                password_label: <span className="text-white">Create a Password</span>,
+              },
+              forgotten_password: {
+                email_label: <span className="text-white">Email address</span>,
+              },
+              update_password: {
+                password_label: <span className="text-white">New Password</span>,
+              },
+            },
+          }}
         />
       </div>
       <MadeWithDyad />
