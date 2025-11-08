@@ -50,16 +50,18 @@ const getCalendarItemTitle = (item: CalendarItem): string => {
     return `Inquiry: ${item.fraternity} - ${item.school}`;
   } else {
     const finalPaymentTask = (item as Event).tasks?.find(task => task.name === "Paid(Full)");
+    // Fallback for eventName if it's undefined
+    const eventName = (item as Event).eventName || `${(item as Event).fraternity || 'Unknown'} - ${(item as Event).school || 'Unknown'}`;
     if (finalPaymentTask?.completed) {
-      return `Event: ${item.eventName} - ${item.fraternity} (Paid)`;
+      return `Event: ${eventName} (Paid)`;
     }
     if ((item as Event).status === "Completed") {
-      return `Event: ${item.eventName} - ${item.fraternity} (Completed)`;
+      return `Event: ${eventName} (Completed)`;
     }
     if ((item as Event).status === "Cancelled") {
-      return `Event: ${item.eventName} - ${item.fraternity} (Cancelled)`;
+      return `Event: ${eventName} (Cancelled)`;
     }
-    return `Event: ${item.eventName} - ${item.fraternity} (In Progress)`;
+    return `Event: ${eventName} (In Progress)`;
   }
 };
 
@@ -297,7 +299,7 @@ const CalendarPage = () => {
                     >
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3"> {/* Adjusted padding to p-3 */}
                         <CardTitle className="text-base font-medium"> {/* Reduced font size to text-base */}
-                          {'source' in item && item.source === 'google' ? `Google: ${item.summary}` : ('inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school}` : `Event: ${item.eventName}`)}
+                          {'source' in item && item.source === 'google' ? `Google: ${item.summary}` : ('inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school}` : `Event: ${item.eventName || `${(item as Event).fraternity || 'Unknown'} - ${(item as Event).school || 'Unknown'}`}`)}
                         </CardTitle>
                         <Badge className={cn("text-xs", getCalendarItemColor(item))}>
                           {'source' in item && item.source === 'google' ? "Google Event" : ('inquiryDate' in item ? "Inquiry" : item.status)}
