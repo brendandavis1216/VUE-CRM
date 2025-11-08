@@ -241,6 +241,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     saveStateToLocalStorage("appEvents", events); // Corrected function name here
   }, [events]);
 
+  // --- Leads Management Functions ---
+  const fetchLeads = useCallback(async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error("Error fetching leads:", error);
+      toast.error("Failed to fetch leads.");
+    } else {
+      setLeads(data as Lead[]);
+    }
+  }, [user]); // Dependency array for useCallback
+
   // Fetch leads when component mounts or user changes
   useEffect(() => {
     if (user) {
@@ -248,7 +264,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } else {
       setLeads([]); // Clear leads if no user is logged in
     }
-  }, [user]);
+  }, [user, fetchLeads]); // Added fetchLeads to dependencies
 
   const calculateProgress = (tasks: InquiryTask[] | EventTask[]) => {
     if (tasks.length === 0) return 0;
@@ -496,21 +512,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   // --- Leads Management Functions ---
-  const fetchLeads = async () => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error("Error fetching leads:", error);
-      toast.error("Failed to fetch leads.");
-    } else {
-      setLeads(data as Lead[]);
-    }
-  };
-
   const addLeads = async (newLeadsData: Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at'>[]) => {
     if (!user) {
       toast.error("You must be logged in to add leads.");
