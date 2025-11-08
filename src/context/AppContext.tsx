@@ -276,15 +276,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     let targetClientId: string;
     let clientToUpdate: Client | undefined;
 
+    // First, try to find an existing client by the provided existingClientId
     if (existingClientId) {
-      targetClientId = existingClientId;
       clientToUpdate = clients.find(c => c.id === existingClientId);
-      if (!clientToUpdate) {
-        console.error(`Existing client with ID ${existingClientId} not found. Creating a new client.`);
-        targetClientId = `client-${Date.now()}-from-inq`; // Fallback to new ID
+      if (clientToUpdate) {
+        targetClientId = existingClientId;
+      } else {
+        console.warn(`Existing client with ID ${existingClientId} not found. Attempting to find by fraternity/school.`);
       }
-    } else {
-      targetClientId = `client-${Date.now()}-from-inq`;
+    }
+
+    // If no client found by ID, or no ID was provided, try to find by fraternity and school
+    if (!clientToUpdate) {
+      clientToUpdate = clients.find(
+        c => c.fraternity.toLowerCase() === newInquiryData.fraternity.toLowerCase() &&
+             c.school.toLowerCase() === newInquiryData.school.toLowerCase()
+      );
+
+      if (clientToUpdate) {
+        targetClientId = clientToUpdate.id;
+        // Update existing client's contact info with new inquiry's contact
+        setClients(prevClients =>
+          prevClients.map(c =>
+            c.id === clientToUpdate?.id
+              ? {
+                  ...c,
+                  mainContactName: newInquiryData.mainContact,
+                  phoneNumber: newInquiryData.phoneNumber,
+                  // Instagram handle is not part of inquiry form, so keep existing or default
+                  instagramHandle: c.instagramHandle === "N/A" ? "N/A" : c.instagramHandle,
+                }
+              : c
+          )
+        );
+        toast.info(`Client "${clientToUpdate.fraternity} - ${clientToUpdate.school}" contact updated from inquiry.`);
+      } else {
+        // If still no client found, create a new one
+        targetClientId = `client-${Date.now()}-from-inq`;
+        const initialAverageEventSize = newInquiryData.budget; // First event's budget
+        const initialNumberOfEvents = 0; // New client starts with 0 events from this inquiry's perspective
+
+        const newClient: Client = {
+          id: targetClientId,
+          fraternity: newInquiryData.fraternity,
+          school: newInquiryData.school,
+          mainContactName: newInquiryData.mainContact,
+          phoneNumber: newInquiryData.phoneNumber,
+          instagramHandle: "N/A", // Placeholder, as not available in inquiry form
+          averageEventSize: initialAverageEventSize,
+          numberOfEvents: initialNumberOfEvents,
+          clientScore: calculateClientScore(initialNumberOfEvents, initialAverageEventSize),
+        };
+        setClients((prevClients) => [...prevClients, newClient]);
+        toast.success(`New client "${newClient.fraternity} - ${newClient.school}" added from inquiry!`);
+      }
     }
 
     const defaultTasks: InquiryTask[] = [
@@ -296,38 +341,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const inquiryWithTasks: Inquiry = {
       ...newInquiryData,
       id: `inq-${Date.now()}`,
-      clientId: targetClientId, // Link to the client
+      clientId: targetClientId!, // Link to the client (guaranteed to be set by now)
       tasks: defaultTasks,
       progress: 0,
     };
 
     setInquiries((prev) => [...prev, inquiryWithTasks]);
     toast.success("New inquiry added!");
-
-    // Handle client creation/update
-    if (!clientToUpdate) { // If no existing client was found or existingClientId was not provided
-      const initialAverageEventSize = newInquiryData.budget; // First event's budget
-      const initialNumberOfEvents = 0; // New client starts with 0 events from this inquiry's perspective
-
-      const newClient: Client = {
-        id: targetClientId,
-        fraternity: newInquiryData.fraternity,
-        school: newInquiryData.school,
-        mainContactName: newInquiryData.mainContact,
-        phoneNumber: newInquiryData.phoneNumber,
-        instagramHandle: "N/A", // Placeholder, as not available in inquiry form
-        averageEventSize: initialAverageEventSize,
-        numberOfEvents: initialNumberOfEvents,
-        clientScore: calculateClientScore(initialNumberOfEvents, initialAverageEventSize),
-      };
-      setClients((prevClients) => [...prevClients, newClient]);
-      toast.success(`New client "${newClient.fraternity} - ${newClient.school}" added from inquiry!`);
-    } else {
-      // If an existing client was found, we don't update its event count or average event size here.
-      // Those updates happen when the inquiry is *completed* in `updateInquiryTask`.
-      // We just ensure the inquiry is linked.
-      toast.success(`Inquiry linked to existing client "${clientToUpdate.fraternity} - ${clientToUpdate.school}"!`);
-    }
   };
 
   const updateInquiry = (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => {
@@ -496,19 +516,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addClient = (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => {
-    const numberOfEvents = 0; // New clients start with 0 events
-    const averageEventSize = 0; // New clients start with 0 average event size
-    const clientScore = calculateClientScore(numberOfEvents, averageEventSize);
+    const existingClientIndex = clients.findIndex(
+      c => c.fraternity.toLowerCase() === newClientData.fraternity.toLowerCase() &&
+           c.school.toLowerCase() === newClientData.school.toLowerCase()
+    );
 
-    const newClient: Client = {
-      ...newClientData,
-      id: `client-${Date.now()}`,
-      numberOfEvents: numberOfEvents,
-      averageEventSize: averageEventSize, // Initialize to 0
-      clientScore: clientScore,
-    };
-    setClients((prev) => [...prev, newClient]);
-    toast.success("New client added successfully!");
+    if (existingClientIndex > -1) {
+      // Update existing client's contact details
+      setClients(prevClients =>
+        prevClients.map((client, index) =>
+          index === existingClientIndex
+            ? {
+                ...client,
+                mainContactName: newClientData.mainContactName,
+                phoneNumber: newClientData.phoneNumber,
+                instagramHandle: newClientData.instagramHandle,
+              }
+            : client
+        )
+      );
+      toast.success(`Client "${newClientData.fraternity} - ${newClientData.school}" contact updated!`);
+    } else {
+      // Create a new client
+      const numberOfEvents = 0; // New clients start with 0 events
+      const averageEventSize = 0; // New clients start with 0 average event size
+      const clientScore = calculateClientScore(numberOfEvents, averageEventSize);
+
+      const newClient: Client = {
+        ...newClientData,
+        id: `client-${Date.now()}`,
+        numberOfEvents: numberOfEvents,
+        averageEventSize: averageEventSize, // Initialize to 0
+        clientScore: clientScore,
+      };
+      setClients((prev) => [...prev, newClient]);
+      toast.success("New client added successfully!");
+    }
   };
 
   // --- Leads Management Functions ---
