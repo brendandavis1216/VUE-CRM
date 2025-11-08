@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Upload, Pencil, Trash2, ChevronDown } from "lucide-react"; // Import ChevronDown
+import { Upload, Pencil, Trash2, ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,6 +29,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { LeadFilterSort } from "@/components/LeadFilterSort"; // Import the new component
+
+type SortBy = 'none' | 'name' | 'school' | 'fraternity' | 'status';
+type SortOrder = 'asc' | 'desc';
 
 const LeadsPage = () => {
   const { leads, fetchLeads, updateLead, deleteAllLeads, deleteLead } = useAppContext();
@@ -38,9 +42,78 @@ const LeadsPage = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
 
+  // State for filtering and sorting
+  const [filterSchool, setFilterSchool] = useState("");
+  const [filterFraternity, setFilterFraternity] = useState("");
+  const [sortBy, setSortBy] = useState<SortBy>('none');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+
   useEffect(() => {
     fetchLeads();
   }, [fetchLeads]);
+
+  const handleFilterSortChange = (
+    newFilterSchool: string,
+    newFilterFraternity: string,
+    newSortBy: SortBy,
+    newSortOrder: SortOrder
+  ) => {
+    setFilterSchool(newFilterSchool);
+    setFilterFraternity(newFilterFraternity);
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+  };
+
+  const filteredAndSortedLeads = useMemo(() => {
+    let currentLeads = [...leads];
+
+    // Apply filters
+    if (filterSchool) {
+      currentLeads = currentLeads.filter(lead =>
+        lead.school?.toLowerCase().includes(filterSchool.toLowerCase())
+      );
+    }
+    if (filterFraternity) {
+      currentLeads = currentLeads.filter(lead =>
+        lead.fraternity?.toLowerCase().includes(filterFraternity.toLowerCase())
+      );
+    }
+
+    // Apply sorting
+    if (sortBy !== 'none') {
+      currentLeads.sort((a, b) => {
+        let valA: any;
+        let valB: any;
+
+        switch (sortBy) {
+          case 'name':
+            valA = a.name.toLowerCase();
+            valB = b.name.toLowerCase();
+            break;
+          case 'school':
+            valA = a.school?.toLowerCase() || '';
+            valB = b.school?.toLowerCase() || '';
+            break;
+          case 'fraternity':
+            valA = a.fraternity?.toLowerCase() || '';
+            valB = b.fraternity?.toLowerCase() || '';
+            break;
+          case 'status':
+            valA = a.status.toLowerCase();
+            valB = b.status.toLowerCase();
+            break;
+          default:
+            return 0;
+        }
+
+        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    return currentLeads;
+  }, [leads, filterSchool, filterFraternity, sortBy, sortOrder]);
 
   const groupedLeads = useMemo(() => {
     const groups: { [key in LeadStatus]: Lead[] } = {
@@ -51,7 +124,7 @@ const LeadsPage = () => {
 
     const validStatuses: LeadStatus[] = ['Interested', 'General', 'Not Interested'];
 
-    leads.forEach(lead => {
+    filteredAndSortedLeads.forEach(lead => { // Use filteredAndSortedLeads here
       const status: LeadStatus = validStatuses.includes(lead.status)
         ? lead.status
         : 'General';
@@ -59,7 +132,7 @@ const LeadsPage = () => {
     });
 
     return groups;
-  }, [leads]);
+  }, [filteredAndSortedLeads]); // Depend on filteredAndSortedLeads
 
   const handleEditClick = (lead: Lead) => {
     setSelectedLead(lead);
@@ -95,22 +168,22 @@ const LeadsPage = () => {
             {leadsList.map((lead) => (
               <Card key={lead.id} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={lead.id} className="border-none">
-                  <AccordionTrigger className="flex items-center justify-between p-4 hover:no-underline group [&>svg]:hidden"> {/* Added [&>svg]:hidden */}
+                  <AccordionTrigger className="flex items-center justify-between p-4 hover:no-underline group [&>svg]:hidden">
                     <CardTitle className="text-lg font-medium text-card-foreground">{lead.name}</CardTitle>
-                    <div className="flex items-center gap-2"> {/* New container for button and chevron */}
+                    <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-8 w-8 p-0 text-muted-foreground hover:text-primary flex-shrink-0"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent accordion from toggling
+                          e.stopPropagation();
                           handleEditClick(lead);
                         }}
                       >
                         <Pencil className="h-4 w-4" />
                         <span className="sr-only">Edit Lead</span>
                       </Button>
-                      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" /> {/* Custom chevron */}
+                      <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground space-y-2">
@@ -172,12 +245,25 @@ const LeadsPage = () => {
               <LeadCSVUpload onUploadSuccess={fetchLeads} onClose={() => setIsUploadDialogOpen(false)} />
             </DialogContent>
           </Dialog>
+          <LeadFilterSort
+            onFilterSortChange={handleFilterSortChange}
+            currentFilterSchool={filterSchool}
+            currentFilterFraternity={filterFraternity}
+            currentSortBy={sortBy}
+            currentSortOrder={sortOrder}
+          />
         </div>
       </div>
 
-      {renderLeadSection('Interested', 'Interested', groupedLeads.Interested)}
-      {renderLeadSection('General', 'General', groupedLeads.General)}
-      {renderLeadSection('Not Interested', 'Not Interested', groupedLeads['Not Interested'])}
+      {filteredAndSortedLeads.length === 0 && (filterSchool || filterFraternity || sortBy !== 'none') ? (
+        <p className="text-center text-muted-foreground mt-8">No leads match your current filters.</p>
+      ) : (
+        <>
+          {renderLeadSection('Interested', 'Interested', groupedLeads.Interested)}
+          {renderLeadSection('General', 'General', groupedLeads.General)}
+          {renderLeadSection('Not Interested', 'Not Interested', groupedLeads['Not Interested'])}
+        </>
+      )}
 
       {selectedLead && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
