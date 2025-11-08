@@ -95,13 +95,12 @@ const LeadsPage = () => {
             {leadsList.map((lead) => (
               <Card key={lead.id} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={lead.id} className="border-none">
-                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
-                    <CardTitle className="text-lg font-medium text-card-foreground">{lead.name}</CardTitle>
-                    {/* The edit button is now a direct child, positioned by justify-between */}
+                  <AccordionTrigger className="flex items-center p-4 hover:no-underline group"> {/* Removed justify-between */}
+                    <CardTitle className="text-lg font-medium text-card-foreground flex-grow">{lead.name}</CardTitle> {/* Added flex-grow */}
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-primary flex-shrink-0" // Added flex-shrink-0
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent accordion from toggling
                         handleEditClick(lead);
