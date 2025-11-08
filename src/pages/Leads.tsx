@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, Upload, Pencil, Trash2 } from "lucide-react"; // Import Trash2 icon
+import { PlusCircle, Upload, Pencil, Trash2, MoreHorizontal } from "lucide-react"; // Import MoreHorizontal icon
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,13 +23,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"; // Import AlertDialog components
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"; // Import DropdownMenu components
 
 const LeadsPage = () => {
-  const { leads, fetchLeads, updateLead, deleteAllLeads } = useAppContext();
+  const { leads, fetchLeads, updateLead, deleteAllLeads, deleteLead } = useAppContext();
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // State for delete confirmation dialog
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false); // Renamed for clarity
+  const [isDeleteIndividualDialogOpen, setIsDeleteIndividualDialogOpen] = useState(false); // State for individual delete confirmation
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null); // State to hold lead for individual deletion
 
   useEffect(() => {
     fetchLeads();
@@ -72,7 +81,15 @@ const LeadsPage = () => {
 
   const handleDeleteAllLeads = async () => {
     await deleteAllLeads();
-    setIsDeleteDialogOpen(false); // Close the dialog after deletion
+    setIsDeleteAllDialogOpen(false); // Close the dialog after deletion
+  };
+
+  const handleConfirmDeleteIndividualLead = async () => {
+    if (leadToDelete) {
+      await deleteLead(leadToDelete.id);
+      setIsDeleteIndividualDialogOpen(false);
+      setLeadToDelete(null);
+    }
   };
 
   const renderLeadSection = (status: LeadStatus, title: string, leadsList: Lead[]) => (
@@ -86,15 +103,34 @@ const LeadsPage = () => {
             <Card key={lead.id} className="bg-card text-card-foreground border-border">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg font-medium">{lead.name}</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                  onClick={() => handleEditClick(lead)}
-                >
-                  <Pencil className="h-4 w-4" />
-                  <span className="sr-only">Edit Lead</span>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                      onClick={(e) => e.stopPropagation()} // Prevent card click if any
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="sr-only">More actions</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-popover text-popover-foreground border-border">
+                    <DropdownMenuItem onClick={() => handleEditClick(lead)}>
+                      <Pencil className="mr-2 h-4 w-4" /> Edit Lead
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => {
+                        setLeadToDelete(lead);
+                        setIsDeleteIndividualDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete Lead
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 {lead.school && <p><strong>School:</strong> {lead.school}</p>}
@@ -143,7 +179,7 @@ const LeadsPage = () => {
             </DialogContent>
           </Dialog>
 
-          <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialog open={isDeleteAllDialogOpen} onOpenChange={setIsDeleteAllDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 <Trash2 className="mr-2 h-4 w-4" /> Delete All
@@ -187,6 +223,28 @@ const LeadsPage = () => {
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {leadToDelete && (
+        <AlertDialog open={isDeleteIndividualDialogOpen} onOpenChange={setIsDeleteIndividualDialogOpen}>
+          <AlertDialogContent className="bg-card text-card-foreground border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">Confirm Deletion</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                Are you sure you want to delete the lead "{leadToDelete.name}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-secondary text-secondary-foreground hover:bg-secondary/80">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDeleteIndividualLead}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

@@ -22,6 +22,7 @@ interface AppContextType {
   addLeads: (newLeads: Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at'>[]) => Promise<void>; // Function to add multiple leads
   updateLead: (leadId: string, updatedLeadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>) => Promise<void>; // Function to update a lead
   deleteAllLeads: () => Promise<void>; // New: Function to delete all leads
+  deleteLead: (leadId: string) => Promise<void>; // New: Function to delete a single lead
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -544,6 +545,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const deleteLead = async (leadId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to delete leads.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from('leads')
+      .delete()
+      .eq('id', leadId)
+      .eq('user_id', user.id); // Ensure user can only delete their own leads
+
+    if (error) {
+      console.error("Error deleting lead:", error);
+      toast.error("Failed to delete lead.");
+    } else {
+      setLeads((prev) => prev.filter((lead) => lead.id !== leadId));
+      toast.success("Lead deleted successfully!");
+    }
+  };
+
   const deleteAllLeads = async () => {
     if (!user) {
       toast.error("You must be logged in to delete leads.");
@@ -582,6 +604,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addLeads,   // Provide addLeads
         updateLead, // Provide updateLead
         deleteAllLeads, // Provide deleteAllLeads
+        deleteLead, // Provide deleteLead
       }}
     >
       {children}
