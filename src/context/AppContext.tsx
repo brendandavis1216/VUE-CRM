@@ -591,14 +591,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 // --- Google Calendar Integration ---
 const initiateGoogleCalendarAuth = useCallback(async () => {
+  console.log("initiateGoogleCalendarAuth called."); // ADDED LOG
   const { data, error } = await supabase.auth.getSession();
   if (error || !data.session?.access_token) {
     toast.error("You must be logged in to connect Google Calendar.");
+    console.error("Error getting session or no access token:", error); // ADDED LOG
     return;
   }
 
   const jwt = data.session.access_token;
   const clientOrigin = window.location.origin; // Get the client's origin
+  console.log("Client Origin:", clientOrigin); // ADDED LOG
 
   const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
   if (!functionsUrl) {
@@ -619,12 +622,15 @@ const initiateGoogleCalendarAuth = useCallback(async () => {
       body: JSON.stringify({ clientOrigin }), // Send clientOrigin in the body
     });
 
+    console.log("Response status from auth endpoint:", res.status); // ADDED LOG
     if (!res.ok) {
       const msg = await res.text();
+      console.error("Auth start failed response:", msg); // ADDED LOG
       throw new Error(`Auth start failed: ${msg}`);
     }
 
     const { authorizeUrl } = await res.json();
+    console.log("Received authorizeUrl:", authorizeUrl); // ADDED LOG
     window.location.href = authorizeUrl;
   } catch (e) {
     console.error("Error initiating Google Calendar auth:", e);
