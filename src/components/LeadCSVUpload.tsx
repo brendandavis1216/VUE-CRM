@@ -52,6 +52,7 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: (header) => header.toLowerCase().trim().replace(/ /g, '_'), // Normalize headers
       complete: (results) => {
         if (results.errors.length) {
           setError(results.errors[0].message);
@@ -61,28 +62,30 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
 
         const requiredHeaders = ['name'];
         const availableHeaders = results.meta.fields || [];
-        const missingHeaders = requiredHeaders.filter(header => !availableHeaders.includes(header));
+        
+        // Check if 'name' or 'main_contact' is present for the required 'name' field
+        const hasNameColumn = availableHeaders.includes('name') || availableHeaders.includes('main_contact');
 
-        if (missingHeaders.length > 0) {
-          setError(`Missing required CSV headers: ${missingHeaders.join(', ')}. Please ensure your CSV has at least a 'name' column.`);
+        if (!hasNameColumn) {
+          setError(`Missing required CSV header: 'name' or 'main_contact'. Please ensure your CSV has at least one of these columns.`);
           setParsedData([]);
           return;
         }
 
         const data: ParsedLeadRow[] = results.data.map((row: any) => ({
-          name: row.name || '',
+          name: row.name || row.main_contact || '', // Prioritize 'name', then 'main_contact'
           email: row.email || undefined,
           phone_number: row.phone_number || undefined,
           school: row.school || undefined,
           fraternity: row.fraternity || undefined,
-          instagram_handle: row.instagram_handle || undefined, // Map new field
+          instagram_handle: row.instagram_handle || undefined,
           status: row.status || 'General', // Default status
           notes: row.notes || undefined,
-          election_date: row.election_date || undefined, // Map new field
+          election_date: row.election_date || undefined,
         })).filter(row => row.name.trim() !== ''); // Filter out rows with empty names
 
         if (data.length === 0) {
-          setError("No valid lead data found in the CSV. Ensure 'name' column is populated.");
+          setError("No valid lead data found in the CSV. Ensure 'name' or 'main_contact' column is populated.");
         } else {
           setParsedData(data);
         }
@@ -132,7 +135,7 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
           className="bg-input text-foreground border-border file:text-primary file:bg-primary-foreground"
         />
         <p className="text-xs text-muted-foreground">
-          Accepted headers: `name` (required), `email`, `phone_number`, `school`, `fraternity`, `instagram_handle`, `status`, `notes`, `election_date`.
+          Accepted headers (case-insensitive, spaces become underscores): `name` (required, or `main_contact`), `email`, `phone_number`, `school`, `fraternity`, `instagram_handle`, `status`, `notes`, `election_date`.
         </p>
       </div>
 
