@@ -510,8 +510,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       .select();
 
     if (error) {
-      console.error("Error adding leads:", error);
-      toast.error("Failed to add leads.");
+      console.error("Error adding leads:", error); // Log the full error object
+      toast.error(`Failed to add leads: ${error.message}`); // Display specific error message
     } else {
       setLeads((prev) => [...prev, ...(data as Lead[])]);
       toast.success(`${data.length} leads added successfully!`);
