@@ -600,8 +600,17 @@ const initiateGoogleCalendarAuth = useCallback(async () => {
   const jwt = data.session.access_token;
   const clientOrigin = window.location.origin; // Get the client's origin
 
+  const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
+  if (!functionsUrl) {
+    console.error("VITE_SUPABASE_FUNCTIONS_URL is not defined in environment variables.");
+    toast.error("Supabase Functions URL is not configured. Please check your .env file.");
+    return;
+  }
+  const authEndpoint = `${functionsUrl}/google-calendar/auth`;
+  console.log("Attempting to fetch Google Calendar auth URL from:", authEndpoint); // ADDED LOG
+
   try {
-    const res = await fetch(`${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/google-calendar/auth`, {
+    const res = await fetch(authEndpoint, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${jwt}`,
@@ -637,7 +646,13 @@ const fetchGoogleCalendarEvents = useCallback(async ({ timeMin, timeMax }: { tim
   }
 
   const jwt = data.session.access_token;
-  const url = new URL(`${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/google-calendar/events`);
+  const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
+  if (!functionsUrl) {
+    console.error("VITE_SUPABASE_FUNCTIONS_URL is not defined in environment variables.");
+    toast.error("Supabase Functions URL is not configured. Please check your .env file.");
+    return;
+  }
+  const url = new URL(`${functionsUrl}/google-calendar/events`);
   if (timeMin) url.searchParams.set('timeMin', timeMin);
   if (timeMax) url.searchParams.set('timeMax', timeMax);
 
