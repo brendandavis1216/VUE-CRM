@@ -69,7 +69,6 @@ interface Lead {
   id: string;
   user_id: string; // Supabase user ID
   name: string;
-  email?: string;
   phone_number?: string;
   school?: string;
   fraternity?: string;

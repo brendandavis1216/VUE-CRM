@@ -25,7 +25,6 @@ import { Lead, LeadStatus } from "@/types/app";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal("")),
   phone_number: z.string().regex(/^\d{10}$/, { message: "Phone number must be 10 digits." }).optional().or(z.literal("")),
   school: z.string().optional().or(z.literal("")),
   fraternity: z.string().optional().or(z.literal("")),
@@ -48,7 +47,6 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: lead.name,
-      email: lead.email || "",
       phone_number: lead.phone_number?.replace(/\D/g, '') || "",
       school: lead.school || "",
       fraternity: lead.fraternity || "",
@@ -62,7 +60,6 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
   function handleSubmit(values: LeadFormValues) {
     onSubmit(lead.id, {
       name: values.name,
-      email: values.email || undefined,
       phone_number: values.phone_number || undefined,
       school: values.school || undefined,
       fraternity: values.fraternity || undefined,
@@ -85,19 +82,6 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
               <FormLabel className="text-white">Name</FormLabel>
               <FormControl>
                 <Input {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-white">Email</FormLabel>
-              <FormControl>
-                <Input type="email" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>

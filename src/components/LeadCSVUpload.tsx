@@ -20,7 +20,6 @@ interface LeadCSVUploadProps {
 
 interface ParsedLeadRow {
   name: string;
-  email?: string | null;
   phone_number?: string | null;
   school?: string | null;
   fraternity?: string | null;
@@ -74,7 +73,6 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
 
         const data: ParsedLeadRow[] = results.data.map((row: any) => ({
           name: row.name || row.main_contact || '', // Prioritize 'name', then 'main_contact'
-          email: row.email || null, // Convert empty string to null
           phone_number: row.phone_number || null, // Convert empty string to null
           school: row.school || null, // Convert empty string to null
           fraternity: row.fraternity || null, // Convert empty string to null
@@ -106,7 +104,6 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
     try {
       await addLeads(parsedData.map(lead => ({
         name: lead.name,
-        email: lead.email,
         phone_number: lead.phone_number,
         school: lead.school,
         fraternity: lead.fraternity,
@@ -135,7 +132,7 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
           className="bg-input text-foreground border-border file:text-primary file:bg-primary-foreground"
         />
         <p className="text-xs text-muted-foreground">
-          Accepted headers (case-insensitive, spaces become underscores): `name` (required, or `main_contact`), `email`, `phone_number`, `school`, `fraternity`, `instagram_handle`, `status`, `notes`, `election_date`.
+          Accepted headers (case-insensitive, spaces become underscores): `name` (required, or `main_contact`), `phone_number`, `school`, `fraternity`, `instagram_handle`, `status`, `notes`, `election_date`.
         </p>
       </div>
 

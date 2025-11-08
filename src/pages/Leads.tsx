@@ -100,7 +100,6 @@ const LeadsPage = () => {
               <CardContent className="space-y-2 text-sm">
                 {lead.school && <p><strong>School:</strong> {lead.school}</p>}
                 {lead.fraternity && <p><strong>Fraternity:</strong> {lead.fraternity}</p>}
-                {lead.email && <p><strong>Email:</strong> <a href={`mailto:${lead.email}`} className="text-blue-400 hover:underline">{lead.email}</a></p>}
                 {lead.phone_number && <p><strong>Phone:</strong> <a href={`tel:${lead.phone_number}`} className="text-blue-400 hover:underline">{formatPhoneNumber(lead.phone_number)}</a></p>}
                 {lead.instagram_handle && <p><strong>Instagram:</strong> <a href={`https://www.instagram.com/${lead.instagram_handle.replace(/^@/, '')}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{lead.instagram_handle}</a></p>}
                 {lead.election_date && <p><strong>Election Date:</strong> {format(new Date(lead.election_date), "PPP")}</p>}
