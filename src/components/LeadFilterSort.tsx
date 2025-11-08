@@ -32,6 +32,7 @@ export const LeadFilterSort: React.FC<LeadFilterSortProps> = ({
   currentSortBy,
   currentSortOrder,
 }) => {
+  const [isOpen, setIsOpen] = useState(false); // State to control the sheet's open/close
   const [filterSchool, setFilterSchool] = useState(currentFilterSchool);
   const [filterFraternity, setFilterFraternity] = useState(currentFilterFraternity);
   const [sortBy, setSortBy] = useState<SortBy>(currentSortBy);
@@ -39,6 +40,7 @@ export const LeadFilterSort: React.FC<LeadFilterSortProps> = ({
 
   const handleApply = () => {
     onFilterSortChange(filterSchool, filterFraternity, sortBy, sortOrder);
+    setIsOpen(false); // Close the sheet after applying
   };
 
   const handleReset = () => {
@@ -47,10 +49,11 @@ export const LeadFilterSort: React.FC<LeadFilterSortProps> = ({
     setSortBy('none');
     setSortOrder('asc');
     onFilterSortChange("", "", 'none', 'asc'); // Reset immediately
+    setIsOpen(false); // Close the sheet after resetting
   };
 
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}> {/* Control the sheet's open state */}
       <SheetTrigger asChild>
         <Button variant="outline" className="bg-secondary text-secondary-foreground hover:bg-secondary/80">
           <Filter className="mr-2 h-4 w-4" /> Filters
