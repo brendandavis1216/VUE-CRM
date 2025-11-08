@@ -23,8 +23,8 @@ export const MobileNav = () => {
             to={item.path}
             className={({ isActive }) =>
               cn(
-                "flex flex-col items-center justify-center text-xs font-medium transition-colors p-2 rounded-md", // Base styles: padding and rounded corners
-                "text-muted-foreground hover:text-primary", // Default color (white) and hover effect (dark blue/gray)
+                "flex flex-col items-center justify-center text-xs font-medium transition-colors p-2 rounded-md",
+                "text-foreground hover:bg-accent/50", // Default text color is white, subtle background on hover
                 isActive && "text-primary-foreground ring-2 ring-offset-2 ring-offset-background ring-primary" // Active state: white text and outline
               )
             }
