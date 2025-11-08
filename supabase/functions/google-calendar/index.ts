@@ -4,37 +4,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', // Added POST, GET, OPTIONS
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 };
-
-const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_OAUTH_CLIENT_ID'); // Corrected env var name
-const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET'); // Corrected env var name
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-
-console.log('Edge Function Environment Variables:');
-console.log(`GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
-console.log(`GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
-console.log(`SUPABASE_URL: ${SUPABASE_URL ? 'SET' : 'NOT SET'}`);
-console.log(`SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'}`);
-
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  const missingVars = [];
-  if (!GOOGLE_CLIENT_ID) missingVars.push('GOOGLE_OAUTH_CLIENT_ID');
-  if (!GOOGLE_CLIENT_SECRET) missingVars.push('GOOGLE_OAUTH_CLIENT_SECRET');
-  if (!SUPABASE_URL) missingVars.push('SUPABASE_URL');
-  if (!SUPABASE_ANON_KEY) missingVars.push('SUPABASE_ANON_KEY');
-
-  const errorMessage = `Server configuration error: Missing environment variables for Google Calendar integration: ${missingVars.join(', ')}. Please ensure these are set as Supabase secrets.`;
-  console.error(errorMessage);
-  return new Response(JSON.stringify({ error: errorMessage }), {
-    status: 500,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
-
-const REDIRECT_URI = `${SUPABASE_URL}/functions/v1/google-calendar/callback`;
-console.log('DEBUG: Constructed REDIRECT_URI:', REDIRECT_URI);
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -45,6 +16,36 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Move environment variable checks inside the serve function
+  const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_OAUTH_CLIENT_ID');
+  const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET');
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+  const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+
+  console.log('Edge Function Environment Variables:');
+  console.log(`GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
+  console.log(`GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
+  console.log(`SUPABASE_URL: ${SUPABASE_URL ? 'SET' : 'NOT SET'}`);
+  console.log(`SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'}`);
+
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    const missingVars = [];
+    if (!GOOGLE_CLIENT_ID) missingVars.push('GOOGLE_OAUTH_CLIENT_ID');
+    if (!GOOGLE_CLIENT_SECRET) missingVars.push('GOOGLE_OAUTH_CLIENT_SECRET');
+    if (!SUPABASE_URL) missingVars.push('SUPABASE_URL');
+    if (!SUPABASE_ANON_KEY) missingVars.push('SUPABASE_ANON_KEY');
+
+    const errorMessage = `Server configuration error: Missing environment variables for Google Calendar integration: ${missingVars.join(', ')}. Please ensure these are set as Supabase secrets.`;
+    console.error(errorMessage);
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const REDIRECT_URI = `${SUPABASE_URL}/functions/v1/google-calendar/callback`;
+  console.log('DEBUG: Constructed REDIRECT_URI:', REDIRECT_URI);
+
   const url = new URL(req.url);
   const path = url.pathname.replace('/google-calendar', ''); 
   console.log('DEBUG: Received path in Edge Function:', path);
@@ -54,12 +55,12 @@ serve(async (req) => {
   let userId: string | null = null;
 
   const supabaseClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
-    global: { headers: { Authorization: authHeader } }, // Pass the full header for auth.getUser()
+    global: { headers: { Authorization: authHeader } },
   });
 
   if (authHeader) {
     try {
-      const { data: { user }, error: userError } = await supabaseClient.auth.getUser(); // Verify JWT using Supabase client
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
       if (userError || !user) {
         console.error('Supabase auth.getUser failed:', userError?.message || 'No user found');
         throw new Error('Invalid or expired token');
@@ -146,14 +147,13 @@ serve(async (req) => {
         });
       }
 
-      const { clientOrigin } = await req.json(); // Get clientOrigin from request body
+      const { clientOrigin } = await req.json();
 
       const scopes = [
         'https://www.googleapis.com/auth/calendar.events',
         'https://www.googleapis.com/auth/calendar.readonly',
       ];
 
-      // Encode both userId and clientOrigin into the state parameter
       const statePayload = btoa(JSON.stringify({ userId, clientOrigin }));
 
       const params = new URLSearchParams({
@@ -163,7 +163,7 @@ serve(async (req) => {
         scope: scopes.join(' '),
         access_type: 'offline',
         prompt: 'consent',
-        state: statePayload, // Use the encoded state
+        state: statePayload,
       });
 
       const authorizeUrl = `${GOOGLE_AUTH_URL}?${params.toString()}`;
@@ -262,7 +262,6 @@ serve(async (req) => {
           if (insertError) throw insertError;
         }
 
-        // Redirect back to the client application's origin
         return new Response(null, {
           status: 302,
           headers: {
