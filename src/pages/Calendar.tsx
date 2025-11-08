@@ -201,7 +201,7 @@ const CalendarPage = () => {
             <div key={dayKey} className="space-y-2">
               <h3 className={cn(
                 "text-xl font-bold",
-                isToday ? "text-yellow-400" : "text-white" // Changed from text-primary to text-yellow-400
+                isToday ? "text-foreground" : "text-foreground" // Ensure it's always text-foreground (white)
               )}>
                 {format(day, "EEEE, MMM d")} {isToday && "(Today)"}
               </h3>
