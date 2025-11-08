@@ -37,6 +37,7 @@ serve(async (req) => {
 
   const url = new URL(req.url);
   const path = url.pathname.replace('/functions/v1/google-calendar', '');
+  console.log('DEBUG: Received path in Edge Function:', path); // Added debug log here
 
   const authHeader = req.headers.get('Authorization');
   let userId: string | null = null;
@@ -46,7 +47,7 @@ serve(async (req) => {
       const token = authHeader.replace('Bearer ', '');
       const { payload } = await jose.jwtVerify(
         token,
-        new TextEncoder().encode(JWT_SECRET!) // Changed this line
+        new TextEncoder().encode(JWT_SECRET!)
       );
       userId = payload.sub as string;
     } catch (e) {
