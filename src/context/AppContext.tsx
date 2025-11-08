@@ -591,52 +591,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 // --- Google Calendar Integration ---
 const initiateGoogleCalendarAuth = useCallback(async () => {
-  console.log("initiateGoogleCalendarAuth called."); // ADDED LOG
-  const { data, error } = await supabase.auth.getSession();
-  if (error || !data.session?.access_token) {
-    toast.error("You must be logged in to connect Google Calendar.");
-    console.error("Error getting session or no access token:", error); // ADDED LOG
-    return;
-  }
-
-  const jwt = data.session.access_token;
-  const clientOrigin = window.location.origin; // Get the client's origin
-  console.log("Client Origin:", clientOrigin); // ADDED LOG
-
-  const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
-  if (!functionsUrl) {
-    console.error("VITE_SUPABASE_FUNCTIONS_URL is not defined in environment variables.");
-    toast.error("Supabase Functions URL is not configured. Please check your .env file.");
-    return;
-  }
-  const authEndpoint = `${functionsUrl}/google-calendar/auth`;
-  console.log("Attempting to fetch Google Calendar auth URL from:", authEndpoint); // ADDED LOG
-
   try {
-    const res = await fetch(authEndpoint, {
-      method: 'POST',
+    console.log("initiateGoogleCalendarAuth called.");
+
+    const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+    if (sessionErr || !sessionData?.session) {
+      toast.error("Log in first.");
+      console.error("No Supabase session.", sessionErr);
+      return;
+    }
+    const accessToken = sessionData.session.access_token;
+    const clientOrigin = window.location.origin;
+    const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
+
+    const url = `${functionsUrl}/google-calendar/auth`;
+    console.log("Client Origin:", clientOrigin);
+    console.log("Attempting to fetch Google Calendar auth URL from:", url);
+
+    const res = await fetch(url, {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${jwt}`,
-        'Content-Type': 'application/json',
+        "content-type": "application/json",
+        "authorization": `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ clientOrigin }), // Send clientOrigin in the body
+      body: JSON.stringify({ clientOrigin }),
     });
 
-    console.log("Response status from auth endpoint:", res.status); // ADDED LOG
+    console.log("Response status from auth endpoint:", res.status);
     if (!res.ok) {
-      const msg = await res.text();
-      console.error("Auth start failed response:", msg); // ADDED LOG
-      throw new Error(`Auth start failed: ${msg}`);
+      const txt = await res.text();
+      console.error("Auth endpoint error body:", txt);
+      toast.error("Failed to start Google auth. Check console.");
+      return;
     }
 
     const { authorizeUrl } = await res.json();
-    console.log("Received authorizeUrl:", authorizeUrl); // ADDED LOG
+    console.log("Received authorizeUrl:", authorizeUrl);
+
+    // Full page navigation (not fetch)
     window.location.href = authorizeUrl;
   } catch (e) {
-    console.error("Error initiating Google Calendar auth:", e);
-    toast.error(`Failed to connect Google Calendar: ${e instanceof Error ? e.message : String(e)}`);
+    console.error("initiateGoogleCalendarAuth error:", e);
+    toast.error("Failed to connect Google Calendar: " + String(e));
   }
-}, [user]); // Depend on user to ensure session is available
+}, [user]);
 
 const fetchGoogleCalendarEvents = useCallback(async ({ timeMin, timeMax }: { timeMin?: string; timeMax?: string }) => {
   if (!user) {
@@ -679,7 +677,7 @@ const fetchGoogleCalendarEvents = useCallback(async ({ timeMin, timeMax }: { tim
     toast.error(`Failed to fetch Google Calendar events: ${e instanceof Error ? e.message : String(e)}`);
     setGoogleCalendarEvents([]); // Clear events on error
   }
-}, [user]); // Depend on user to ensure session is available
+}, [user]);
 // --- End Google Calendar Integration ---
 
   return (
