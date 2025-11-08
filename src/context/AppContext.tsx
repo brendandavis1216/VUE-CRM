@@ -238,7 +238,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [inquiries]);
 
   useEffect(() => {
-    saveStateFromLocalStorage("appEvents", events); // Use saveStateFromLocalStorage here
+    saveStateToLocalStorage("appEvents", events); // Corrected function name here
   }, [events]);
 
   // Fetch leads when component mounts or user changes
