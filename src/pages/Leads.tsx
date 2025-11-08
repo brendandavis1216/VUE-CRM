@@ -11,7 +11,7 @@ import { useAppContext } from "@/context/AppContext";
 import { Lead, LeadStatus } from "@/types/app";
 import { LeadCSVUpload } from "@/components/LeadCSVUpload";
 import { LeadEditForm } from "@/components/LeadEditForm";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPhoneNumber, stringToHslColor } from "@/lib/utils"; // Import stringToHslColor
 import {
   AlertDialog,
   AlertDialogAction,
@@ -310,7 +310,7 @@ const LeadsPage = () => {
             <div className="space-y-8">
               {Object.entries(groupedLeadsBySchool).map(([schoolName, schoolLeads]) => (
                 <div key={schoolName} className="space-y-4">
-                  <h2 className="text-2xl font-bold text-white mb-2">{schoolName}</h2>
+                  <h2 className="text-2xl font-bold mb-2" style={{ color: stringToHslColor(schoolName, 70, 70) }}>{schoolName}</h2>
                   <Separator className="my-4 bg-border" />
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {renderLeadCards(schoolLeads)}
