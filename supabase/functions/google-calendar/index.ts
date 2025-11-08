@@ -46,6 +46,15 @@ serve(async (req) => {
   if (authHeader) {
     try {
       const token = authHeader.replace('Bearer ', '');
+      // --- TEMPORARY DEBUGGING LOGS START ---
+      console.log('DEBUG: JWT_SECRET (raw from env):', JWT_SECRET ? 'SET (length ' + JWT_SECRET.length + ')' : 'NOT SET');
+      try {
+        const decodedSecret = jose.base64url.decode(JWT_SECRET!);
+        console.log('DEBUG: Decoded JWT_SECRET (Uint8Array length):', decodedSecret.length);
+      } catch (decodeError) {
+        console.error('DEBUG: Error decoding JWT_SECRET in Edge Function:', decodeError);
+      }
+      // --- TEMPORARY DEBUGGING LOGS END ---
       const { payload } = await jose.jwtVerify(
         token,
         jose.base64url.decode(JWT_SECRET!)
