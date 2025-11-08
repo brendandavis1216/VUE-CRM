@@ -227,6 +227,13 @@ serve(async (req) => {
 
         const tokens = await response.json();
         console.log('DEBUG: Callback - Successfully received tokens from Google.');
+        console.log('DEBUG: Received tokens (partial):', {
+          access_token_length: tokens.access_token?.length,
+          refresh_token_length: tokens.refresh_token?.length,
+          expires_in: tokens.expires_in,
+          scope: tokens.scope,
+          token_type: tokens.token_type,
+        });
         const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
 
         console.log(`DEBUG: Callback - Checking for existing tokens for user ${userIdFromState}.`);
@@ -289,8 +296,8 @@ serve(async (req) => {
           },
         });
       } catch (error) {
-        console.error('ERROR: Unhandled error in Google callback:', error);
-        return new Response(JSON.stringify({ error: `Failed to authenticate with Google: ${error instanceof Error ? error.message : String(error)}` }), {
+        console.error('ERROR: Unhandled error in Google callback:', error instanceof Error ? error.message : JSON.stringify(error));
+        return new Response(JSON.stringify({ error: `Failed to authenticate with Google: ${error instanceof Error ? error.message : JSON.stringify(error)}` }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
