@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import * as jose from 'https://esm.sh/jose@5.6.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,17 +10,16 @@ const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID');
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-const JWT_SECRET = Deno.env.get('JWT_SECRET');
+// JWT_SECRET is no longer needed for verifying Supabase session tokens via auth.getUser()
 
 console.log('Edge Function Environment Variables:');
 console.log(`GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
 console.log(`GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_URL: ${SUPABASE_URL ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'}`);
-console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET (string length: ' + JWT_SECRET.length + ')' : 'NOT SET'}`);
 
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY || !JWT_SECRET) {
-  console.error('Missing environment variables for Google Calendar integration. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY, and JWT_SECRET are set as Supabase secrets.');
+if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('Missing environment variables for Google Calendar integration. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SUPABASE_URL, and SUPABASE_ANON_KEY are set as Supabase secrets.');
   throw new Error('Server configuration error: Missing environment variables for Google Calendar integration.');
 }
 
@@ -31,16 +29,6 @@ console.log('DEBUG: Constructed REDIRECT_URI:', REDIRECT_URI);
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_CALENDAR_API_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
-
-// Prepare the JWT secret key once outside the serve function
-let jwtVerificationKey: Uint8Array;
-try {
-  jwtVerificationKey = new TextEncoder().encode(JWT_SECRET!);
-  console.log(`DEBUG: JWT_SECRET encoded to Uint8Array for verification. Byte length: ${jwtVerificationKey.byteLength}`);
-} catch (e) {
-  console.error('Error encoding JWT_SECRET:', e);
-  throw new Error('Failed to encode JWT_SECRET for verification.');
-}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -55,21 +43,21 @@ serve(async (req) => {
   console.log('DEBUG: Authorization Header:', authHeader ? 'Present' : 'Missing');
   let userId: string | null = null;
 
+  const supabaseClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
+    global: { headers: { Authorization: authHeader } }, // Pass the full header for auth.getUser()
+  });
+
   if (authHeader) {
     try {
-      const token = authHeader.replace('Bearer ', '');
-      console.log('DEBUG: Extracted Token (first 20 chars):', token.substring(0, 20) + '...');
-      const { payload } = await jose.jwtVerify(
-        token,
-        jwtVerificationKey, // Use the pre-encoded key
-        {
-          algorithms: ['HS256'], // Explicitly specify the algorithm
-        }
-      );
-      userId = payload.sub as string;
-      console.log('DEBUG: JWT Verified. User ID:', userId);
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser(); // Verify JWT using Supabase client
+      if (userError || !user) {
+        console.error('Supabase auth.getUser failed:', userError?.message || 'No user found');
+        throw new Error('Invalid or expired token');
+      }
+      userId = user.id;
+      console.log('DEBUG: Supabase JWT Verified. User ID:', userId);
     } catch (e) {
-      console.error('JWT verification failed:', e);
+      console.error('JWT verification failed via Supabase auth.getUser:', e instanceof Error ? e.message : String(e));
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -78,10 +66,6 @@ serve(async (req) => {
   } else {
     console.log('DEBUG: No Authorization header found. User is not authenticated via JWT.');
   }
-
-  const supabaseClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
-    global: { headers: { Authorization: `Bearer ${authHeader}` } },
-  });
 
   const getUserGoogleTokens = async (uid: string) => {
     const { data, error } = await supabaseClient
