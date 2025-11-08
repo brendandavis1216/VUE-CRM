@@ -2,7 +2,6 @@ import 'node:util'; // Ensure Node.js util polyfills are loaded for compatibilit
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import { google } from 'https://esm.sh/googleapis@105.0.0'; // Changed version and simplified path
 import * as jose from 'https://esm.sh/jose@5.6.3';
 
 const corsHeaders = {
@@ -10,33 +9,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Correctly access environment variables without the VITE_ prefix for Edge Functions
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID');
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-const JWT_SECRET = Deno.env.get('JWT_SECRET'); // Changed from SUPABASE_JWT_SECRET
+const JWT_SECRET = Deno.env.get('JWT_SECRET');
 
-// CRITICAL: Check for missing environment variables at the top level
-// Adding explicit logging for debugging
 console.log('Edge Function Environment Variables:');
 console.log(`GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
 console.log(`GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_URL: ${SUPABASE_URL ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'}`);
-console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET' : 'NOT SET'}`); // DO NOT log the actual secret value
+console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET' : 'NOT SET'}`);
 
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY || !JWT_SECRET) { // Updated check
+if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY || !JWT_SECRET) {
   console.error('Missing environment variables for Google Calendar integration. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY, and JWT_SECRET are set as Supabase secrets.');
-  // Throw an error to prevent the function from running with missing critical config
   throw new Error('Server configuration error: Missing environment variables for Google Calendar integration.');
 }
 
-const oAuth2Client = new google.auth.OAuth2(
-  GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET,
-  `${SUPABASE_URL}/functions/v1/google-calendar/callback`
-);
+const REDIRECT_URI = `${SUPABASE_URL}/functions/v1/google-calendar/callback`;
+const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
+const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const GOOGLE_CALENDAR_API_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -46,7 +40,6 @@ serve(async (req) => {
   const url = new URL(req.url);
   const path = url.pathname.replace('/functions/v1/google-calendar', '');
 
-  // Verify JWT token from Supabase for authenticated requests
   const authHeader = req.headers.get('Authorization');
   let userId: string | null = null;
 
@@ -55,7 +48,7 @@ serve(async (req) => {
       const token = authHeader.replace('Bearer ', '');
       const { payload } = await jose.jwtVerify(
         token,
-        jose.base64url.decode(JWT_SECRET!) // Changed from SUPABASE_JWT_SECRET!
+        jose.base64url.decode(JWT_SECRET!)
       );
       userId = payload.sub as string;
     } catch (e) {
@@ -71,7 +64,6 @@ serve(async (req) => {
     global: { headers: { Authorization: `Bearer ${authHeader}` } },
   });
 
-  // Helper to get user's Google tokens
   const getUserGoogleTokens = async (uid: string) => {
     const { data, error } = await supabaseClient
       .from('user_google_tokens')
@@ -79,18 +71,57 @@ serve(async (req) => {
       .eq('user_id', uid)
       .single();
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+    if (error && error.code !== 'PGRST116') {
       console.error('Error fetching Google tokens:', error);
       return null;
     }
     return data;
   };
 
-  // Helper to refresh token if expired
-  const refreshAccessToken = async (refreshToken: string) => {
-    oAuth2Client.setCredentials({ refresh_token: refreshToken });
-    const { credentials } = await oAuth2Client.refreshAccessToken();
-    return credentials;
+  const refreshAccessToken = async (refreshToken: string, uid: string) => {
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID!,
+      client_secret: GOOGLE_CLIENT_SECRET!,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    });
+
+    const response = await fetch(GOOGLE_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error refreshing token:', errorData);
+      throw new Error(`Failed to refresh access token: ${errorData.error_description || response.statusText}`);
+    }
+
+    const newTokens = await response.json();
+    const expiresAt = new Date(Date.now() + (newTokens.expires_in * 1000));
+
+    const { error: updateError } = await supabaseClient
+      .from('user_google_tokens')
+      .update({
+        access_token: newTokens.access_token,
+        expires_at: expiresAt.toISOString(),
+        updated_at: new Date().toISOString(),
+        // refresh_token is often not returned on refresh, so we don't update it unless explicitly provided
+        ...(newTokens.refresh_token && { refresh_token: newTokens.refresh_token }),
+      })
+      .eq('user_id', uid);
+
+    if (updateError) {
+      console.error('Error updating tokens in DB after refresh:', updateError);
+      throw updateError;
+    }
+
+    return {
+      access_token: newTokens.access_token,
+      refresh_token: newTokens.refresh_token || refreshToken, // Use new if provided, else old
+      expires_at: expiresAt,
+    };
   };
 
   switch (path) {
@@ -107,12 +138,17 @@ serve(async (req) => {
         'https://www.googleapis.com/auth/calendar.readonly',
       ];
 
-      const authorizeUrl = oAuth2Client.generateAuthUrl({
+      const params = new URLSearchParams({
+        client_id: GOOGLE_CLIENT_ID!,
+        redirect_uri: REDIRECT_URI,
+        response_type: 'code',
+        scope: scopes.join(' '),
         access_type: 'offline',
-        scope: scopes,
         prompt: 'consent',
-        state: userId, // Pass userId as state to retrieve it in callback
+        state: userId,
       });
+
+      const authorizeUrl = `${GOOGLE_AUTH_URL}?${params.toString()}`;
 
       return new Response(JSON.stringify({ authorizeUrl }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -121,7 +157,7 @@ serve(async (req) => {
 
     case '/callback': {
       const code = url.searchParams.get('code');
-      const state = url.searchParams.get('state'); // This is our userId
+      const state = url.searchParams.get('state');
 
       if (!code || !state) {
         return new Response(JSON.stringify({ error: 'Missing code or state parameter' }), {
@@ -131,10 +167,28 @@ serve(async (req) => {
       }
 
       try {
-        const { tokens } = await oAuth2Client.getToken(code);
-        oAuth2Client.setCredentials(tokens);
+        const params = new URLSearchParams({
+          client_id: GOOGLE_CLIENT_ID!,
+          client_secret: GOOGLE_CLIENT_SECRET!,
+          code: code,
+          redirect_uri: REDIRECT_URI,
+          grant_type: 'authorization_code',
+        });
 
-        const expiresAt = new Date(Date.now() + (tokens.expiry_date! - Date.now()));
+        const response = await fetch(GOOGLE_TOKEN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString(),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error exchanging code for tokens:', errorData);
+          throw new Error(`Failed to get tokens: ${errorData.error_description || response.statusText}`);
+        }
+
+        const tokens = await response.json();
+        const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
 
         const { data: existingTokens, error: fetchError } = await supabaseClient
           .from('user_google_tokens')
@@ -148,12 +202,11 @@ serve(async (req) => {
         }
 
         if (existingTokens) {
-          // Update existing tokens
           const { error: updateError } = await supabaseClient
             .from('user_google_tokens')
             .update({
-              access_token: tokens.access_token!,
-              refresh_token: tokens.refresh_token || existingTokens.refresh_token, // Keep old refresh token if new one not provided
+              access_token: tokens.access_token,
+              refresh_token: tokens.refresh_token || existingTokens.refresh_token,
               expires_at: expiresAt.toISOString(),
               scope: tokens.scope,
               token_type: tokens.token_type,
@@ -163,12 +216,11 @@ serve(async (req) => {
 
           if (updateError) throw updateError;
         } else {
-          // Insert new tokens
           const { error: insertError } = await supabaseClient
             .from('user_google_tokens')
             .insert({
               user_id: state,
-              access_token: tokens.access_token!,
+              access_token: tokens.access_token,
               refresh_token: tokens.refresh_token,
               expires_at: expiresAt.toISOString(),
               scope: tokens.scope,
@@ -178,7 +230,6 @@ serve(async (req) => {
           if (insertError) throw insertError;
         }
 
-        // Redirect back to the app's calendar page
         return new Response(null, {
           status: 302,
           headers: {
@@ -187,8 +238,8 @@ serve(async (req) => {
           },
         });
       } catch (error) {
-        console.error('Error exchanging code for tokens:', error);
-        return new Response(JSON.stringify({ error: 'Failed to authenticate with Google' }), {
+        console.error('Error in Google callback:', error);
+        return new Response(JSON.stringify({ error: `Failed to authenticate with Google: ${error instanceof Error ? error.message : String(error)}` }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -203,7 +254,7 @@ serve(async (req) => {
         });
       }
 
-      const userTokens = await getUserGoogleTokens(userId);
+      let userTokens = await getUserGoogleTokens(userId);
       if (!userTokens) {
         return new Response(JSON.stringify({ error: 'Google account not connected' }), {
           status: 400,
@@ -215,24 +266,12 @@ serve(async (req) => {
       let currentRefreshToken = userTokens.refresh_token;
       let currentExpiresAt = new Date(userTokens.expires_at);
 
-      // Check if token is expired and refresh if possible
       if (currentExpiresAt < new Date() && currentRefreshToken) {
         try {
-          const newCredentials = await refreshAccessToken(currentRefreshToken);
-          currentAccessToken = newCredentials.access_token!;
-          currentRefreshToken = newCredentials.refresh_token || currentRefreshToken;
-          currentExpiresAt = new Date(newCredentials.expiry_date!);
-
-          // Update tokens in Supabase
-          await supabaseClient
-            .from('user_google_tokens')
-            .update({
-              access_token: currentAccessToken,
-              refresh_token: currentRefreshToken,
-              expires_at: currentExpiresAt.toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', userId);
+          const refreshed = await refreshAccessToken(currentRefreshToken, userId);
+          currentAccessToken = refreshed.access_token;
+          currentRefreshToken = refreshed.refresh_token;
+          currentExpiresAt = refreshed.expires_at;
         } catch (refreshError) {
           console.error('Error refreshing Google access token:', refreshError);
           return new Response(JSON.stringify({ error: 'Failed to refresh Google access token. Please reconnect.' }), {
@@ -247,27 +286,37 @@ serve(async (req) => {
         });
       }
 
-      oAuth2Client.setCredentials({ access_token: currentAccessToken });
-      const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
-
       try {
         const timeMin = url.searchParams.get('timeMin') || new Date().toISOString();
-        const timeMax = url.searchParams.get('timeMax') || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days from now
+        const timeMax = url.searchParams.get('timeMax') || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-        const res = await calendar.events.list({
-          calendarId: 'primary',
+        const calendarParams = new URLSearchParams({
           timeMin: timeMin,
           timeMax: timeMax,
-          singleEvents: true,
+          singleEvents: 'true',
           orderBy: 'startTime',
         });
 
-        return new Response(JSON.stringify(res.data.items), {
+        const response = await fetch(`${GOOGLE_CALENDAR_API_URL}?${calendarParams.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${currentAccessToken}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error fetching Google Calendar events:', errorData);
+          throw new Error(`Failed to fetch Google events: ${errorData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        return new Response(JSON.stringify(data.items), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (error) {
         console.error('Error fetching Google Calendar events:', error);
-        return new Response(JSON.stringify({ error: 'Failed to fetch Google Calendar events' }), {
+        return new Response(JSON.stringify({ error: `Failed to fetch Google Calendar events: ${error instanceof Error ? error.message : String(error)}` }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -282,7 +331,7 @@ serve(async (req) => {
         });
       }
 
-      const userTokens = await getUserGoogleTokens(userId);
+      let userTokens = await getUserGoogleTokens(userId);
       if (!userTokens) {
         return new Response(JSON.stringify({ error: 'Google account not connected' }), {
           status: 400,
@@ -294,24 +343,12 @@ serve(async (req) => {
       let currentRefreshToken = userTokens.refresh_token;
       let currentExpiresAt = new Date(userTokens.expires_at);
 
-      // Check if token is expired and refresh if possible
       if (currentExpiresAt < new Date() && currentRefreshToken) {
         try {
-          const newCredentials = await refreshAccessToken(currentRefreshToken);
-          currentAccessToken = newCredentials.access_token!;
-          currentRefreshToken = newCredentials.refresh_token || currentRefreshToken;
-          currentExpiresAt = new Date(newCredentials.expiry_date!);
-
-          // Update tokens in Supabase
-          await supabaseClient
-            .from('user_google_tokens')
-            .update({
-              access_token: currentAccessToken,
-              refresh_token: currentRefreshToken,
-              expires_at: currentExpiresAt.toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', userId);
+          const refreshed = await refreshAccessToken(currentRefreshToken, userId);
+          currentAccessToken = refreshed.access_token;
+          currentRefreshToken = refreshed.refresh_token;
+          currentExpiresAt = refreshed.expires_at;
         } catch (refreshError) {
           console.error('Error refreshing Google access token:', refreshError);
           return new Response(JSON.stringify({ error: 'Failed to refresh Google access token. Please reconnect.' }), {
@@ -326,22 +363,30 @@ serve(async (req) => {
         });
       }
 
-      oAuth2Client.setCredentials({ access_token: currentAccessToken });
-      const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
-
       try {
         const eventData = await req.json();
-        const res = await calendar.events.insert({
-          calendarId: 'primary',
-          requestBody: eventData,
+        const response = await fetch(GOOGLE_CALENDAR_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentAccessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(eventData),
         });
 
-        return new Response(JSON.stringify(res.data), {
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error creating Google Calendar event:', errorData);
+          throw new Error(`Failed to create Google Calendar event: ${errorData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        return new Response(JSON.stringify(data), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (error) {
         console.error('Error creating Google Calendar event:', error);
-        return new Response(JSON.stringify({ error: 'Failed to create Google Calendar event' }), {
+        return new Response(JSON.stringify({ error: `Failed to create Google Calendar event: ${error instanceof Error ? error.message : String(error)}` }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
