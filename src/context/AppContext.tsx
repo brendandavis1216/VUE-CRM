@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
-import { Client, Inquiry, Event, InquiryTask, EventTask, Lead, LeadStatus, GoogleCalendarEvent } from "@/types/app";
+import { Client, Inquiry, Event, InquiryTask, EventTask, Lead, LeadStatus, GoogleCalendarEvent, DocuSignToken } from "@/types/app";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/components/SessionContextProvider";
@@ -13,6 +13,7 @@ interface AppContextType {
   events: Event[];
   leads: Lead[]; // Added leads
   googleCalendarEvents: GoogleCalendarEvent[]; // Added Google Calendar events
+  isDocuSignConnected: boolean; // New: DocuSign connection status
   addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => void;
   updateInquiryTask: (inquiryId: string, taskId: string) => void;
   updateEventTask: (eventId: string, taskId: string) => void;
@@ -28,6 +29,15 @@ interface AppContextType {
   initiateGoogleCalendarAuth: () => Promise<void>; // Function to initiate Google Calendar auth
   fetchGoogleCalendarEvents: ({ timeMin, timeMax }: { timeMin?: string; timeMax?: string }) => Promise<void>; // Function to fetch Google Calendar events
   createGoogleCalendarEvent: (event: Event) => Promise<void>; // New: Function to create Google Calendar event
+  initiateDocuSignAuth: () => Promise<void>; // New: Function to initiate DocuSign auth
+  sendDocuSignDocument: (
+    recipientName: string,
+    recipientEmail: string,
+    documentBase64: string,
+    documentName: string,
+    subject: string,
+    emailBlurb: string
+  ) => Promise<void>; // New: Function to send DocuSign document
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -227,6 +237,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   );
   const [leads, setLeads] = useState<Lead[]>(initialLeads); // State for leads
   const [googleCalendarEvents, setGoogleCalendarEvents] = useState<GoogleCalendarEvent[]>([]); // State for Google Calendar events
+  const [isDocuSignConnected, setIsDocuSignConnected] = useState(false); // New: DocuSign connection status
 
   // Use useEffect to save state whenever it changes
   useEffect(() => {
@@ -824,6 +835,130 @@ const createGoogleCalendarEvent = useCallback(async (event: Event) => {
 }, [user, fetchGoogleCalendarEvents]);
 // --- End Google Calendar Integration ---
 
+// --- DocuSign Integration ---
+const fetchDocuSignConnectionStatus = useCallback(async () => {
+  if (!user) {
+    setIsDocuSignConnected(false);
+    return;
+  }
+  const { data, error } = await supabase
+    .from('user_docusign_tokens')
+    .select('id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 means "no rows found"
+    console.error("Error fetching DocuSign connection status:", error);
+    setIsDocuSignConnected(false);
+  } else {
+    setIsDocuSignConnected(!!data);
+  }
+}, [user]);
+
+useEffect(() => {
+  fetchDocuSignConnectionStatus();
+}, [user, fetchDocuSignConnectionStatus]);
+
+const initiateDocuSignAuth = useCallback(async () => {
+  try {
+    const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+    if (sessionErr || !sessionData?.session) {
+      toast.error("Log in first.");
+      console.error("No Supabase session.", sessionErr);
+      return;
+    }
+    const accessToken = sessionData.session.access_token;
+    const clientOrigin = window.location.origin;
+    const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
+
+    if (!functionsUrl) {
+      console.error("VITE_SUPABASE_FUNCTIONS_URL is not defined in environment variables.");
+      toast.error("Supabase Functions URL is not configured. Please check your .env file.");
+      return;
+    }
+
+    const url = `${functionsUrl}/docusign/auth`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ clientOrigin }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      console.error("DocuSign Auth endpoint error body:", txt);
+      toast.error("Failed to start DocuSign auth. Check console.");
+      return;
+    }
+
+    const { authorizeUrl } = await res.json();
+    window.location.href = authorizeUrl;
+  } catch (e) {
+    console.error("initiateDocuSignAuth error:", e);
+    toast.error("Failed to connect DocuSign: " + String(e));
+  }
+}, [user]);
+
+const sendDocuSignDocument = useCallback(async (
+  recipientName: string,
+  recipientEmail: string,
+  documentBase64: string,
+  documentName: string,
+  subject: string,
+  emailBlurb: string
+) => {
+  if (!user) {
+    toast.error("You need to be logged in to send DocuSign documents.");
+    return;
+  }
+
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.access_token) {
+    toast.error("Not authenticated with Supabase. Please log in.");
+    return;
+  }
+
+  const jwt = data.session.access_token;
+  const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
+  if (!functionsUrl) {
+    console.error("VITE_SUPABASE_FUNCTIONS_URL is not defined in environment variables.");
+    toast.error("Supabase Functions URL is not configured. Please check your .env file.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${functionsUrl}/docusign/send-document`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwt}`,
+      },
+      body: JSON.stringify({
+        recipientName,
+        recipientEmail,
+        documentBase64,
+        documentName,
+        subject,
+        emailBlurb,
+      }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(`Failed to send DocuSign document: ${errorData.error || res.statusText}`);
+    }
+
+    toast.success(`Document "${documentName}" sent via DocuSign!`);
+  } catch (e) {
+    console.error("Error sending DocuSign document:", e);
+    toast.error(`Failed to send DocuSign document: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}, [user]);
+// --- End DocuSign Integration ---
+
   return (
     <AppContext.Provider
       value={{
@@ -832,6 +967,7 @@ const createGoogleCalendarEvent = useCallback(async (event: Event) => {
         events,
         leads, // Provide leads
         googleCalendarEvents, // Provide Google Calendar events
+        isDocuSignConnected, // Provide DocuSign connection status
         addInquiry,
         updateInquiryTask,
         updateEventTask,
@@ -847,6 +983,8 @@ const createGoogleCalendarEvent = useCallback(async (event: Event) => {
         initiateGoogleCalendarAuth, // Provide initiateGoogleCalendarAuth
         fetchGoogleCalendarEvents, // Provide fetchGoogleCalendarEvents
         createGoogleCalendarEvent, // Provide createGoogleCalendarEvent
+        initiateDocuSignAuth, // Provide initiateDocuSignAuth
+        sendDocuSignDocument, // Provide sendDocuSignDocument
       }}
     >
       {children}

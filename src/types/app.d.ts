@@ -110,3 +110,13 @@ export interface GoogleCalendarEvent {
   /** Helpful tag to mark this source */
   source: 'google';
 }
+
+export interface DocuSignToken {
+  id: string;
+  user_id: string;
+  access_token: string;
+  refresh_token: string | null;
+  expires_at: string;
+  created_at: string;
+  updated_at: string;
+}

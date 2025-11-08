@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Pencil, ChevronDown, PlusCircle } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { Pencil, ChevronDown, PlusCircle, FileSignature } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
 import {
   Accordion,
@@ -15,26 +15,47 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ClientEditForm } from "@/components/ClientEditForm";
 import { ClientFilterSort } from "@/components/ClientFilterSort";
 import { ClientAddForm } from "@/components/ClientAddForm";
-import { InquiryForm } from "@/components/InquiryForm"; // Import InquiryForm
+import { InquiryForm } from "@/components/InquiryForm";
 import { Client } from "@/types/app";
+import { DocuSignConnectButton } from "@/components/DocuSignConnectButton"; // Import DocuSignConnectButton
+import { SendContractForm } from "@/components/SendContractForm"; // Import SendContractForm
+import { useSearchParams } from "react-router-dom"; // Import useSearchParams
+import { toast } from "sonner";
 
 type SortBy = 'none' | 'school' | 'averageEventSize' | 'numberOfEvents' | 'clientScore';
 type SortOrder = 'asc' | 'desc';
 
 const ClientsPage = () => {
-  const { clients, updateClient, addClient, addInquiry } = useAppContext();
+  const { clients, updateClient, addClient, addInquiry, isDocuSignConnected } = useAppContext();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false); // Renamed for clarity
+  const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   // State for adding inquiry from client card
   const [isAddInquiryDialogOpen, setIsAddInquiryDialogOpen] = useState(false);
   const [clientForNewInquiry, setClientForNewInquiry] = useState<Client | null>(null);
 
+  // State for sending contract
+  const [isSendContractDialogOpen, setIsSendContractDialogOpen] = useState(false);
+  const [clientForContract, setClientForContract] = useState<Client | null>(null);
+
   // State for filtering and sorting
   const [filterSchool, setFilterSchool] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>('none');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle DocuSign Auth Callback Success
+  useEffect(() => {
+    const docusignAuthSuccess = searchParams.get('docusign_auth_success');
+    if (docusignAuthSuccess === 'true') {
+      toast.success("DocuSign connected successfully!");
+      // Remove the query parameter from the URL
+      searchParams.delete('docusign_auth_success');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleEditClick = (client: Client) => {
     setSelectedClient(client);
@@ -67,6 +88,19 @@ const ClientsPage = () => {
     }
     setIsAddInquiryDialogOpen(false);
     setClientForNewInquiry(null);
+  };
+
+  const handleSendContractClick = (client: Client) => {
+    if (!isDocuSignConnected) {
+      toast.error("Please connect your DocuSign account first.");
+      return;
+    }
+    if (!client.phoneNumber) {
+      toast.error("Client must have a phone number on file to send contracts.");
+      return;
+    }
+    setClientForContract(client);
+    setIsSendContractDialogOpen(true);
   };
 
   const handleFilterSortChange = (
@@ -144,6 +178,7 @@ const ClientsPage = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold text-white">Clients</h1>
         <div className="flex gap-2">
+          <DocuSignConnectButton /> {/* DocuSign Connect Button */}
           <Dialog open={isAddClientDialogOpen} onOpenChange={setIsAddClientDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
@@ -163,7 +198,7 @@ const ClientsPage = () => {
       {groupedClients.length === 0 ? (
         <p className="text-center text-muted-foreground mt-8">No clients match your current filters.</p>
       ) : (
-        <div className="space-y-8"> {/* Added space between school groups */}
+        <div className="space-y-8">
           {groupedClients.map(({ schoolName, clients: schoolClients }) => (
             <div key={schoolName} className="space-y-4">
               <h2 className="text-2xl font-bold text-white mb-2">{schoolName}</h2>
@@ -237,6 +272,15 @@ const ClientsPage = () => {
                             <Pencil className="mr-2 h-4 w-4" /> Edit Client
                           </Button>
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 mt-2"
+                          onClick={() => handleSendContractClick(client)}
+                          disabled={!isDocuSignConnected || !client.phoneNumber}
+                        >
+                          <FileSignature className="mr-2 h-4 w-4" /> Send Contract
+                        </Button>
                       </AccordionContent>
                     </AccordionItem>
                   </Card>
@@ -257,6 +301,20 @@ const ClientsPage = () => {
               client={selectedClient}
               onSubmit={handleClientUpdate}
               onClose={() => setIsEditDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {clientForContract && (
+        <Dialog open={isSendContractDialogOpen} onOpenChange={setIsSendContractDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+            <DialogHeader>
+              <DialogTitle className="text-white">Send Contract to {clientForContract.mainContactName}</DialogTitle>
+            </DialogHeader>
+            <SendContractForm
+              client={clientForContract}
+              onClose={() => setIsSendContractDialogOpen(false)}
             />
           </DialogContent>
         </Dialog>
