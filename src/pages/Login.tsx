@@ -13,35 +13,35 @@ const Login = () => {
       <p className="text-center text-white mb-6">Sign in to manage your events and clients.</p>
       <div className="w-full max-w-md space-y-6">
         <Auth
-          key="supabase-auth-ui" // Added key to force re-render
+          key="supabase-auth-ui"
           supabaseClient={supabase}
           providers={[]}
           appearance={{
             theme: ThemeSupa,
             variables: {
-              default: {
+              dark: { // Moved custom colors under 'dark' to ensure they apply in dark mode
                 colors: {
-                  brand: 'hsl(var(--primary))', // Dark background for primary button
-                  brandAccent: 'hsl(var(--primary-foreground))', // White text for primary button
-                  defaultButtonBackground: 'hsl(var(--primary))', // Dark background for default button
-                  defaultButtonBackgroundHover: 'hsl(var(--primary-foreground))', // White text for default button hover
-                  inputBackground: 'hsl(var(--secondary))', // Dark gray for input background
-                  inputBorder: 'hsl(var(--border))', // Dark gray for input border
+                  brand: 'hsl(var(--primary))',
+                  brandAccent: 'hsl(var(--primary-foreground))',
+                  defaultButtonBackground: 'hsl(var(--primary))',
+                  defaultButtonBackgroundHover: 'hsl(var(--primary-foreground))',
+                  inputBackground: 'hsl(var(--secondary))',
+                  inputBorder: 'hsl(var(--border))',
                   inputLabel: 'hsl(0 0% 100%)', // Explicitly set to pure white for label text
-                  inputText: 'hsl(0 0% 100%)', // Pure white input text
-                  messageText: 'hsl(0 0% 100%)', // Pure white for message text (e.g., error messages)
-                  messageBackground: 'hsl(0 62.8% 30.6%)', // Red background
-                  anchorTextColor: 'hsl(0 0% 100%)', // Pure white for links
-                  inputPlaceholder: 'hsl(0 0% 100%)', // Pure white for placeholder text
-                  dividerBackground: 'hsl(var(--border))', // Dark gray for dividers
-                  textColor: 'hsl(0 0% 100%)', // Pure white for general text, directly set
+                  inputText: 'hsl(0 0% 100%)',
+                  messageText: 'hsl(0 0% 100%)',
+                  messageBackground: 'hsl(0 62.8% 30.6%)',
+                  anchorTextColor: 'hsl(0 0% 100%)',
+                  inputPlaceholder: 'hsl(0 0% 100%)',
+                  dividerBackground: 'hsl(var(--border))',
+                  textColor: 'hsl(0 0% 100%)',
                 },
               },
             },
           }}
-          theme="dark"
+          // Removed theme="dark" as it might conflict with appearance.variables.dark
           redirectTo={window.location.origin + '/clients'}
-          className="supabase-auth-ui-custom-theme" // Add custom class here
+          className="supabase-auth-ui-custom-theme"
         />
       </div>
       <MadeWithDyad />
