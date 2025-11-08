@@ -31,8 +31,14 @@ const LeadsPage = () => {
       'Not Interested': [],
     };
 
+    const validStatuses: LeadStatus[] = ['Interested', 'General', 'Not Interested'];
+
     leads.forEach(lead => {
-      groups[lead.status].push(lead);
+      // Ensure lead.status is a valid LeadStatus, default to 'General' if not
+      const status: LeadStatus = validStatuses.includes(lead.status)
+        ? lead.status
+        : 'General';
+      groups[status].push(lead);
     });
 
     return groups;
