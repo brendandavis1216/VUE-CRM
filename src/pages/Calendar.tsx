@@ -25,15 +25,16 @@ const getCalendarItemColor = (item: CalendarItem): string => {
   } else if ('inquiryDate' in item) { // It's an Inquiry
     return "bg-red-500"; // Red: Inquired
   } else { // It's an Event
-    const finalPaymentTask = item.tasks.find(task => task.name === "Paid(Full)");
+    // Safely access tasks using optional chaining
+    const finalPaymentTask = (item as Event).tasks?.find(task => task.name === "Paid(Full)");
 
     if (finalPaymentTask?.completed) {
       return "bg-green-500"; // Green: Event Paid
     }
-    if (item.status === "Completed") {
+    if ((item as Event).status === "Completed") {
       return "bg-blue-500"; // Blue: Event Completed
     }
-    if (item.status === "Cancelled") {
+    if ((item as Event).status === "Cancelled") {
       return "bg-gray-500"; // Gray: Event Cancelled (new color)
     }
     // Default for Pending/Confirmed events that are not yet paid
@@ -48,14 +49,14 @@ const getCalendarItemTitle = (item: CalendarItem): string => {
   } else if ('inquiryDate' in item) {
     return `Inquiry: ${item.fraternity} - ${item.school}`;
   } else {
-    const finalPaymentTask = item.tasks.find(task => task.name === "Paid(Full)");
+    const finalPaymentTask = (item as Event).tasks?.find(task => task.name === "Paid(Full)");
     if (finalPaymentTask?.completed) {
       return `Event: ${item.eventName} - ${item.fraternity} (Paid)`;
     }
-    if (item.status === "Completed") {
+    if ((item as Event).status === "Completed") {
       return `Event: ${item.eventName} - ${item.fraternity} (Completed)`;
     }
-    if (item.status === "Cancelled") {
+    if ((item as Event).status === "Cancelled") {
       return `Event: ${item.eventName} - ${item.fraternity} (Cancelled)`;
     }
     return `Event: ${item.eventName} - ${item.fraternity} (In Progress)`;

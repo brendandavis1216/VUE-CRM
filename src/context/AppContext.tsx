@@ -52,6 +52,9 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
       return storedData.map(event => {
         let currentEvent = { ...event }; // Start with a shallow copy
 
+        // Ensure tasks is an array, even if it's missing from stored data
+        currentEvent.tasks = Array.isArray(currentEvent.tasks) ? currentEvent.tasks : [];
+
         let date: Date;
         if (typeof currentEvent.eventDate === 'string') {
           date = new Date(currentEvent.eventDate);
