@@ -20,14 +20,14 @@ interface LeadCSVUploadProps {
 
 interface ParsedLeadRow {
   name: string;
-  email?: string;
-  phone_number?: string;
-  school?: string;
-  fraternity?: string;
-  instagram_handle?: string; // New field
+  email?: string | null;
+  phone_number?: string | null;
+  school?: string | null;
+  fraternity?: string | null;
+  instagram_handle?: string | null; // New field
   status?: string; // Will default to 'General' if not provided
-  notes?: string;
-  election_date?: string; // New field
+  notes?: string | null;
+  election_date?: string | null; // New field
 }
 
 export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, onClose }) => {
@@ -74,14 +74,14 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
 
         const data: ParsedLeadRow[] = results.data.map((row: any) => ({
           name: row.name || row.main_contact || '', // Prioritize 'name', then 'main_contact'
-          email: row.email || undefined,
-          phone_number: row.phone_number || undefined,
-          school: row.school || undefined,
-          fraternity: row.fraternity || undefined,
-          instagram_handle: row.instagram_handle || undefined,
+          email: row.email || null, // Convert empty string to null
+          phone_number: row.phone_number || null, // Convert empty string to null
+          school: row.school || null, // Convert empty string to null
+          fraternity: row.fraternity || null, // Convert empty string to null
+          instagram_handle: row.instagram_handle || null, // Convert empty string to null
           status: row.status || 'General', // Default status
-          notes: row.notes || undefined,
-          election_date: row.election_date || undefined,
+          notes: row.notes || null, // Convert empty string to null
+          election_date: row.election_date || null, // Convert empty string to null
         })).filter(row => row.name.trim() !== ''); // Filter out rows with empty names
 
         if (data.length === 0) {
@@ -110,10 +110,10 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
         phone_number: lead.phone_number,
         school: lead.school,
         fraternity: lead.fraternity,
-        instagram_handle: lead.instagram_handle, // Pass new field
-        status: lead.status as Lead['status'], // Cast to LeadStatus
+        instagram_handle: lead.instagram_handle,
+        status: lead.status as Lead['status'],
         notes: lead.notes,
-        election_date: lead.election_date, // Pass new field
+        election_date: lead.election_date,
       })));
       onUploadSuccess();
       onClose();
