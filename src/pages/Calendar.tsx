@@ -1,24 +1,28 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { format, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks, eachDayOfInterval, getMonth, getYear, setMonth, setYear, startOfMonth } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { format, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks, eachDayOfInterval, getMonth, getYear, setMonth, setYear, startOfMonth, parseISO } from "date-fns";
+import { ChevronLeft, ChevronRight, CalendarPlus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Event, Inquiry } from "@/types/app";
+import { Event, Inquiry, GoogleCalendarEvent } from "@/types/app";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate, useSearchParams } from "react-router-dom"; // Import useNavigate and useSearchParams
+import { GoogleCalendarConnectButton } from "@/components/GoogleCalendarConnectButton"; // Import the new component
+import { useSession } from "@/components/SessionContextProvider"; // Import useSession
 
 // Define a union type for items that can appear on the calendar
-type CalendarItem = Inquiry | Event;
+type CalendarItem = Inquiry | Event | GoogleCalendarEvent;
 
 // Helper function to determine the color for a calendar item based on new logic
 const getCalendarItemColor = (item: CalendarItem): string => {
-  if ('inquiryDate' in item) { // It's an Inquiry
+  if ('source' in item && item.source === 'google') {
+    return "bg-purple-500"; // Purple for Google Calendar events
+  } else if ('inquiryDate' in item) { // It's an Inquiry
     return "bg-red-500"; // Red: Inquired
   } else { // It's an Event
     const finalPaymentTask = item.tasks.find(task => task.name === "Paid(Full)");
@@ -39,7 +43,9 @@ const getCalendarItemColor = (item: CalendarItem): string => {
 
 // Helper function to get the title for the tooltip
 const getCalendarItemTitle = (item: CalendarItem): string => {
-  if ('inquiryDate' in item) {
+  if ('source' in item && item.source === 'google') {
+    return `Google Event: ${item.summary}`;
+  } else if ('inquiryDate' in item) {
     return `Inquiry: ${item.fraternity} - ${item.school}`;
   } else {
     const finalPaymentTask = item.tasks.find(task => task.name === "Paid(Full)");
@@ -63,21 +69,63 @@ const LEGEND_COLORS = {
   "Event (Paid)": "bg-green-500",
   "Event (Completed)": "bg-blue-500",
   "Event (Cancelled)": "bg-gray-500",
+  "Google Calendar Event": "bg-purple-500", // Added Google Calendar event to legend
 };
 
 const CalendarPage = () => {
-  const { events, inquiries } = useAppContext();
+  const { events, inquiries, googleCalendarEvents, fetchGoogleCalendarEvents } = useAppContext();
+  const { session } = useSession();
   const navigate = useNavigate(); // Initialize useNavigate
+  const [searchParams, setSearchParams] = useSearchParams(); // Initialize useSearchParams
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(
     startOfWeek(new Date(), { weekStartsOn: 1 }) // Start week on Monday
   );
 
+  // Handle Google Auth Callback Success
+  useEffect(() => {
+    const googleAuthSuccess = searchParams.get('google_auth_success');
+    if (googleAuthSuccess === 'true') {
+      toast.success("Google Calendar connected successfully!");
+      // Remove the query parameter from the URL
+      searchParams.delete('google_auth_success');
+      setSearchParams(searchParams, { replace: true });
+      // Re-fetch Google events after successful connection
+      fetchGoogleCalendarEvents({
+        timeMin: format(currentWeekStart, 'yyyy-MM-dd'),
+        timeMax: format(endOfWeek(currentWeekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+      });
+    }
+  }, [searchParams, setSearchParams, fetchGoogleCalendarEvents, currentWeekStart]);
+
+  // Fetch Google Calendar events when component mounts or week changes
+  useEffect(() => {
+    if (session) {
+      fetchGoogleCalendarEvents({
+        timeMin: format(currentWeekStart, 'yyyy-MM-dd'),
+        timeMax: format(endOfWeek(currentWeekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+      });
+    }
+  }, [session, currentWeekStart, fetchGoogleCalendarEvents]);
+
+
   const allCalendarItems: CalendarItem[] = useMemo(() => {
-    return [
+    const combinedItems: CalendarItem[] = [
       ...inquiries.map(inq => ({ ...inq, date: inq.inquiryDate })),
       ...events.map(event => ({ ...event, date: event.eventDate })),
+      ...googleCalendarEvents.map(gEvent => {
+        // Determine the correct date property for Google events
+        const eventDate = gEvent.start.dateTime ? parseISO(gEvent.start.dateTime) : (gEvent.start.date ? parseISO(gEvent.start.date) : new Date());
+        return { ...gEvent, date: eventDate };
+      }),
     ];
-  }, [events, inquiries]);
+
+    // Sort all items by their respective dates
+    return combinedItems.sort((a, b) => {
+      const dateA = 'inquiryDate' in a ? a.inquiryDate : ('eventDate' in a ? a.eventDate : ('date' in a ? a.date : new Date()));
+      const dateB = 'inquiryDate' in b ? b.inquiryDate : ('eventDate' in b ? b.eventDate : ('date' in b ? b.date : new Date()));
+      return dateA.getTime() - dateB.getTime();
+    });
+  }, [events, inquiries, googleCalendarEvents]);
 
   const daysInWeek = useMemo(() => {
     const weekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 });
@@ -89,10 +137,33 @@ const CalendarPage = () => {
     daysInWeek.forEach(day => {
       const dayKey = format(day, 'yyyy-MM-dd');
       groups[dayKey] = allCalendarItems
-        .filter(item => isSameDay('inquiryDate' in item ? item.inquiryDate : item.eventDate, day))
+        .filter(item => {
+          let itemDate: Date;
+          if ('inquiryDate' in item) {
+            itemDate = item.inquiryDate;
+          } else if ('eventDate' in item) {
+            itemDate = item.eventDate;
+          } else if ('start' in item && item.source === 'google') {
+            itemDate = item.start.dateTime ? parseISO(item.start.dateTime) : (item.start.date ? parseISO(item.start.date) : new Date());
+          } else {
+            itemDate = new Date(); // Fallback
+          }
+          return isSameDay(itemDate, day);
+        })
         .sort((a, b) => {
-          const dateA = 'inquiryDate' in a ? a.inquiryDate : a.eventDate;
-          const dateB = 'inquiryDate' in b ? b.inquiryDate : b.eventDate;
+          let dateA: Date;
+          let dateB: Date;
+
+          if ('inquiryDate' in a) dateA = a.inquiryDate;
+          else if ('eventDate' in a) dateA = a.eventDate;
+          else if ('start' in a && a.source === 'google') dateA = a.start.dateTime ? parseISO(a.start.dateTime) : (a.start.date ? parseISO(a.start.date) : new Date());
+          else dateA = new Date();
+
+          if ('inquiryDate' in b) dateB = b.inquiryDate;
+          else if ('eventDate' in b) dateB = b.eventDate;
+          else if ('start' in b && b.source === 'google') dateB = b.start.dateTime ? parseISO(b.start.dateTime) : (b.start.date ? parseISO(b.start.date) : new Date());
+          else dateB = new Date();
+
           return dateA.getTime() - dateB.getTime();
         });
     });
@@ -122,7 +193,9 @@ const CalendarPage = () => {
   };
 
   const handleItemClick = (item: CalendarItem) => {
-    if ('inquiryDate' in item) {
+    if ('source' in item && item.source === 'google') {
+      window.open(item.htmlLink, '_blank'); // Open Google event in new tab
+    } else if ('inquiryDate' in item) {
       navigate(`/inquiries?inquiryId=${item.id}`);
     } else {
       navigate(`/events?eventId=${item.id}`);
@@ -190,6 +263,11 @@ const CalendarPage = () => {
         </div>
       </Card>
 
+      {/* Google Calendar Connect Button */}
+      <div className="flex justify-center mb-4">
+        <GoogleCalendarConnectButton />
+      </div>
+
       {/* Daily Event Lists */}
       <div className="space-y-6">
         {daysInWeek.map((day) => {
@@ -218,10 +296,10 @@ const CalendarPage = () => {
                     >
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3"> {/* Adjusted padding to p-3 */}
                         <CardTitle className="text-base font-medium"> {/* Reduced font size to text-base */}
-                          {'inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school}` : `Event: ${item.eventName}`}
+                          {'source' in item && item.source === 'google' ? `Google: ${item.summary}` : ('inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school}` : `Event: ${item.eventName}`)}
                         </CardTitle>
                         <Badge className={cn("text-xs", getCalendarItemColor(item))}>
-                          {'inquiryDate' in item ? "Inquiry" : item.status}
+                          {'source' in item && item.source === 'google' ? "Google Event" : ('inquiryDate' in item ? "Inquiry" : item.status)}
                         </Badge>
                       </CardHeader>
                     </Card>

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { Client, Inquiry, Event, InquiryTask, EventTask, Lead, LeadStatus } from "@/types/app";
+import React, { createContext, useState, useContext, ReactNode, useEffect, useCallback } from "react";
+import { Client, Inquiry, Event, InquiryTask, EventTask, Lead, LeadStatus, GoogleCalendarEvent } from "@/types/app";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/components/SessionContextProvider";
@@ -11,6 +11,7 @@ interface AppContextType {
   inquiries: Inquiry[];
   events: Event[];
   leads: Lead[]; // Added leads
+  googleCalendarEvents: GoogleCalendarEvent[]; // Added Google Calendar events
   addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => void;
   updateInquiryTask: (inquiryId: string, taskId: string) => void;
   updateEventTask: (eventId: string, taskId: string) => void;
@@ -23,6 +24,8 @@ interface AppContextType {
   updateLead: (leadId: string, updatedLeadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>) => Promise<void>; // Function to update a lead
   deleteAllLeads: () => Promise<void>; // New: Function to delete all leads
   deleteLead: (leadId: string) => Promise<void>; // New: Function to delete a single lead
+  initiateGoogleCalendarAuth: () => Promise<void>; // Function to initiate Google Calendar auth
+  fetchGoogleCalendarEvents: ({ timeMin, timeMax }: { timeMin?: string; timeMax?: string }) => Promise<void>; // Function to fetch Google Calendar events
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -211,6 +214,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     loadStateFromLocalStorage("appEvents", initialEvents)
   );
   const [leads, setLeads] = useState<Lead[]>(initialLeads); // State for leads
+  const [googleCalendarEvents, setGoogleCalendarEvents] = useState<GoogleCalendarEvent[]>([]); // State for Google Calendar events
 
   // Use useEffect to save state whenever it changes
   useEffect(() => {
@@ -585,6 +589,76 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       toast.success("All leads deleted successfully!");
     }
   };
+// --- Google Calendar Integration ---
+const initiateGoogleCalendarAuth = useCallback(async () => {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.access_token) {
+    toast.error("You must be logged in to connect Google Calendar.");
+    return;
+  }
+
+  const jwt = data.session.access_token;
+  try {
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/google-calendar/auth`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+        'Content-Type': 'application/json',
+      },
+      // The redirectUri is handled by the Edge Function itself, no need to send it here.
+      // The Edge Function will use the SUPABASE_URL/functions/v1/google-calendar/callback
+    });
+
+    if (!res.ok) {
+      const msg = await res.text();
+      throw new Error(`Auth start failed: ${msg}`);
+    }
+
+    const { authorizeUrl } = await res.json();
+    window.location.href = authorizeUrl;
+  } catch (e) {
+    console.error("Error initiating Google Calendar auth:", e);
+    toast.error(`Failed to connect Google Calendar: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}, [user]); // Depend on user to ensure session is available
+
+const fetchGoogleCalendarEvents = useCallback(async ({ timeMin, timeMax }: { timeMin?: string; timeMax?: string }) => {
+  if (!user) {
+    setGoogleCalendarEvents([]); // Clear events if not logged in
+    return;
+  }
+
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session?.access_token) {
+    console.warn("Not authenticated, cannot fetch Google Calendar events.");
+    setGoogleCalendarEvents([]);
+    return;
+  }
+
+  const jwt = data.session.access_token;
+  const url = new URL(`${import.meta.env.VITE_SUPABASE_FUNCTIONS_URL}/google-calendar/events`);
+  if (timeMin) url.searchParams.set('timeMin', timeMin);
+  if (timeMax) url.searchParams.set('timeMax', timeMax);
+
+  try {
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${jwt}` },
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(`Failed to fetch Google events: ${errorData.error || res.statusText}`);
+    }
+
+    const events: GoogleCalendarEvent[] = await res.json();
+    setGoogleCalendarEvents(events || []);
+  } catch (e) {
+    console.error("Error fetching Google Calendar events:", e);
+    toast.error(`Failed to fetch Google Calendar events: ${e instanceof Error ? e.message : String(e)}`);
+    setGoogleCalendarEvents([]); // Clear events on error
+  }
+}, [user]); // Depend on user to ensure session is available
+// --- End Google Calendar Integration ---
 
   return (
     <AppContext.Provider
@@ -593,6 +667,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         inquiries,
         events,
         leads, // Provide leads
+        googleCalendarEvents, // Provide Google Calendar events
         addInquiry,
         updateInquiryTask,
         updateEventTask,
@@ -605,6 +680,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateLead, // Provide updateLead
         deleteAllLeads, // Provide deleteAllLeads
         deleteLead, // Provide deleteLead
+        initiateGoogleCalendarAuth, // Provide initiateGoogleCalendarAuth
+        fetchGoogleCalendarEvents, // Provide fetchGoogleCalendarEvents
       }}
     >
       {children}

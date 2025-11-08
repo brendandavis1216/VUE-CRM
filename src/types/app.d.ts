@@ -79,3 +79,34 @@ interface Lead {
   created_at: string;
   updated_at: string;
 }
+
+export interface GoogleCalendarEvent {
+  /** Google event id */
+  id: string;
+
+  /** Event title */
+  summary: string;
+
+  /** Start info (either dateTime or all-day date) */
+  start: {
+    dateTime?: string;
+    date?: string;
+    timeZone?: string;
+  };
+
+  /** End info */
+  end: {
+    dateTime?: string;
+    date?: string;
+    timeZone?: string;
+  };
+
+  /** Event location text */
+  location?: string;
+
+  /** Link to open this event in Google Calendar */
+  htmlLink: string;
+
+  /** Helpful tag to mark this source */
+  source: 'google';
+}
