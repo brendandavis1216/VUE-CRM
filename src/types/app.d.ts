@@ -69,13 +69,13 @@ interface Lead {
   id: string;
   user_id: string; // Supabase user ID
   name: string;
-  phone_number?: string;
-  school?: string;
-  fraternity?: string;
-  instagram_handle?: string; // New: Instagram handle
+  phone_number: string | null; // Changed to allow null
+  school: string | null; // Changed to allow null
+  fraternity: string | null; // Changed to allow null
+  instagram_handle: string | null; // Changed to allow null
   status: LeadStatus;
-  notes?: string;
-  election_date?: string; // Changed to string
+  notes: string | null; // Changed to allow null
+  election_date: string | null; // Changed to allow null
   created_at: string;
   updated_at: string;
 }

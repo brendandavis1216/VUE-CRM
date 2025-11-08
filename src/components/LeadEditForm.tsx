@@ -21,13 +21,13 @@ import { Lead, LeadStatus } from "@/types/app";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  phone_number: z.string().regex(/^\d{10}$/, { message: "Phone number must be 10 digits." }).optional().or(z.literal("")),
-  school: z.string().optional().or(z.literal("")),
-  fraternity: z.string().optional().or(z.literal("")),
-  instagram_handle: z.string().optional().or(z.literal("")), // New field
+  phone_number: z.string().nullable(), // Changed to nullable
+  school: z.string().nullable(), // Changed to nullable
+  fraternity: z.string().nullable(), // Changed to nullable
+  instagram_handle: z.string().nullable(), // Changed to nullable
   status: z.enum(["General", "Interested", "Not Interested"]),
-  notes: z.string().optional().or(z.literal("")),
-  election_date: z.string().optional().or(z.literal("")), // Changed to string
+  notes: z.string().nullable(), // Changed to nullable
+  election_date: z.string().nullable(), // Changed to nullable
 });
 
 type LeadFormValues = z.infer<typeof formSchema>;
@@ -43,26 +43,27 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: lead.name,
-      phone_number: lead.phone_number?.replace(/\D/g, '') || "",
-      school: lead.school || "",
-      fraternity: lead.fraternity || "",
-      instagram_handle: lead.instagram_handle || "", // Set default
+      phone_number: lead.phone_number || null, // Use null for default
+      school: lead.school || null,
+      fraternity: lead.fraternity || null,
+      instagram_handle: lead.instagram_handle || null,
       status: lead.status,
-      notes: lead.notes || "",
-      election_date: lead.election_date || "", // Set default as string
+      notes: lead.notes || null,
+      election_date: lead.election_date || null,
     },
   });
 
   function handleSubmit(values: LeadFormValues) {
+    // Explicitly convert empty strings to null for nullable fields
     onSubmit(lead.id, {
       name: values.name,
-      phone_number: values.phone_number || undefined,
-      school: values.school || undefined,
-      fraternity: values.fraternity || undefined,
-      instagram_handle: values.instagram_handle || undefined, // Pass new field
+      phone_number: values.phone_number === "" ? null : values.phone_number,
+      school: values.school === "" ? null : values.school,
+      fraternity: values.fraternity === "" ? null : values.fraternity,
+      instagram_handle: values.instagram_handle === "" ? null : values.instagram_handle,
       status: values.status,
-      notes: values.notes || undefined,
-      election_date: values.election_date || undefined, // Pass as string
+      notes: values.notes === "" ? null : values.notes,
+      election_date: values.election_date === "" ? null : values.election_date,
     });
     onClose();
   }
@@ -92,7 +93,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
               <FormControl>
                 <Input
                   {...field}
-                  value={formatPhoneNumber(field.value)}
+                  value={formatPhoneNumber(field.value || "")} // Ensure value is string for formatting
                   onChange={(e) => {
                     const rawValue = e.target.value.replace(/\D/g, '');
                     if (rawValue.length <= 10) {
@@ -113,7 +114,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
             <FormItem>
               <FormLabel className="text-white">School</FormLabel>
               <FormControl>
-                <Input {...field} className="bg-input text-foreground border-border" />
+                <Input {...field} value={field.value || ""} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -126,7 +127,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
             <FormItem>
               <FormLabel className="text-white">Fraternity</FormLabel>
               <FormControl>
-                <Input {...field} className="bg-input text-foreground border-border" />
+                <Input {...field} value={field.value || ""} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -139,7 +140,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
             <FormItem>
               <FormLabel className="text-white">Instagram Handle</FormLabel>
               <FormControl>
-                <Input {...field} className="bg-input text-foreground border-border" />
+                <Input {...field} value={field.value || ""} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -151,7 +152,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-white">Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                 <FormControl>
                   <SelectTrigger className="bg-input text-foreground border-border">
                     <SelectValue placeholder="Select status" />
@@ -174,7 +175,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
             <FormItem>
               <FormLabel className="text-white">Election Date</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., November 2024" {...field} className="bg-input text-foreground border-border" />
+                <Input placeholder="e.g., November 2024" {...field} value={field.value || ""} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -187,7 +188,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
             <FormItem>
               <FormLabel className="text-white">Notes</FormLabel>
               <FormControl>
-                <Textarea {...field} className="bg-input text-foreground border-border" />
+                <Textarea {...field} value={field.value || ""} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>
