@@ -26,6 +26,8 @@ if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANO
 }
 
 const REDIRECT_URI = `${SUPABASE_URL}/functions/v1/google-calendar/callback`;
+console.log('DEBUG: Constructed REDIRECT_URI:', REDIRECT_URI); // Added debug log here
+
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_CALENDAR_API_URL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
@@ -36,8 +38,8 @@ serve(async (req) => {
   }
 
   const url = new URL(req.url);
-  // Adjusted path replacement to correctly get '/auth' from '/google-calendar/auth'
   const path = url.pathname.replace('/google-calendar', ''); 
+  console.log('DEBUG: Received path in Edge Function:', path);
 
   const authHeader = req.headers.get('Authorization');
   let userId: string | null = null;
@@ -359,43 +361,43 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: 'Google access token expired and no refresh token available. Please reconnect.' }), {
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      try {
-        const eventData = await req.json();
-        const response = await fetch(GOOGLE_CALENDAR_API_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${currentAccessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(eventData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Error creating Google Calendar event:', errorData);
-          throw new Error(`Failed to create Google Calendar event: ${errorData.error?.message || response.statusText}`);
+          });
         }
 
-        const data = await response.json();
-        return new Response(JSON.stringify(data), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      } catch (error) {
-        console.error('Error creating Google Calendar event:', error);
-        return new Response(JSON.stringify({ error: `Failed to create Google Calendar event: ${error instanceof Error ? error.message : String(error)}` }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-    }
+        try {
+          const eventData = await req.json();
+          const response = await fetch(GOOGLE_CALENDAR_API_URL, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${currentAccessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(eventData),
+          });
 
-    default:
-      return new Response(JSON.stringify({ error: 'Not Found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-  }
-});
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error creating Google Calendar event:', errorData);
+            throw new Error(`Failed to create Google Calendar event: ${errorData.error?.message || response.statusText}`);
+          }
+
+          const data = await response.json();
+          return new Response(JSON.stringify(data), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (error) {
+          console.error('Error creating Google Calendar event:', error);
+          return new Response(JSON.stringify({ error: `Failed to create Google Calendar event: ${error instanceof Error ? error.message : String(error)}` }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      default:
+        return new Response(JSON.stringify({ error: 'Not Found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+    }
+  });
