@@ -171,46 +171,11 @@ const ClientsPage = () => {
                 {schoolClients.map((client) => (
                   <Card key={client.id} className="mb-4 bg-card text-card-foreground border-border">
                     <AccordionItem value={client.id} className="border-none">
-                      <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline [&>svg]:hidden group">
+                      <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
                         <CardTitle className="text-lg font-medium text-card-foreground">{client.fraternity}</CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Dialog> {/* Wrap the button in a Dialog */}
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                                onClick={(e) => {
-                                  e.stopPropagation(); // Prevent accordion from toggling
-                                  handleAddInquiryClick(client);
-                                }}
-                              >
-                                <PlusCircle className="h-4 w-4" />
-                                <span className="sr-only">Add Inquiry for {client.fraternity}</span>
-                              </Button>
-                            </DialogTrigger>
-                            {isAddInquiryDialogOpen && clientForNewInquiry?.id === client.id && (
-                              <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
-                                <DialogHeader>
-                                  <DialogTitle className="text-white">Add New Inquiry for {clientForNewInquiry.fraternity}</DialogTitle>
-                                </DialogHeader>
-                                <InquiryForm
-                                  onSubmit={handleAddInquirySubmit}
-                                  onClose={() => setIsAddInquiryDialogOpen(false)}
-                                  defaultValues={{
-                                    school: clientForNewInquiry.school,
-                                    fraternity: clientForNewInquiry.fraternity,
-                                    mainContact: clientForNewInquiry.mainContactName,
-                                    phoneNumber: clientForNewInquiry.phoneNumber,
-                                  }}
-                                />
-                              </DialogContent>
-                            )}
-                          </Dialog>
-                          <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
-                        </div>
+                        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                       </AccordionTrigger>
-                      <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
+                      <AccordionContent className="p-4 pt-0 text-sm text-card-foreground space-y-2">
                         <p><strong>Contact:</strong> {client.mainContactName} ({client.phoneNumber})</p>
                         <p>
                           <strong>Instagram:</strong>{" "}
@@ -233,14 +198,45 @@ const ClientsPage = () => {
                         </p>
                         <p><strong># Events:</strong> {client.numberOfEvents}</p>
                         <p><strong>Client Score:</strong> {client.clientScore}</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-4 w-full bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                          onClick={() => handleEditClick(client)}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" /> Edit Client
-                        </Button>
+                        <div className="flex gap-2 mt-4">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                onClick={() => handleAddInquiryClick(client)}
+                              >
+                                <PlusCircle className="mr-2 h-4 w-4" /> Add Inquiry
+                              </Button>
+                            </DialogTrigger>
+                            {isAddInquiryDialogOpen && clientForNewInquiry?.id === client.id && (
+                              <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+                                <DialogHeader>
+                                  <DialogTitle className="text-white">Add New Inquiry for {clientForNewInquiry.fraternity}</DialogTitle>
+                                </DialogHeader>
+                                <InquiryForm
+                                  onSubmit={handleAddInquirySubmit}
+                                  onClose={() => setIsAddInquiryDialogOpen(false)}
+                                  defaultValues={{
+                                    school: clientForNewInquiry.school,
+                                    fraternity: clientForNewInquiry.fraternity,
+                                    mainContact: clientForNewInquiry.mainContactName,
+                                    phoneNumber: clientForNewInquiry.phoneNumber,
+                                  }}
+                                />
+                              </DialogContent>
+                            )}
+                          </Dialog>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                            onClick={() => handleEditClick(client)}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" /> Edit Client
+                          </Button>
+                        </div>
                       </AccordionContent>
                     </AccordionItem>
                   </Card>

@@ -7,21 +7,30 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS', // Added POST, GET, OPTIONS
 };
 
-const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID');
-const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET');
+const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_OAUTH_CLIENT_ID'); // Corrected env var name
+const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET'); // Corrected env var name
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-// JWT_SECRET is no longer needed for verifying Supabase session tokens via auth.getUser()
 
 console.log('Edge Function Environment Variables:');
-console.log(`GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
-console.log(`GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
+console.log(`GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
+console.log(`GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_URL: ${SUPABASE_URL ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'}`);
 
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('Missing environment variables for Google Calendar integration. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SUPABASE_URL, and SUPABASE_ANON_KEY are set as Supabase secrets.');
-  throw new Error('Server configuration error: Missing environment variables for Google Calendar integration.');
+  const missingVars = [];
+  if (!GOOGLE_CLIENT_ID) missingVars.push('GOOGLE_OAUTH_CLIENT_ID');
+  if (!GOOGLE_CLIENT_SECRET) missingVars.push('GOOGLE_OAUTH_CLIENT_SECRET');
+  if (!SUPABASE_URL) missingVars.push('SUPABASE_URL');
+  if (!SUPABASE_ANON_KEY) missingVars.push('SUPABASE_ANON_KEY');
+
+  const errorMessage = `Server configuration error: Missing environment variables for Google Calendar integration: ${missingVars.join(', ')}. Please ensure these are set as Supabase secrets.`;
+  console.error(errorMessage);
+  return new Response(JSON.stringify({ error: errorMessage }), {
+    status: 500,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
 }
 
 const REDIRECT_URI = `${SUPABASE_URL}/functions/v1/google-calendar/callback`;
