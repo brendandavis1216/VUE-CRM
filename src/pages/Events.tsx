@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
-import { Search, Pencil, CalendarPlus } from "lucide-react"; // Import CalendarPlus icon
+import { Search, Pencil, CalendarPlus } from "lucide-react"; // CalendarPlus is no longer used here
 import {
   Accordion,
   AccordionContent,
@@ -24,7 +24,7 @@ import { useSearchParams } from "react-router-dom"; // Import useSearchParams
 import { useSession } from "@/components/SessionContextProvider"; // Import useSession
 
 const EventsPage = () => {
-  const { events, updateEventTask, updateEvent, createGoogleCalendarEvent, googleCalendarEvents } = useAppContext();
+  const { events, updateEventTask, updateEvent, googleCalendarEvents } = useAppContext(); // Removed createGoogleCalendarEvent
   const { session } = useSession(); // Get session to check if user is logged in
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false);
@@ -65,10 +65,6 @@ const EventsPage = () => {
     updateEvent(eventId, updatedValues);
     setIsEditEventDialogOpen(false);
     setSelectedEvent(null);
-  };
-
-  const handleAddToGoogleCalendar = async (event: Event) => {
-    await createGoogleCalendarEvent(event);
   };
 
   const { upcomingEvents, pastEvents } = useMemo(() => {
@@ -186,21 +182,6 @@ const EventsPage = () => {
                           ))}
                       </div>
                     </div>
-                    {session && ( // Only show button if user is logged in
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "mt-4 w-full",
-                          isAddedToGoogleCalendar ? "bg-green-600 text-white hover:bg-green-700" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                        )}
-                        onClick={() => handleAddToGoogleCalendar(event)}
-                        disabled={isAddedToGoogleCalendar} // Disable if already added
-                      >
-                        <CalendarPlus className="mr-2 h-4 w-4" />
-                        {isAddedToGoogleCalendar ? "Added to Google Calendar" : "Add to Google Calendar"}
-                      </Button>
-                    )}
                   </AccordionContent>
                 </AccordionItem>
               </Card>

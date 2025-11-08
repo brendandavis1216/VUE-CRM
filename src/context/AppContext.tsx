@@ -419,6 +419,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
             });
             setEvents((prev) => [...prev, newEvent]);
+            
+            // Automatically add to Google Calendar if user is logged in
+            if (user) {
+              createGoogleCalendarEvent(newEvent);
+            } else {
+              toast.info("Log in to automatically add events to Google Calendar.");
+            }
+
             return null; // Remove inquiry from list
           }
           return updatedInquiry;
