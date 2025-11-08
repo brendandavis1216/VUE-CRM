@@ -19,15 +19,15 @@ const Login = () => {
           appearance={{
             theme: ThemeSupa,
             variables: {
-              dark: { // Moved custom colors under 'dark' to ensure they apply in dark mode
+              dark: { // Custom colors for dark mode
                 colors: {
-                  brand: 'hsl(var(--primary))',
-                  brandAccent: 'hsl(var(--primary-foreground))',
-                  defaultButtonBackground: 'hsl(var(--primary))',
-                  defaultButtonBackgroundHover: 'hsl(var(--primary-foreground))',
+                  brand: 'hsl(222.2 47.4% 11.2%)', // Explicitly set to dark blue/gray
+                  brandAccent: 'hsl(222.2 47.4% 20%)', // Slightly lighter dark blue/gray for hover
+                  defaultButtonBackground: 'hsl(222.2 47.4% 11.2%)', // Explicitly set to dark blue/gray
+                  defaultButtonBackgroundHover: 'hsl(222.2 47.4% 20%)', // Slightly lighter dark blue/gray for hover
                   inputBackground: 'hsl(var(--secondary))',
                   inputBorder: 'hsl(var(--border))',
-                  inputLabel: 'hsl(0 0% 100%)', // Explicitly set to pure white for label text
+                  inputLabel: 'hsl(0 0% 100%)',
                   inputText: 'hsl(0 0% 100%)',
                   messageText: 'hsl(0 0% 100%)',
                   messageBackground: 'hsl(0 62.8% 30.6%)',
@@ -39,7 +39,7 @@ const Login = () => {
               },
             },
           }}
-          // Removed theme="dark" as it might conflict with appearance.variables.dark
+          theme="dark" // Explicitly set theme to dark
           redirectTo={window.location.origin + '/clients'}
           className="supabase-auth-ui-custom-theme"
         />
