@@ -95,12 +95,12 @@ const LeadsPage = () => {
             {leadsList.map((lead) => (
               <Card key={lead.id} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={lead.id} className="border-none">
-                  <AccordionTrigger className="flex items-center p-4 hover:no-underline group"> {/* Removed justify-between */}
-                    <CardTitle className="text-lg font-medium text-card-foreground flex-grow">{lead.name}</CardTitle> {/* Added flex-grow */}
+                  <AccordionTrigger className="flex items-center justify-between p-4 hover:no-underline group">
+                    <CardTitle className="text-lg font-medium text-card-foreground">{lead.name}</CardTitle>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-muted-foreground hover:text-primary flex-shrink-0" // Added flex-shrink-0
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-primary flex-shrink-0"
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent accordion from toggling
                         handleEditClick(lead);
@@ -109,7 +109,7 @@ const LeadsPage = () => {
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">Edit Lead</span>
                     </Button>
-                    {/* The AccordionTrigger's default chevron will render immediately after this button */}
+                    {/* The AccordionTrigger's default chevron will render here, after the button */}
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground space-y-2">
                     {lead.school && <p><strong>School:</strong> {lead.school}</p>}
