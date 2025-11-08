@@ -18,7 +18,7 @@ console.log(`GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID ? 'SET' : 'NOT SET'}`);
 console.log(`GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_URL: ${SUPABASE_URL ? 'SET' : 'NOT SET'}`);
 console.log(`SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? 'SET' : 'NOT SET'}`);
-console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET (length: ' + JWT_SECRET.length + ')' : 'NOT SET'}`);
+console.log(`JWT_SECRET: ${JWT_SECRET ? 'SET (string length: ' + JWT_SECRET.length + ')' : 'NOT SET'}`);
 
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !SUPABASE_URL || !SUPABASE_ANON_KEY || !JWT_SECRET) {
   console.error('Missing environment variables for Google Calendar integration. Please ensure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SUPABASE_URL, SUPABASE_ANON_KEY, and JWT_SECRET are set as Supabase secrets.');
@@ -37,8 +37,6 @@ let jwtVerificationKey: Uint8Array;
 try {
   jwtVerificationKey = new TextEncoder().encode(JWT_SECRET!);
   console.log(`DEBUG: JWT_SECRET encoded to Uint8Array for verification. Byte length: ${jwtVerificationKey.byteLength}`);
-  // Log a slice of the key to ensure it's not empty or malformed
-  console.log(`DEBUG: First 10 bytes of JWT_SECRET: ${Array.from(jwtVerificationKey.slice(0, 10)).join(',')}`);
 } catch (e) {
   console.error('Error encoding JWT_SECRET:', e);
   throw new Error('Failed to encode JWT_SECRET for verification.');
