@@ -85,6 +85,13 @@ const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
           currentEvent.status = "Pending";
         }
 
+        // Ensure eventName exists, default to fraternity - school if not present
+        if (!currentEvent.eventName && currentEvent.fraternity && currentEvent.school) {
+          currentEvent.eventName = `${currentEvent.fraternity} - ${currentEvent.school}`;
+        } else if (!currentEvent.eventName) {
+          currentEvent.eventName = "Unnamed Event"; // Fallback if fraternity/school also missing
+        }
+
         return currentEvent; // Return the (potentially modified) shallow copy
       }) as T;
     }
