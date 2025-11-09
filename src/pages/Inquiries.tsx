@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, Search, Pencil } from "lucide-react"; // Import Pencil icon
+import { PlusCircle, Search, Pencil, FileSignature } from "lucide-react"; // Import Pencil and FileSignature icon
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -23,15 +23,22 @@ import {
 import { Inquiry } from "@/types/app"; // Import Inquiry type
 import { format } from "date-fns";
 import { useSearchParams } from "react-router-dom"; // Import useSearchParams
+import { DocuSignConnectButton } from "@/components/DocuSignConnectButton"; // Import DocuSignConnectButton
+import { SendContractForm } from "@/components/SendContractForm"; // Import SendContractForm
+import { toast } from "sonner";
 
 const InquiriesPage = () => {
-  const { inquiries, addInquiry, updateInquiryTask, updateInquiry } = useAppContext();
+  const { inquiries, addInquiry, updateInquiryTask, updateInquiry, isDocuSignConnected } = useAppContext();
   const [isAddInquiryDialogOpen, setIsAddInquiryDialogOpen] = useState(false);
   const [isEditInquiryDialogOpen, setIsEditInquiryDialogOpen] = useState(false); // State for edit dialog
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null); // State for selected inquiry to edit
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchParams] = useSearchParams(); // Initialize useSearchParams
+  const [searchParams, setSearchParams] = useSearchParams(); // Initialize useSearchParams
   const [activeAccordionItem, setActiveAccordionItem] = useState<string | undefined>(undefined); // State to control accordion
+
+  // State for sending contract
+  const [isSendContractDialogOpen, setIsSendContractDialogOpen] = useState(false);
+  const [inquiryForContract, setInquiryForContract] = useState<Inquiry | null>(null);
 
   useEffect(() => {
     const inquiryIdFromUrl = searchParams.get('inquiryId');
@@ -47,6 +54,17 @@ const InquiriesPage = () => {
     }
   }, [searchParams]);
 
+  // Handle DocuSign Auth Callback Success (if redirected here)
+  useEffect(() => {
+    const docusignAuthSuccess = searchParams.get('docusign_auth_success');
+    if (docusignAuthSuccess === 'true') {
+      toast.success("DocuSign connected successfully!");
+      // Remove the query parameter from the URL
+      searchParams.delete('docusign_auth_success');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const handleMainFormSubmit = (newInquiryData: Parameters<typeof addInquiry>[0]) => {
     addInquiry(newInquiryData);
     setIsAddInquiryDialogOpen(false);
@@ -61,6 +79,19 @@ const InquiriesPage = () => {
     updateInquiry(inquiryId, updatedValues);
     setIsEditInquiryDialogOpen(false);
     setSelectedInquiry(null);
+  };
+
+  const handleSendContractClick = (inquiry: Inquiry) => {
+    if (!isDocuSignConnected) {
+      toast.error("Please connect your DocuSign account first.");
+      return;
+    }
+    if (!inquiry.phoneNumber) {
+      toast.error("Inquiry must have a phone number on file to send contracts.");
+      return;
+    }
+    setInquiryForContract(inquiry);
+    setIsSendContractDialogOpen(true);
   };
 
   const filteredInquiries = useMemo(() => {
@@ -84,6 +115,7 @@ const InquiriesPage = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold text-white">Inquiries</h1>
         <div className="flex gap-2 items-center">
+          <DocuSignConnectButton /> {/* DocuSign Connect Button */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -186,6 +218,15 @@ const InquiriesPage = () => {
                         ))}
                       </div>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 mt-4"
+                      onClick={() => handleSendContractClick(inquiry)}
+                      disabled={!isDocuSignConnected || !inquiry.phoneNumber}
+                    >
+                      <FileSignature className="mr-2 h-4 w-4" /> Send Contract
+                    </Button>
                   </AccordionContent>
                 </AccordionItem>
               </Card>
@@ -204,6 +245,23 @@ const InquiriesPage = () => {
               inquiry={selectedInquiry}
               onSubmit={handleInquiryUpdate}
               onClose={() => setIsEditInquiryDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {inquiryForContract && (
+        <Dialog open={isSendContractDialogOpen} onOpenChange={setIsSendContractDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+            <DialogHeader>
+              <DialogTitle className="text-white">Send Contract to {inquiryForContract.mainContact}</DialogTitle>
+            </DialogHeader>
+            <SendContractForm
+              defaultRecipientName={inquiryForContract.mainContact}
+              defaultFraternity={inquiryForContract.fraternity}
+              defaultSchool={inquiryForContract.school}
+              defaultPhoneNumber={inquiryForContract.phoneNumber}
+              onClose={() => setIsSendContractDialogOpen(false)}
             />
           </DialogContent>
         </Dialog>

@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/form";
 import { DialogFooter } from "@/components/ui/dialog";
 import { useAppContext } from "@/context/AppContext";
-import { Client } from "@/types/app";
 import { toast } from "sonner";
 
 const formSchema = z.object({
@@ -35,22 +34,31 @@ const formSchema = z.object({
 type SendContractFormValues = z.infer<typeof formSchema>;
 
 interface SendContractFormProps {
-  client: Client;
+  defaultRecipientName: string;
+  defaultFraternity: string;
+  defaultSchool: string;
+  defaultPhoneNumber: string; // Added for potential future use or display
   onClose: () => void;
 }
 
-export const SendContractForm: React.FC<SendContractFormProps> = ({ client, onClose }) => {
+export const SendContractForm: React.FC<SendContractFormProps> = ({
+  defaultRecipientName,
+  defaultFraternity,
+  defaultSchool,
+  defaultPhoneNumber,
+  onClose,
+}) => {
   const { sendDocuSignDocument } = useAppContext();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SendContractFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      recipientName: client.mainContactName,
-      recipientEmail: "", // Email is not stored on client, user must input
-      documentName: `${client.fraternity} - ${client.school} Contract`,
-      subject: `Contract for ${client.fraternity} at ${client.school}`,
-      emailBlurb: `Dear ${client.mainContactName},\n\nPlease find attached the contract for your review and signature.`,
+      recipientName: defaultRecipientName,
+      recipientEmail: "", // Email is not stored on client/inquiry, user must input
+      documentName: `${defaultFraternity} - ${defaultSchool} Contract`,
+      subject: `Contract for ${defaultFraternity} at ${defaultSchool}`,
+      emailBlurb: `Dear ${defaultRecipientName},\n\nPlease find attached the contract for your review and signature.`,
     },
   });
 
