@@ -22,10 +22,7 @@ import { toast } from "sonner";
 const formSchema = z.object({
   recipientName: z.string().min(2, { message: "Recipient name must be at least 2 characters." }),
   recipientEmail: z.string().email({ message: "Please enter a valid email address." }),
-  documentFile: z.any()
-    .refine((file) => file instanceof File, "A document file is required.")
-    .refine((file) => file?.size <= 5 * 1024 * 1024, `Max file size is 5MB.`) // 5MB limit
-    .refine((file) => file?.type === "application/pdf", "Only PDF files are allowed."),
+  templateId: z.string().min(1, { message: "DocuSign Template ID is required." }), // NEW: Template ID field
   documentName: z.string().min(1, { message: "Document name is required." }),
   subject: z.string().min(1, { message: "Email subject is required." }),
   emailBlurb: z.string().optional(),
@@ -35,17 +32,21 @@ type SendContractFormValues = z.infer<typeof formSchema>;
 
 interface SendContractFormProps {
   defaultRecipientName: string;
+  defaultRecipientEmail: string; // NEW: Default recipient email
   defaultFraternity: string;
   defaultSchool: string;
-  defaultPhoneNumber: string; // Added for potential future use or display
+  defaultAddress: string; // NEW: Default address for template fields
+  defaultBudget: number; // NEW: Default budget for template fields
   onClose: () => void;
 }
 
 export const SendContractForm: React.FC<SendContractFormProps> = ({
   defaultRecipientName,
+  defaultRecipientEmail,
   defaultFraternity,
   defaultSchool,
-  defaultPhoneNumber,
+  defaultAddress,
+  defaultBudget,
   onClose,
 }) => {
   const { sendDocuSignDocument } = useAppContext();
@@ -55,7 +56,8 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       recipientName: defaultRecipientName,
-      recipientEmail: "", // Email is not stored on client/inquiry, user must input
+      recipientEmail: defaultRecipientEmail, // Autopopulate email
+      templateId: "", // User will need to input this or it can be hardcoded later
       documentName: `${defaultFraternity} - ${defaultSchool} Contract`,
       subject: `Contract for ${defaultFraternity} at ${defaultSchool}`,
       emailBlurb: `Dear ${defaultRecipientName},\n\nPlease find attached the contract for your review and signature.`,
@@ -65,37 +67,31 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
   const onSubmit = async (values: SendContractFormValues) => {
     setIsLoading(true);
     try {
-      const file = values.documentFile;
-      const reader = new FileReader();
-
-      reader.onload = async (event) => {
-        const base64String = event.target?.result?.toString().split(',')[1]; // Get base64 part
-        if (base64String) {
-          await sendDocuSignDocument(
-            values.recipientName,
-            values.recipientEmail,
-            base64String,
-            values.documentName,
-            values.subject,
-            values.emailBlurb || ""
-          );
-          onClose();
-        } else {
-          toast.error("Failed to read document file.");
-        }
-        setIsLoading(false);
+      // Prepare template field values
+      const templateFieldValues: Record<string, string> = {
+        "Fraternity": defaultFraternity,
+        "School": defaultSchool,
+        "MainContactName": defaultRecipientName,
+        "MainContactEmail": values.recipientEmail,
+        "EventAddress": defaultAddress,
+        "Budget": defaultBudget.toLocaleString(),
+        // Add more fields here as needed, matching your DocuSign template tab labels
       };
 
-      reader.onerror = () => {
-        toast.error("Error reading file.");
-        setIsLoading(false);
-      };
-
-      reader.readAsDataURL(file);
-
+      await sendDocuSignDocument(
+        values.recipientName,
+        values.recipientEmail,
+        values.templateId, // Pass templateId
+        templateFieldValues, // Pass templateFieldValues
+        values.documentName,
+        values.subject,
+        values.emailBlurb || ""
+      );
+      onClose();
     } catch (error) {
       console.error("Error sending contract:", error);
       toast.error("Failed to send contract.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -131,18 +127,12 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
         />
         <FormField
           control={form.control}
-          name="documentFile"
-          render={({ field: { value, onChange, ...fieldProps } }) => (
+          name="templateId"
+          render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Contract Document (PDF)</FormLabel>
+              <FormLabel className="text-white">DocuSign Template ID</FormLabel>
               <FormControl>
-                <Input
-                  {...fieldProps}
-                  type="file"
-                  accept=".pdf"
-                  onChange={(event) => onChange(event.target.files && event.target.files[0])}
-                  className="bg-input text-foreground border-border file:text-primary file:bg-primary-foreground"
-                />
+                <Input placeholder="Enter your DocuSign Template ID" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>

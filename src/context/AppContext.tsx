@@ -33,7 +33,8 @@ interface AppContextType {
   sendDocuSignDocument: (
     recipientName: string,
     recipientEmail: string,
-    documentBase64: string,
+    templateId: string, // Changed from documentBase64
+    templateFieldValues: Record<string, string>, // New: for template fields
     documentName: string,
     subject: string,
     emailBlurb: string
@@ -200,6 +201,7 @@ const initialInquiries: Inquiry[] = [
     fraternity: "Gamma Delta Epsilon",
     mainContact: "Chris Evans",
     phoneNumber: "5551112222",
+    email: "chris.evans@west.edu", // Added email to initial inquiry
     addressOfEvent: "123 Party Lane",
     capacity: 500,
     budget: 8000,
@@ -905,7 +907,8 @@ const initiateDocuSignAuth = useCallback(async () => {
 const sendDocuSignDocument = useCallback(async (
   recipientName: string,
   recipientEmail: string,
-  documentBase64: string,
+  templateId: string, // Changed from documentBase64
+  templateFieldValues: Record<string, string>, // New: for template fields
   documentName: string,
   subject: string,
   emailBlurb: string
@@ -939,7 +942,8 @@ const sendDocuSignDocument = useCallback(async (
       body: JSON.stringify({
         recipientName,
         recipientEmail,
-        documentBase64,
+        templateId, // Pass templateId
+        templateFieldValues, // Pass templateFieldValues
         documentName,
         subject,
         emailBlurb,

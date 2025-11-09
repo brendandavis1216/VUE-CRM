@@ -280,7 +280,7 @@ serve(async (req) => {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: `${clientOriginFromState}/clients?docusign_auth_success=true`, // Redirect to clients page
+            Location: `${clientOriginFromState}/inquiries?docusign_auth_success=true`, // Redirect to inquiries page
             ...corsHeaders,
           },
         });
@@ -334,49 +334,45 @@ serve(async (req) => {
       }
 
       try {
-        const { recipientName, recipientEmail, documentBase64, documentName, subject, emailBlurb } = await req.json();
+        const { recipientName, recipientEmail, templateId, templateFieldValues, documentName, subject, emailBlurb } = await req.json();
 
-        if (!recipientName || !recipientEmail || !documentBase64 || !documentName || !subject || !emailBlurb) {
+        if (!recipientName || !recipientEmail || !templateId || !documentName || !subject || !emailBlurb) {
           return new Response(JSON.stringify({ error: 'Missing required fields for sending document' }), {
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
 
+        // Construct text tabs from templateFieldValues
+        const textTabs = Object.entries(templateFieldValues).map(([tabLabel, value]) => ({
+          tabLabel: tabLabel,
+          value: value,
+        }));
+
         const envelopeDefinition = {
           emailSubject: subject,
           emailBlurb: emailBlurb,
-          documents: [
+          templateId: templateId, // Use templateId
+          templateRoles: [
             {
-              documentBase64: documentBase64,
-              name: documentName,
-              fileExtension: 'pdf', // Assuming PDF, adjust if needed
-              documentId: '1',
+              email: recipientEmail,
+              name: recipientName,
+              roleName: 'Signer', // Assuming a role named 'Signer' in your template
+              clientUserId: userId, // Required for embedded signing, but not for email sending
+              tabs: {
+                signHereTabs: [
+                  {
+                    anchorString: '/sn1/', // Anchor text in your document, e.g., a placeholder like [SIGN HERE 1]
+                    anchorUnits: 'pixels',
+                    anchorXOffset: '20',
+                    anchorYOffset: '10',
+                    tabLabel: 'SignHere1',
+                  },
+                ],
+                textTabs: textTabs, // Add dynamic text tabs
+              },
             },
           ],
-          recipients: {
-            signers: [
-              {
-                email: recipientEmail,
-                name: recipientName,
-                recipientId: '1',
-                routingOrder: '1',
-                tabs: {
-                  // Example: Add a sign here tab. You might need to adjust coordinates based on your document.
-                  // For production, consider using DocuSign templates or more robust tab placement.
-                  signHereTabs: [
-                    {
-                      anchorString: '/sn1/', // Anchor text in your document, e.g., a placeholder like [SIGN HERE 1]
-                      anchorUnits: 'pixels',
-                      anchorXOffset: '20',
-                      anchorYOffset: '10',
-                      tabLabel: 'SignHere1',
-                    },
-                  ],
-                },
-              },
-            ],
-          },
           status: 'sent', // Set to 'sent' to send the envelope immediately
         };
 

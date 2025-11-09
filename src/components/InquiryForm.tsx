@@ -28,6 +28,7 @@ const formSchema = z.object({
   fraternity: z.string().min(2, { message: "Fraternity name must be at least 2 characters." }),
   mainContact: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
   phoneNumber: z.string().regex(/^\d{10}$/, { message: "Phone number must be 10 digits." }), // Updated validation
+  email: z.string().email({ message: "Please enter a valid email address." }), // NEW: Email field
   addressOfEvent: z.string().min(5, { message: "Address must be at least 5 characters." }),
   capacity: z.coerce.number().min(1, { message: "Capacity must be at least 1." }),
   budget: z.coerce.number().min(0, { message: "Budget cannot be negative." }),
@@ -58,6 +59,7 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
       fraternity: defaultValues?.fraternity || "",
       mainContact: defaultValues?.mainContact || "",
       phoneNumber: defaultValues?.phoneNumber?.replace(/\D/g, '') || "", // Ensure default value is raw 10 digits
+      email: defaultValues?.email || "", // NEW: Default email
       addressOfEvent: "",
       capacity: 0,
       budget: 0,
@@ -159,6 +161,19 @@ export const InquiryForm: React.FC<InquiryFormProps> = ({ onSubmit, onClose, def
                   }}
                   className="bg-input text-foreground border-border"
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Email</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., contact@example.com" {...field} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>

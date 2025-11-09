@@ -29,6 +29,7 @@ const formSchema = z.object({
   fraternity: z.string().min(2, { message: "Fraternity name must be at least 2 characters." }),
   mainContact: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
   phoneNumber: z.string().regex(/^\d{10}$/, { message: "Phone number must be 10 digits." }),
+  email: z.string().email({ message: "Please enter a valid email address." }), // NEW: Email field
   addressOfEvent: z.string().min(5, { message: "Address must be at least 5 characters." }),
   capacity: z.coerce.number().min(1, { message: "Capacity must be at least 1." }),
   budget: z.coerce.number().min(0, { message: "Budget cannot be negative." }),
@@ -59,6 +60,7 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
       fraternity: inquiry.fraternity,
       mainContact: inquiry.mainContact,
       phoneNumber: inquiry.phoneNumber.replace(/\D/g, ''),
+      email: inquiry.email, // NEW: Set default email
       addressOfEvent: inquiry.addressOfEvent,
       capacity: inquiry.capacity,
       budget: inquiry.budget,
@@ -156,6 +158,19 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
                   }}
                   className="bg-input text-foreground border-border"
                 />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Email</FormLabel>
+              <FormControl>
+                <Input {...field} className="bg-input text-foreground border-border" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -404,7 +419,7 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
             )}
           />
         </div>
-        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Save Changes</Button>
+        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Add Inquiry</Button>
       </form>
     </Form>
   );

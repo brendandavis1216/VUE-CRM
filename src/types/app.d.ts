@@ -23,6 +23,7 @@ interface Inquiry {
   fraternity: string;
   mainContact: string;
   phoneNumber: string; // Added phone number to inquiry
+  email: string; // NEW: Added email to inquiry
   addressOfEvent: string;
   capacity: number;
   budget: number;

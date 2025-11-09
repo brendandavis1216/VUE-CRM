@@ -86,8 +86,8 @@ const InquiriesPage = () => {
       toast.error("Please connect your DocuSign account first.");
       return;
     }
-    if (!inquiry.phoneNumber) {
-      toast.error("Inquiry must have a phone number on file to send contracts.");
+    if (!inquiry.email) { // Changed from phoneNumber to email
+      toast.error("Inquiry must have an email on file to send contracts.");
       return;
     }
     setInquiryForContract(inquiry);
@@ -105,6 +105,7 @@ const InquiriesPage = () => {
         inquiry.fraternity.toLowerCase().includes(lowerCaseSearchTerm) ||
         inquiry.mainContact.toLowerCase().includes(lowerCaseSearchTerm) ||
         inquiry.addressOfEvent.toLowerCase().includes(lowerCaseSearchTerm) ||
+        inquiry.email.toLowerCase().includes(lowerCaseSearchTerm) || // Search by email
         format(inquiry.inquiryDate, "PPP").toLowerCase().includes(lowerCaseSearchTerm) || // Search by formatted date
         inquiry.inquiryTime.toLowerCase().includes(lowerCaseSearchTerm) // Search by time
     );
@@ -183,6 +184,7 @@ const InquiriesPage = () => {
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">
                     <p className="text-sm text-muted-foreground">{inquiry.mainContact} ({inquiry.phoneNumber})</p>
+                    <p className="text-sm"><strong>Email:</strong> {inquiry.email}</p> {/* Display email */}
                     <p className="text-sm"><strong>Date:</strong> {format(inquiry.inquiryDate, "PPP")}</p>
                     <p className="text-sm"><strong>Time:</strong> {inquiry.inquiryTime}</p>
                     <p className="text-sm"><strong>Event Address:</strong> {inquiry.addressOfEvent}</p>
@@ -223,7 +225,7 @@ const InquiriesPage = () => {
                       size="sm"
                       className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 mt-4"
                       onClick={() => handleSendContractClick(inquiry)}
-                      disabled={!isDocuSignConnected || !inquiry.phoneNumber}
+                      disabled={!isDocuSignConnected || !inquiry.email}
                     >
                       <FileSignature className="mr-2 h-4 w-4" /> Send Contract
                     </Button>
@@ -258,9 +260,11 @@ const InquiriesPage = () => {
             </DialogHeader>
             <SendContractForm
               defaultRecipientName={inquiryForContract.mainContact}
+              defaultRecipientEmail={inquiryForContract.email} // Pass inquiry email
               defaultFraternity={inquiryForContract.fraternity}
               defaultSchool={inquiryForContract.school}
-              defaultPhoneNumber={inquiryForContract.phoneNumber}
+              defaultAddress={inquiryForContract.addressOfEvent} // Pass inquiry address
+              defaultBudget={inquiryForContract.budget} // Pass inquiry budget
               onClose={() => setIsSendContractDialogOpen(false)}
             />
           </DialogContent>
