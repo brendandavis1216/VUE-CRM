@@ -10,54 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAppContext } from "@/context/AppContext";
 import { Lead, LeadStatus } from "@/types/app";
 import { LeadCSVUpload } from "@/components/LeadCSVUpload";
-import { LeadEditForm } from "@/components/LeadEditForm";
-import { formatPhoneNumber } from "@/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { LeadFilterSort } from "@/components/LeadFilterSort";
-import { InquiryForm } from "@/components/InquiryForm";
-import { Separator } from "@/components/ui/separator";
-
-type SortBy = 'none' | 'name' | 'school' | 'fraternity' | 'status';
-type SortOrder = 'asc' | 'desc';
-
-// Helper functions for localStorage
-function loadFromLocalStorage<T>(key: string, defaultValue: T): T {
-  if (typeof window === 'undefined') return defaultValue;
-  try {
-    const storedValue = localStorage.getItem(key);
-    return storedValue ? JSON.parse(storedValue) : defaultValue;
-  } catch (error) {
-    console.error(`Error loading ${key} from localStorage:`, error);
-    return defaultValue;
-  }
-}
-
-function saveToLocalStorage<T>(key: string, value: T) {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.error(`Error saving ${key} to localStorage:`, error);
-  }
-}
-
-const LeadsPage = () => {
+import { LeadEditForm } => {
   const { leads, fetchLeads, updateLead, deleteAllLeads, deleteLead, addInquiry } = useAppContext();
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -250,7 +203,7 @@ const LeadsPage = () => {
               {lead.election_date && <p><strong>Election Date:</strong> {lead.election_date}</p>}
               {lead.notes && <p><strong>Notes:</strong> {lead.notes}</p>}
               <div className="flex items-center gap-2 mt-2">
-                <Label htmlFor={`status-${lead.id}`} className="text-white">Status:</Label>
+                <Label htmlFor={`status-${lead.id}`} className="block font-semibold text-black dark:text-white mb-1">Status:</Label>
                 <Select value={lead.status} onValueChange={(value: LeadStatus) => handleStatusChange(lead.id, value)}>
                   <SelectTrigger id={`status-${lead.id}`} className="w-[180px] bg-input text-foreground border-border">
                     <SelectValue placeholder="Change status" />
@@ -312,7 +265,7 @@ const LeadsPage = () => {
                 <Upload className="mr-2 h-4 w-4" /> Upload CSV
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] bg-card text-card-foreground border-border">
+            <DialogContent className="dark sm:max-w-[600px] bg-card text-card-foreground border-border">
               <DialogHeader>
                 <DialogTitle className="text-white">Upload Leads from CSV</DialogTitle>
               </DialogHeader>
@@ -357,7 +310,7 @@ const LeadsPage = () => {
 
       {selectedLead && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+          <DialogContent className="dark sm:max-w-[425px] bg-card text-card-foreground border-border">
             <DialogHeader>
               <DialogTitle className="text-white">Edit Lead: {selectedLead.name}</DialogTitle>
             </DialogHeader>
@@ -394,7 +347,7 @@ const LeadsPage = () => {
 
       {leadForInquiry && (
         <Dialog open={isStartInquiryDialogOpen} onOpenChange={setIsStartInquiryDialogOpen}>
-          <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+          <DialogContent className="dark sm:max-w-[425px] bg-card text-card-foreground border-border">
             <DialogHeader>
               <DialogTitle className="text-white">Start New Inquiry for {leadForInquiry.name}</DialogTitle>
             </DialogHeader>

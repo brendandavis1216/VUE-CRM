@@ -167,7 +167,7 @@ const ClientsPage = () => {
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Client
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+            <DialogContent className="dark sm:max-w-[425px] bg-card text-card-foreground border-border">
               <DialogHeader>
                 <DialogTitle className="text-white">Add New Client</DialogTitle>
               </DialogHeader>
@@ -228,7 +228,7 @@ const ClientsPage = () => {
                               </Button>
                             </DialogTrigger>
                             {isAddInquiryDialogOpen && clientForNewInquiry?.id === client.id && (
-                              <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+                              <DialogContent className="dark sm:max-w-[425px] bg-card text-card-foreground border-border">
                                 <DialogHeader>
                                   <DialogTitle className="text-white">Add New Inquiry for {clientForNewInquiry.fraternity}</DialogTitle>
                                 </DialogHeader>
@@ -266,7 +266,7 @@ const ClientsPage = () => {
 
       {selectedClient && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground border-border">
+          <DialogContent className="dark sm:max-w-[425px] bg-card text-card-foreground border-border">
             <DialogHeader>
               <DialogTitle className="text-white">Edit Client: {selectedClient.fraternity}</DialogTitle>
             </DialogHeader>

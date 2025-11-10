@@ -58,7 +58,7 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
           name="fraternity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Fraternity</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Fraternity</FormLabel>
               <FormControl>
                 <Input {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -71,7 +71,7 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
           name="school"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">School</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">School</FormLabel>
               <FormControl>
                 <Input {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -84,7 +84,7 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
           name="mainContactName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Main Contact Name</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Main Contact Name</FormLabel>
               <FormControl>
                 <Input {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -97,7 +97,7 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
           name="phoneNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Phone Number</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Phone Number</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -120,7 +120,7 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
           name="instagramHandle"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Instagram Handle</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Instagram Handle</FormLabel>
               <FormControl>
                 <Input {...field} className="bg-input text-foreground border-border" />
               </FormControl>

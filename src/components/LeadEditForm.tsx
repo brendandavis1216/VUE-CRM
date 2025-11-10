@@ -76,7 +76,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Name</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Name</FormLabel>
               <FormControl>
                 <Input {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -89,7 +89,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
           name="phone_number"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Phone Number</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Phone Number</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -112,7 +112,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
           name="school"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">School</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">School</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -125,7 +125,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
           name="fraternity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Fraternity</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Fraternity</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -138,7 +138,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
           name="instagram_handle"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Instagram Handle</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Instagram Handle</FormLabel>
               <FormControl>
                 <Input {...field} value={field.value || ""} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -151,7 +151,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Status</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Status</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                 <FormControl>
                   <SelectTrigger className="bg-input text-foreground border-border">
@@ -173,7 +173,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
           name="election_date"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Election Date</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Election Date</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., November 2024" {...field} value={field.value || ""} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -186,7 +186,7 @@ export const LeadEditForm: React.FC<LeadEditFormProps> = ({ lead, onSubmit, onCl
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Notes</FormLabel>
+              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Notes</FormLabel>
               <FormControl>
                 <Textarea {...field} value={field.value || ""} className="bg-input text-foreground border-border" />
               </FormControl>

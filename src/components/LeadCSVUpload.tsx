@@ -123,7 +123,7 @@ export const LeadCSVUpload: React.FC<LeadCSVUploadProps> = ({ onUploadSuccess, o
   return (
     <div className="space-y-4">
       <div className="grid w-full max-w-sm items-center gap-1.5">
-        <Label htmlFor="csv-upload" className="text-white">Upload Leads CSV</Label>
+        <Label htmlFor="csv-upload" className="block font-semibold text-black dark:text-white mb-1">Upload Leads CSV</Label>
         <Input
           id="csv-upload"
           type="file"
