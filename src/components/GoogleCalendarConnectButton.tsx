@@ -36,22 +36,23 @@ export const GoogleCalendarConnectButton: React.FC<GoogleCalendarConnectButtonPr
     return null; // Or a loading spinner
   }
 
+  if (isConnected) {
+    return (
+      <div className="flex items-center text-green-500">
+        <CheckCircle2 className="mr-2 h-5 w-5" />
+        <span className="text-sm font-medium">Google Calendar Connected</span>
+      </div>
+    );
+  }
+
   return (
     <Button
       variant="outline"
       onClick={handleConnect}
-      disabled={!session || isConnected} // Disable if not logged in or already connected
-      className={isConnected ? "bg-green-600 text-white hover:bg-green-700" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}
+      disabled={!session} // Disable if not logged in
+      className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
     >
-      {isConnected ? (
-        <>
-          <CheckCircle2 className="mr-2 h-4 w-4" /> Google Calendar Connected
-        </>
-      ) : (
-        <>
-          <CalendarPlus className="mr-2 h-4 w-4" /> Connect Google Calendar
-        </>
-      )}
+      <CalendarPlus className="mr-2 h-4 w-4" /> Connect Google Calendar
     </Button>
   );
 };
