@@ -101,248 +101,15 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="school"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="block font-semibold text-black dark:text-white mb-1">School</FormLabel>
-              <FormControl>
-                <Input {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="fraternity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Fraternity</FormLabel>
-              <FormControl>
-                <Input {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="mainContact"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Main Contact</FormLabel>
-              <FormControl>
-                <Input {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Phone Number</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={formatPhoneNumber(field.value)}
-                  onChange={(e) => {
-                    const rawValue = e.target.value.replace(/\D/g, '');
-                    if (rawValue.length <= 10) {
-                      field.onChange(rawValue);
-                    }
-                  }}
-                  className="bg-input text-foreground border-border"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Email</FormLabel>
-              <FormControl>
-                <Input {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="addressOfEvent"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Address of Event</FormLabel>
-              <FormControl>
-                <Textarea {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="capacity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Capacity</FormLabel>
-              <FormControl>
-                <Input type="number" {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="budget"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="block font-semibold text-black dark:text-white mb-1">Budget ($)</FormLabel>
-              <FormControl>
-                <Input type="number" {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="max-h-[calc(100vh-12rem)] overflow-y-auto p-2"> {/* Added scrollable div */}
           <FormField
             control={form.control}
-            name="inquiryDate"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Inquiry Date</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full pl-3 text-left font-normal bg-input text-foreground border-border",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-popover text-popover-foreground border-border" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) => date < new Date("1900-01-01")}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="inquiryTime"
+            name="school"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Inquiry Time</FormLabel>
+                <FormLabel className="block font-semibold text-black dark:text-white mb-1">School</FormLabel>
                 <FormControl>
-                  <Input type="time" {...field} className="bg-input text-foreground border-border" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="stageBuild"
-            render={({ field }) => (
-              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
-                <FormLabel className="block font-semibold text-black dark:text-white">Stage Build</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="bg-input text-foreground border-border">
-                      <SelectValue placeholder="Select stage type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="bg-popover text-popover-foreground border-border">
-                    <SelectItem value="None">None</SelectItem>
-                    <SelectItem value="Base Stage">Base Stage</SelectItem>
-                    <SelectItem value="Totem Stage">Totem Stage</SelectItem>
-                    <SelectItem value="SL 100">SL 100</SelectItem>
-                    <SelectItem value="SL 75">SL 75</SelectItem>
-                    <SelectItem value="SL260">SL260</SelectItem>
-                    <SelectItem value="Custom Rig">Custom Rig</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="power"
-            render={({ field }) => (
-              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
-                <FormLabel className="block font-semibold text-black dark:text-white">Power</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  disabled={isPowerProvidedChecked} // Disable if checkbox is checked
-                >
-                  <FormControl>
-                    <SelectTrigger className="bg-input text-foreground border-border">
-                      <SelectValue placeholder="Select power type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="bg-popover text-popover-foreground border-border">
-                    <SelectItem value="None">None</SelectItem>
-                    <SelectItem value="Gas Generators">Gas Generators</SelectItem>
-                    <SelectItem value="20kW Diesel">20kW Diesel</SelectItem>
-                    <SelectItem value="36kW">36kW</SelectItem>
-                    <SelectItem value="Provided">Provided</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
-            <FormControl>
-              <Checkbox
-                checked={isPowerProvidedChecked}
-                onCheckedChange={setIsPowerProvidedChecked}
-              />
-            </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel className="block font-semibold text-black dark:text-white">Power Provided</FormLabel>
-            </div>
-          </FormItem>
-          <FormField
-            control={form.control}
-            name="co2Tanks"
-            render={({ field }) => (
-              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
-                <FormLabel className="block font-semibold text-black dark:text-white">CO2 Tanks</FormLabel>
-                <FormControl>
-                  <Input type="number" placeholder="e.g., 4" {...field} className="bg-input text-foreground border-border" />
+                  <Input {...field} className="bg-input text-foreground border-border" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -350,12 +117,12 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
           />
           <FormField
             control={form.control}
-            name="cdjs"
+            name="fraternity"
             render={({ field }) => (
-              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
-                <FormLabel className="block font-semibold text-black dark:text-white">CDJs</FormLabel>
+              <FormItem>
+                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Fraternity</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="e.g., 3" {...field} className="bg-input text-foreground border-border" />
+                  <Input {...field} className="bg-input text-foreground border-border" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -363,63 +130,298 @@ export const InquiryEditForm: React.FC<InquiryEditFormProps> = ({ inquiry, onSub
           />
           <FormField
             control={form.control}
-            name="audio"
+            name="mainContact"
             render={({ field }) => (
-              <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
-                <FormLabel className="block font-semibold text-black dark:text-white">Audio</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="bg-input text-foreground border-border">
-                      <SelectValue placeholder="Select audio setup" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="bg-popover text-popover-foreground border-border">
-                    <SelectItem value="QSC Rig">QSC Rig</SelectItem>
-                    <SelectItem value="4 Arrays 2 Subs">4 Arrays 2 Subs</SelectItem>
-                    <SelectItem value="8 Arrays 4 Subs">8 Arrays 4 Subs</SelectItem>
-                    <SelectItem value="Custom">Custom</SelectItem>
-                  </SelectContent>
-                </Select>
+              <FormItem>
+                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Main Contact</FormLabel>
+                <FormControl>
+                  <Input {...field} className="bg-input text-foreground border-border" />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             control={form.control}
-            name="gates"
+            name="phoneNumber"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
+              <FormItem>
+                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Phone Number</FormLabel>
                 <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
+                  <Input
+                    {...field}
+                    value={formatPhoneNumber(field.value)}
+                    onChange={(e) => {
+                      const rawValue = e.target.value.replace(/\D/g, '');
+                      if (rawValue.length <= 10) {
+                        field.onChange(rawValue);
+                      }
+                    }}
+                    className="bg-input text-foreground border-border"
                   />
                 </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="block font-semibold text-black dark:text-white">Gates Provided</FormLabel>
-                </div>
+                <FormMessage />
               </FormItem>
             )}
           />
           <FormField
             control={form.control}
-            name="security"
+            name="email"
             render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
+              <FormItem>
+                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Email</FormLabel>
                 <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
+                  <Input {...field} className="bg-input text-foreground border-border" />
                 </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel className="block font-semibold text-black dark:text-white">Security Provided</FormLabel>
-                </div>
+                <FormMessage />
               </FormItem>
             )}
           />
-        </div>
-        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Add Inquiry</Button>
+          <FormField
+            control={form.control}
+            name="addressOfEvent"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Address of Event</FormLabel>
+                <FormControl>
+                  <Textarea {...field} className="bg-input text-foreground border-border" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="capacity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Capacity</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} className="bg-input text-foreground border-border" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="budget"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="block font-semibold text-black dark:text-white mb-1">Budget ($)</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} className="bg-input text-foreground border-border" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="inquiryDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel className="block font-semibold text-black dark:text-white mb-1">Inquiry Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal bg-input text-foreground border-border",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-popover text-popover-foreground border-border" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        disabled={(date) => date < new Date("1900-01-01")}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="inquiryTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="block font-semibold text-black dark:text-white mb-1">Inquiry Time</FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} className="bg-input text-foreground border-border" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="stageBuild"
+              render={({ field }) => (
+                <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                  <FormLabel className="block font-semibold text-black dark:text-white">Stage Build</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="bg-input text-foreground border-border">
+                        <SelectValue placeholder="Select stage type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-popover text-popover-foreground border-border">
+                      <SelectItem value="None">None</SelectItem>
+                      <SelectItem value="Base Stage">Base Stage</SelectItem>
+                      <SelectItem value="Totem Stage">Totem Stage</SelectItem>
+                      <SelectItem value="SL 100">SL 100</SelectItem>
+                      <SelectItem value="SL 75">SL 75</SelectItem>
+                      <SelectItem value="SL260">SL260</SelectItem>
+                      <SelectItem value="Custom Rig">Custom Rig</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="power"
+              render={({ field }) => (
+                <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                  <FormLabel className="block font-semibold text-black dark:text-white">Power</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    disabled={isPowerProvidedChecked} // Disable if checkbox is checked
+                  >
+                    <FormControl>
+                      <SelectTrigger className="bg-input text-foreground border-border">
+                        <SelectValue placeholder="Select power type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-popover text-popover-foreground border-border">
+                      <SelectItem value="None">None</SelectItem>
+                      <SelectItem value="Gas Generators">Gas Generators</SelectItem>
+                      <SelectItem value="20kW Diesel">20kW Diesel</SelectItem>
+                      <SelectItem value="36kW">36kW</SelectItem>
+                      <SelectItem value="Provided">Provided</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
+              <FormControl>
+                <Checkbox
+                  checked={isPowerProvidedChecked}
+                  onCheckedChange={setIsPowerProvidedChecked}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="block font-semibold text-black dark:text-white">Power Provided</FormLabel>
+              </div>
+            </FormItem>
+            <FormField
+              control={form.control}
+              name="co2Tanks"
+              render={({ field }) => (
+                <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                  <FormLabel className="block font-semibold text-black dark:text-white">CO2 Tanks</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 4" {...field} className="bg-input text-foreground border-border" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="cdjs"
+              render={({ field }) => (
+                <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                  <FormLabel className="block font-semibold text-black dark:text-white">CDJs</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 3" {...field} className="bg-input text-foreground border-border" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="audio"
+              render={({ field }) => (
+                <FormItem className="flex flex-col space-y-1 rounded-md border border-border p-4">
+                  <FormLabel className="block font-semibold text-black dark:text-white">Audio</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="bg-input text-foreground border-border">
+                        <SelectValue placeholder="Select audio setup" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="bg-popover text-popover-foreground border-border">
+                      <SelectItem value="QSC Rig">QSC Rig</SelectItem>
+                      <SelectItem value="4 Arrays 2 Subs">4 Arrays 2 Subs</SelectItem>
+                      <SelectItem value="8 Arrays 4 Subs">8 Arrays 4 Subs</SelectItem>
+                      <SelectItem value="Custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="gates"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="block font-semibold text-black dark:text-white">Gates Provided</FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="security"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border border-border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="block font-semibold text-black dark:text-white">Security Provided</FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
+        </div> {/* End of scrollable div */}
+        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 mt-4">Add Inquiry</Button>
       </form>
     </Form>
   );
