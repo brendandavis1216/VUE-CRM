@@ -15,7 +15,7 @@ const Login = () => {
         <Auth
           key="supabase-auth-ui"
           supabaseClient={supabase}
-          providers={['passkey']}
+          // Removed providers={['passkey']} to default to email/password
           appearance={{
             theme: ThemeSupa,
             variables: {
