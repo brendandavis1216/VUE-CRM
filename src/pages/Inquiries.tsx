@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { PlusCircle, Search, Pencil, FileSignature } from "lucide-react"; // Import Pencil and FileSignature icon
+import { PlusCircle, Search, Pencil, FileSignature, Trash2 } from "lucide-react"; // Import Trash2 icon
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -25,10 +25,21 @@ import { format } from "date-fns";
 import { useSearchParams } from "react-router-dom"; // Import useSearchParams
 import { DocuSignConnectButton } from "@/components/DocuSignConnectButton"; // Import DocuSignConnectButton
 import { SendContractForm } from "@/components/SendContractForm"; // Import SendContractForm
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"; // Import AlertDialog components
 import { toast } from "sonner";
 
 const InquiriesPage = () => {
-  const { inquiries, addInquiry, updateInquiryTask, updateInquiry, isDocuSignConnected } = useAppContext();
+  const { inquiries, addInquiry, updateInquiryTask, updateInquiry, deleteInquiry, isDocuSignConnected } = useAppContext();
   const [isAddInquiryDialogOpen, setIsAddInquiryDialogOpen] = useState(false);
   const [isEditInquiryDialogOpen, setIsEditInquiryDialogOpen] = useState(false); // State for edit dialog
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null); // State for selected inquiry to edit
@@ -39,6 +50,10 @@ const InquiriesPage = () => {
   // State for sending contract
   const [isSendContractDialogOpen, setIsSendContractDialogOpen] = useState(false);
   const [inquiryForContract, setInquiryForContract] = useState<Inquiry | null>(null);
+
+  // State for deleting inquiry
+  const [isDeleteInquiryDialogOpen, setIsDeleteInquiryDialogOpen] = useState(false);
+  const [inquiryToDelete, setInquiryToDelete] = useState<Inquiry | null>(null);
 
   useEffect(() => {
     const inquiryIdFromUrl = searchParams.get('inquiryId');
@@ -92,6 +107,19 @@ const InquiriesPage = () => {
     }
     setInquiryForContract(inquiry);
     setIsSendContractDialogOpen(true);
+  };
+
+  const handleDeleteClick = (inquiry: Inquiry) => {
+    setInquiryToDelete(inquiry);
+    setIsDeleteInquiryDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (inquiryToDelete) {
+      deleteInquiry(inquiryToDelete.id);
+      setIsDeleteInquiryDialogOpen(false);
+      setInquiryToDelete(null);
+    }
   };
 
   const filteredInquiries = useMemo(() => {
@@ -220,15 +248,25 @@ const InquiriesPage = () => {
                         ))}
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 mt-4"
-                      onClick={() => handleSendContractClick(inquiry)}
-                      disabled={!isDocuSignConnected || !inquiry.email}
-                    >
-                      <FileSignature className="mr-2 h-4 w-4" /> Send Contract
-                    </Button>
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        onClick={() => handleSendContractClick(inquiry)}
+                        disabled={!isDocuSignConnected || !inquiry.email}
+                      >
+                        <FileSignature className="mr-2 h-4 w-4" /> Send Contract
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="flex-1 bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => handleDeleteClick(inquiry)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete Inquiry
+                      </Button>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Card>
@@ -270,6 +308,28 @@ const InquiriesPage = () => {
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {inquiryToDelete && (
+        <AlertDialog open={isDeleteInquiryDialogOpen} onOpenChange={setIsDeleteInquiryDialogOpen}>
+          <AlertDialogContent className="bg-card text-card-foreground border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">Confirm Deletion</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                Are you sure you want to delete the inquiry for "{inquiryToDelete.fraternity} - {inquiryToDelete.school}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-secondary text-secondary-foreground hover:bg-secondary/80">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );

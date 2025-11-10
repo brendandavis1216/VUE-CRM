@@ -26,6 +26,7 @@ interface AppContextType {
   updateLead: (leadId: string, updatedLeadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>) => Promise<void>; // Function to update a lead
   deleteAllLeads: () => Promise<void>; // New: Function to delete all leads
   deleteLead: (leadId: string) => Promise<void>; // New: Function to delete a single lead
+  deleteInquiry: (inquiryId: string) => void; // NEW: Function to delete an inquiry
   initiateGoogleCalendarAuth: () => Promise<void>; // Function to initiate Google Calendar auth
   fetchGoogleCalendarEvents: ({ timeMin, timeMax }: { timeMin?: string; timeMax?: string }) => Promise<void>; // Function to fetch Google Calendar events
   createGoogleCalendarEvent: (event: Event) => Promise<void>; // New: Function to create Google Calendar event
@@ -374,6 +375,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       })
     );
     toast.success("Inquiry updated successfully!");
+  };
+
+  const deleteInquiry = (inquiryId: string) => {
+    setInquiries((prevInquiries) => prevInquiries.filter((inq) => inq.id !== inquiryId));
+    toast.success("Inquiry deleted successfully!");
   };
 
   const updateInquiryTask = (inquiryId: string, taskId: string) => {
@@ -984,6 +990,7 @@ const sendDocuSignDocument = useCallback(async (
         updateLead, // Provide updateLead
         deleteAllLeads, // Provide deleteAllLeads
         deleteLead, // Provide deleteLead
+        deleteInquiry, // NEW: Provide deleteInquiry
         initiateGoogleCalendarAuth, // Provide initiateGoogleCalendarAuth
         fetchGoogleCalendarEvents, // Provide fetchGoogleCalendarEvents
         createGoogleCalendarEvent, // Provide createGoogleCalendarEvent
