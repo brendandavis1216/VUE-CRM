@@ -45,10 +45,11 @@ serve(async (req) => {
   }
 
   const url = new URL(req.url);
-  // In Supabase Edge Functions, url.pathname is typically relative to the function's base.
-  // So, for a request to /functions/v1/docusign/auth, url.pathname should be /auth.
-  const path = url.pathname; 
-  console.log('DEBUG: Derived path for switch:', path);
+  console.log('DEBUG: Full req.url in docusign function:', req.url); // New log
+  console.log('DEBUG: url.pathname in docusign function:', url.pathname); // New log
+  // Explicitly strip the function's base path to get the relative path for the switch statement
+  const path = url.pathname.replace('/functions/v1/docusign', ''); 
+  console.log('DEBUG: Derived path for switch (after stripping):', path);
 
   const authHeader = req.headers.get('Authorization');
   let userId: string | null = null;
