@@ -10,7 +10,54 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAppContext } from "@/context/AppContext";
 import { Lead, LeadStatus } from "@/types/app";
 import { LeadCSVUpload } from "@/components/LeadCSVUpload";
-import { LeadEditForm } => {
+import { LeadEditForm } from "@/components/LeadEditForm"; // Corrected import statement
+import { formatPhoneNumber } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { LeadFilterSort } from "@/components/LeadFilterSort";
+import { InquiryForm } from "@/components/InquiryForm";
+import { Separator } from "@/components/ui/separator";
+
+type SortBy = 'none' | 'name' | 'school' | 'fraternity' | 'status';
+type SortOrder = 'asc' | 'desc';
+
+// Helper functions for localStorage
+function loadFromLocalStorage<T>(key: string, defaultValue: T): T {
+  if (typeof window === 'undefined') return defaultValue;
+  try {
+    const storedValue = localStorage.getItem(key);
+    return storedValue ? JSON.parse(storedValue) : defaultValue;
+  } catch (error) {
+    console.error(`Error loading ${key} from localStorage:`, error);
+    return defaultValue;
+  }
+}
+
+function saveToLocalStorage<T>(key: string, value: T) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`Error saving ${key} to localStorage:`, error);
+  }
+}
+
+const LeadsPage = () => {
   const { leads, fetchLeads, updateLead, deleteAllLeads, deleteLead, addInquiry } = useAppContext();
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
