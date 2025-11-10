@@ -686,7 +686,7 @@ const initiateGoogleCalendarAuth = useCallback(async () => {
     const accessToken = sessionData.session.access_token;
     const clientOrigin = window.location.origin;
     const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
-    console.log("DEBUG: Value of functionsUrl from import.meta.env:", functionsUrl); // Added debug log
+    console.log("DEBUG: Value of functionsUrl from import.meta.env (Google Calendar):", functionsUrl); // Added debug log
 
     if (!functionsUrl) {
       console.error("VITE_SUPABASE_FUNCTIONS_URL is not defined in environment variables.");
@@ -878,6 +878,7 @@ const initiateDocuSignAuth = useCallback(async () => {
     const accessToken = sessionData.session.access_token;
     const clientOrigin = window.location.origin;
     const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
+    console.log("DEBUG: Value of functionsUrl from import.meta.env (DocuSign):", functionsUrl); // Added debug log
 
     if (!functionsUrl) {
       console.error("VITE_SUPABASE_FUNCTIONS_URL is not defined in environment variables.");
@@ -886,6 +887,7 @@ const initiateDocuSignAuth = useCallback(async () => {
     }
 
     const url = `${functionsUrl}/docusign/auth`;
+    console.log("DEBUG: Attempting to fetch DocuSign auth URL from:", url); // Added debug log
     const res = await fetch(url, {
       method: "POST",
       headers: {
