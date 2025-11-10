@@ -76,9 +76,9 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
         "SchoolFraternity": `${defaultSchool} - ${defaultFraternity}`, // Combined field
         "MainContactName": defaultRecipientName,
         "MainContactEmail": values.recipientEmail,
-        "EventAddress": defaultAddress,
+        "EventLocation": defaultAddress, // Changed from "EventAddress" to "EventLocation"
         "Budget": defaultBudget.toLocaleString(),
-        "EventDate": defaultEventDate, // NEW: Add event date
+        "EventDate": defaultEventDate, // Add event date
         // Add more fields here as needed, matching your DocuSign template tab labels
       };
 
