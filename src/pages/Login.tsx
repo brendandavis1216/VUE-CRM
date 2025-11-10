@@ -15,7 +15,7 @@ const Login = () => {
         <Auth
           key="supabase-auth-ui"
           supabaseClient={supabase}
-          providers={[]}
+          providers={['passkey']} {/* Added 'passkey' here */}
           appearance={{
             theme: ThemeSupa,
             variables: {
