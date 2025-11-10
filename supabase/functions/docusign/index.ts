@@ -376,6 +376,8 @@ serve(async (req) => {
           status: 'sent', // Set to 'sent' to send the envelope immediately
         };
 
+        console.log('DEBUG: DocuSign Envelope Definition:', JSON.stringify(envelopeDefinition, null, 2)); // Added logging
+        
         const response = await fetch(`${DOCUSIGN_API_BASE_URL}/accounts/${DOCUSIGN_ACCOUNT_ID}/envelopes`, {
           method: 'POST',
           headers: {
@@ -387,16 +389,17 @@ serve(async (req) => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('Error sending DocuSign document:', errorData);
+          console.error('ERROR: DocuSign API response not OK:', JSON.stringify(errorData, null, 2)); // Enhanced logging
           throw new Error(`Failed to send DocuSign document: ${errorData.message || response.statusText}`);
         }
 
         const data = await response.json();
+        console.log('DEBUG: DocuSign API success response:', JSON.stringify(data, null, 2)); // Added logging
         return new Response(JSON.stringify(data), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (error) {
-        console.error('Error in /send-document endpoint:', error);
+        console.error('ERROR: in /send-document endpoint:', error);
         return new Response(JSON.stringify({ error: `Failed to send DocuSign document: ${error instanceof Error ? error.message : String(error)}` }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
