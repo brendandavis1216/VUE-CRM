@@ -12,9 +12,6 @@ const DOCUSIGN_TOKEN_URL = 'https://account-d.docusign.com/oauth/token';
 const DOCUSIGN_API_BASE_URL = 'https://demo.docusign.net/restapi/v2.1'; // Use demo for developer account
 
 serve(async (req) => {
-  console.log('DEBUG: Incoming request URL:', req.url);
-  console.log('DEBUG: Request Method:', req.method);
-
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -37,7 +34,6 @@ serve(async (req) => {
   const missingVars = requiredEnvVars.filter(v => !Deno.env.get(v));
   if (missingVars.length > 0) {
     const errorMessage = `Server configuration error: Missing environment variables for DocuSign integration: ${missingVars.join(', ')}. Please ensure these are set as Supabase secrets.`;
-    console.error(errorMessage);
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -45,11 +41,7 @@ serve(async (req) => {
   }
 
   const url = new URL(req.url);
-  console.log('DEBUG: Full req.url in docusign function:', req.url); // New log
-  console.log('DEBUG: url.pathname in docusign function:', url.pathname); // New log
-  // Explicitly strip the function's base path to get the relative path for the switch statement
-  const path = url.pathname.replace('/functions/v1/docusign', ''); 
-  console.log('DEBUG: Derived path for switch (after stripping):', path);
+  const fullPath = url.pathname; // Use the full pathname directly
 
   const authHeader = req.headers.get('Authorization');
   let userId: string | null = null;
@@ -66,21 +58,18 @@ serve(async (req) => {
     try {
       const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
       if (userError || !user) {
-        console.error('Supabase auth.getUser failed:', userError?.message || 'No user found');
         throw new Error('Invalid or expired token');
       }
       userId = user.id;
     } catch (e) {
-      console.error('JWT verification failed via Supabase auth.getUser:', e instanceof Error ? e.message : String(e));
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
   } else {
-    // For /callback, we get userId from state, so it's okay if authHeader is missing initially
-    if (path !== '/callback') {
-      console.log('No Authorization header found. User is not authenticated via JWT.');
+    // For /functions/v1/docusign/callback, we get userId from state, so it's okay if authHeader is missing initially
+    if (fullPath !== '/functions/v1/docusign/callback') {
       return new Response(JSON.stringify({ error: 'Unauthorized: Missing Authorization header' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -96,7 +85,6 @@ serve(async (req) => {
       .single();
 
     if (error && error.code !== 'PGRST116') { // PGRST116 means "no rows found"
-      console.error('Error fetching DocuSign tokens:', error);
       return null;
     }
     return data;
@@ -121,7 +109,6 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Error refreshing DocuSign token:', errorData);
       throw new Error(`Failed to refresh access token: ${errorData.error_description || response.statusText}`);
     }
 
@@ -132,14 +119,13 @@ serve(async (req) => {
       .from('user_docusign_tokens')
       .update({
         access_token: newTokens.access_token,
+        refresh_token: newTokens.refresh_token || refreshToken,
         expires_at: expiresAt.toISOString(),
         updated_at: new Date().toISOString(),
-        ...(newTokens.refresh_token && { refresh_token: newTokens.refresh_token }), // DocuSign refresh tokens can also rotate
       })
       .eq('user_id', uid);
 
     if (updateError) {
-      console.error('Error updating DocuSign tokens in DB after refresh:', updateError);
       throw updateError;
     }
 
@@ -150,10 +136,9 @@ serve(async (req) => {
     };
   };
 
-  switch (path) {
-    case '/auth': {
+  switch (fullPath) { // Use fullPath directly in the switch
+    case '/functions/v1/docusign/auth': {
       if (req.method !== 'POST') {
-        console.error('Method Not Allowed for /auth:', req.method);
         return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
           status: 405,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -169,8 +154,8 @@ serve(async (req) => {
       const { clientOrigin } = await req.json();
 
       const scopes = [
-        'signature', // Allows sending and signing documents
-        'extended',  // Allows access to user info, account info, etc.
+        'signature',
+        'extended',
       ];
 
       const statePayload = btoa(JSON.stringify({ userId, clientOrigin, csrf: DOCUSIGN_STATE_SECRET }));
@@ -190,9 +175,8 @@ serve(async (req) => {
       });
     }
 
-    case '/callback': {
-      if (req.method !== 'GET') { // Callback is typically a GET request
-        console.error('Method Not Allowed for /callback:', req.method);
+    case '/functions/v1/docusign/callback': {
+      if (req.method !== 'GET') {
         return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
           status: 405,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -202,7 +186,6 @@ serve(async (req) => {
       const state = url.searchParams.get('state');
 
       if (!code || !state) {
-        console.error('Missing code or state parameter in DocuSign callback.');
         return new Response(JSON.stringify({ error: 'Missing code or state parameter' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -222,7 +205,6 @@ serve(async (req) => {
           throw new Error('CSRF token mismatch');
         }
       } catch (e) {
-        console.error('Error decoding or validating state parameter in DocuSign callback:', e);
         return new Response(JSON.stringify({ error: 'Invalid state parameter' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -249,7 +231,6 @@ serve(async (req) => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('Error exchanging code for DocuSign tokens:', errorData);
           throw new Error(`Failed to get tokens: ${errorData.error_description || response.statusText}`);
         }
 
@@ -263,7 +244,6 @@ serve(async (req) => {
           .single();
 
         if (fetchError && fetchError.code !== 'PGRST116') {
-          console.error('Error checking existing DocuSign tokens in DB:', fetchError);
           throw fetchError;
         }
 
@@ -279,7 +259,6 @@ serve(async (req) => {
             .eq('user_id', userIdFromState);
 
           if (updateError) {
-            console.error('Error updating DocuSign tokens in DB:', updateError);
             throw updateError;
           }
         } else {
@@ -293,7 +272,6 @@ serve(async (req) => {
             });
 
           if (insertError) {
-            console.error('Error inserting DocuSign tokens into DB:', insertError);
             throw insertError;
           }
         }
@@ -301,12 +279,11 @@ serve(async (req) => {
         return new Response(null, {
           status: 302,
           headers: {
-            Location: `${clientOriginFromState}/inquiries?docusign_auth_success=true`, // Redirect to inquiries page
+            Location: `${clientOriginFromState}/inquiries?docusign_auth_success=true`,
             ...corsHeaders,
           },
         });
       } catch (error) {
-        console.error('Unhandled error in DocuSign callback:', error instanceof Error ? error.message : JSON.stringify(error));
         return new Response(JSON.stringify({ error: `Failed to authenticate with DocuSign: ${error instanceof Error ? error.message : JSON.stringify(error)}` }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -314,9 +291,8 @@ serve(async (req) => {
       }
     }
 
-    case '/send-document': {
+    case '/functions/v1/docusign/send-document': {
       if (req.method !== 'POST') {
-        console.error('Method Not Allowed for /send-document:', req.method);
         return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
           status: 405,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -348,7 +324,6 @@ serve(async (req) => {
           currentRefreshToken = refreshed.refresh_token;
           currentExpiresAt = refreshed.expires_at;
         } catch (refreshError) {
-          console.error('Error refreshing DocuSign access token:', refreshError);
           return new Response(JSON.stringify({ error: 'Failed to refresh DocuSign access token. Please reconnect.' }), {
             status: 401,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -371,7 +346,6 @@ serve(async (req) => {
           });
         }
 
-        // Construct text tabs from templateFieldValues
         const textTabs = Object.entries(templateFieldValues).map(([tabLabel, value]) => ({
           tabLabel: tabLabel,
           value: value,
@@ -380,31 +354,29 @@ serve(async (req) => {
         const envelopeDefinition = {
           emailSubject: subject,
           emailBlurb: emailBlurb,
-          templateId: templateId, // Use templateId
+          templateId: templateId,
           templateRoles: [
             {
               email: recipientEmail,
               name: recipientName,
-              roleName: 'Signer', // Assuming a role named 'Signer' in your template
-              clientUserId: userId, // Required for embedded signing, but not for email sending
+              roleName: 'Signer',
+              clientUserId: userId,
               tabs: {
                 signHereTabs: [
                   {
-                    anchorString: '/sn1/', // Anchor text in your document, e.g., a placeholder like [SIGN HERE 1]
+                    anchorString: '/sn1/',
                     anchorUnits: 'pixels',
                     anchorXOffset: '20',
                     anchorYOffset: '10',
                     tabLabel: 'SignHere1',
                   },
                 ],
-                textTabs: textTabs, // Add dynamic text tabs
+                textTabs: textTabs,
               },
             },
           ],
-          status: 'sent', // Set to 'sent' to send the envelope immediately
+          status: 'sent',
         };
-
-        console.log('DEBUG: DocuSign Envelope Definition:', JSON.stringify(envelopeDefinition, null, 2)); // Added logging
         
         const response = await fetch(`${DOCUSIGN_API_BASE_URL}/accounts/${DOCUSIGN_ACCOUNT_ID}/envelopes`, {
           method: 'POST',
@@ -417,17 +389,14 @@ serve(async (req) => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('ERROR: DocuSign API response not OK:', JSON.stringify(errorData, null, 2)); // Enhanced logging
           throw new Error(`Failed to send DocuSign document: ${errorData.message || response.statusText}`);
         }
 
         const data = await response.json();
-        console.log('DEBUG: DocuSign API success response:', JSON.stringify(data, null, 2)); // Added logging
         return new Response(JSON.stringify(data), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       } catch (error) {
-        console.error('ERROR: in /send-document endpoint:', error);
         return new Response(JSON.stringify({ error: `Failed to send DocuSign document: ${error instanceof Error ? error.message : String(error)}` }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -436,8 +405,7 @@ serve(async (req) => {
     }
 
     default:
-      console.log('DEBUG: Default case hit for path:', path);
-      return new Response(JSON.stringify({ error: 'Not Found' }), {
+      return new Response(JSON.stringify({ error: 'Not Found', receivedFullPath: fullPath }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
