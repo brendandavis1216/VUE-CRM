@@ -15,19 +15,19 @@ interface AppContextType {
   googleCalendarEvents: GoogleCalendarEvent[]; // Added Google Calendar events
   isDocuSignConnected: boolean; // New: DocuSign connection status
   isGoogleCalendarConnected: boolean; // NEW: Google Calendar connection status
-  addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => void;
-  updateInquiryTask: (inquiryId: string, taskId: string) => void;
-  updateEventTask: (eventId: string, taskId: string) => void;
-  updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => void;
-  addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => void;
-  updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => void;
-  updateEvent: (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => void;
+  addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => Promise<void>; // Changed to return Promise<void>
+  updateInquiryTask: (inquiryId: string, taskId: string) => Promise<void>; // Changed to return Promise<void>
+  updateEventTask: (eventId: string, taskId: string) => Promise<void>; // Changed to return Promise<void>
+  updateClient: (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => Promise<void>; // Changed to return Promise<void>
+  addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => Promise<void>; // Changed to return Promise<void>
+  updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => Promise<void>; // Changed to return Promise<void>
+  updateEvent: (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => Promise<void>; // Changed to return Promise<void>
   fetchLeads: () => Promise<void>; // Function to fetch leads
   addLeads: (newLeads: Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at'>[]) => Promise<void>; // Function to add multiple leads
   updateLead: (leadId: string, updatedLeadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>) => Promise<void>; // Function to update a lead
   deleteAllLeads: () => Promise<void>; // New: Function to delete all leads
   deleteLead: (leadId: string) => Promise<void>; // New: Function to delete a single lead
-  deleteInquiry: (inquiryId: string) => void; // NEW: Function to delete an inquiry
+  deleteInquiry: (inquiryId: string) => Promise<void>; // NEW: Function to delete an inquiry
   initiateGoogleCalendarAuth: () => Promise<void>; // Function to initiate Google Calendar auth
   fetchGoogleCalendarEvents: ({ timeMin, timeMax }: { timeMin?: string; timeMax?: string }) => Promise<void>; // Function to fetch Google Calendar events
   createGoogleCalendarEvent: (event: Event) => Promise<void>; // New: Function to create Google Calendar event
@@ -50,212 +50,136 @@ const calculateClientScore = (numberOfEvents: number, averageEventSize: number):
   return (numberOfEvents * averageEventSize) / 1000;
 };
 
-// Helper to load state from localStorage
-const loadStateFromLocalStorage = <T,>(key: string, initialValue: T): T => {
-  if (typeof window === 'undefined') {
-    return initialValue; // Return initial value if not in browser environment
-  }
-  try {
-    const serializedState = localStorage.getItem(key);
-    if (serializedState === null) {
-      return initialValue;
-    }
-    const storedData = JSON.parse(serializedState);
+// Helper to parse Supabase data to app types
+const parseClientFromSupabase = (data: any): Client => ({
+  id: data.id,
+  fraternity: data.fraternity,
+  school: data.school,
+  mainContactName: data.main_contact_name,
+  phoneNumber: data.phone_number,
+  instagramHandle: data.instagram_handle,
+  averageEventSize: data.average_event_size,
+  numberOfEvents: data.number_of_events,
+  clientScore: data.client_score,
+});
 
-    // Special handling for events and inquiries to parse Date objects
-    if (key === "appEvents" && Array.isArray(storedData)) {
-      return storedData.map(event => {
-        let currentEvent = { ...event }; // Start with a shallow copy
+const parseInquiryFromSupabase = (data: any): Inquiry => ({
+  id: data.id,
+  clientId: data.client_id,
+  school: data.school,
+  fraternity: data.fraternity,
+  mainContact: data.main_contact,
+  phoneNumber: data.phone_number,
+  email: data.email,
+  addressOfEvent: data.address_of_event,
+  capacity: data.capacity,
+  budget: data.budget,
+  inquiryDate: new Date(data.inquiry_date),
+  inquiryTime: data.inquiry_time,
+  stageBuild: data.stage_build,
+  power: data.power,
+  gates: data.gates,
+  security: data.security,
+  co2Tanks: data.co2_tanks,
+  cdjs: data.cdjs,
+  audio: data.audio,
+  tasks: data.tasks, // tasks are already JSONB, so they should parse correctly
+  progress: data.progress,
+});
 
-        // Ensure tasks is an array, even if it's missing from stored data
-        currentEvent.tasks = Array.isArray(currentEvent.tasks) ? currentEvent.tasks : [];
+const parseEventFromSupabase = (data: any): Event => ({
+  id: data.id,
+  clientId: data.client_id,
+  fraternity: data.fraternity,
+  school: data.school,
+  eventName: data.event_name,
+  eventDate: new Date(data.event_date),
+  addressOfEvent: data.address_of_event,
+  capacity: data.capacity,
+  budget: data.budget,
+  stageBuild: data.stage_build,
+  status: data.status,
+  tasks: data.tasks,
+  progress: data.progress,
+});
 
-        let date: Date;
-        if (typeof currentEvent.eventDate === 'string') {
-          date = new Date(currentEvent.eventDate);
-        } else {
-          date = new Date(); // Default if not a string
-        }
-        if (isNaN(date.getTime())) {
-          console.warn(`Invalid eventDate found for event ID ${currentEvent.id || 'unknown'}. Defaulting to current date.`);
-          currentEvent.eventDate = new Date();
-        } else {
-          currentEvent.eventDate = date;
-        }
-
-        // Filter out any old "Final Payment Received" tasks
-        currentEvent.tasks = currentEvent.tasks.filter(task => task.name !== 'Paid(Full)'); // Changed from 'Final Payment Received' to 'Paid(Full)'
-
-        // Ensure 'Paid(Full)' task exists for all events
-        if (!currentEvent.tasks.some(task => task.name === 'Paid(Full)')) {
-          const newTasks = [...currentEvent.tasks, { id: `event-task-final-payment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, name: "Paid(Full)", completed: false }];
-          currentEvent.tasks = newTasks;
-          // Recalculate progress after adding a task
-          const completedTasks = currentEvent.tasks.filter(task => task.completed).length;
-          currentEvent.progress = (completedTasks / currentEvent.tasks.length) * 100;
-        }
-
-        // Ensure status exists, default to "Pending" if not present
-        if (!currentEvent.status) {
-          currentEvent.status = "Pending";
-        }
-
-        // Ensure eventName exists, default to fraternity - school if not present
-        if (!currentEvent.eventName && currentEvent.fraternity && currentEvent.school) {
-          currentEvent.eventName = `${currentEvent.fraternity} - ${currentEvent.school}`;
-        } else if (!currentEvent.eventName) {
-          currentEvent.eventName = "Unnamed Event"; // Fallback if fraternity/school also missing
-        }
-
-        return currentEvent; // Return the (potentially modified) shallow copy
-      }) as T;
-    }
-    if (key === "appInquiries" && Array.isArray(storedData)) {
-      return storedData.map(inquiry => {
-        let date: Date;
-        if (typeof inquiry.inquiryDate === 'string') {
-          date = new Date(inquiry.inquiryDate);
-        } else {
-          date = new Date(); // Default if not a string
-        }
-        if (isNaN(date.getTime())) {
-          console.warn(`Invalid inquiryDate found for inquiry ID ${inquiry.id || 'unknown'}. Defaulting to current date.`);
-          return { ...inquiry, inquiryDate: new Date() };
-        }
-        return { ...inquiry, inquiryDate: date };
-      }) as T;
-    }
-    return storedData;
-  } catch (error) {
-    console.error(`Error loading state for ${key} from localStorage:`, error);
-    return initialValue;
-  }
-};
-
-// Helper to save state to localStorage
-const saveStateToLocalStorage = <T,>(key: string, state: T) => {
-  if (typeof window === 'undefined') {
-    return; // Do nothing if not in browser environment
-  }
-  try {
-    let stateToStore = state;
-    // Special handling for events and inquiries to stringify Date objects
-    if (key === "appEvents" && Array.isArray(state)) {
-      stateToStore = state.map(event => ({
-        ...event,
-        eventDate: event.eventDate.toISOString(),
-      })) as T;
-    }
-    if (key === "appInquiries" && Array.isArray(state)) {
-      stateToStore = state.map(inquiry => ({
-        ...inquiry,
-        inquiryDate: inquiry.inquiryDate.toISOString(),
-      })) as T;
-    }
-    const serializedState = JSON.stringify(stateToStore);
-    localStorage.setItem(key, serializedState);
-  } catch (error) {
-    console.error(`Error saving state for ${key} to localStorage:`, error);
-  }
-};
-
-const initialClients: Client[] = [
-  {
-    id: "1",
-    fraternity: "Alpha Beta Gamma",
-    school: "State University",
-    mainContactName: "John Doe",
-    phoneNumber: "5551234567",
-    instagramHandle: "@abg_stateu",
-    averageEventSize: 15000,
-    numberOfEvents: 3,
-    clientScore: calculateClientScore(3, 15000),
-  },
-  {
-    id: "2",
-    fraternity: "Delta Epsilon Zeta",
-    school: "City College",
-    mainContactName: "Jane Smith",
-    phoneNumber: "5559876543",
-    instagramHandle: "@dez_citycollege",
-    averageEventSize: 10000,
-    numberOfEvents: 5,
-    clientScore: calculateClientScore(5, 10000),
-  },
-  {
-    id: "client-from-inq1",
-    fraternity: "Gamma Delta Epsilon",
-    school: "University of West",
-    mainContactName: "Chris Evans",
-    phoneNumber: "5551112222",
-    instagramHandle: "N/A",
-    averageEventSize: 8000,
-    numberOfEvents: 0,
-    clientScore: calculateClientScore(0, 8000),
-  }
-];
-
-const initialInquiries: Inquiry[] = [
-  {
-    id: "inq1",
-    clientId: "client-from-inq1",
-    school: "University of West",
-    fraternity: "Gamma Delta Epsilon",
-    mainContact: "Chris Evans",
-    phoneNumber: "5551112222",
-    email: "chris.evans@west.edu", // Added email to initial inquiry
-    addressOfEvent: "123 Party Lane",
-    capacity: 500,
-    budget: 8000,
-    inquiryDate: new Date("2024-10-26"), // Example date
-    inquiryTime: "19:00", // Example time
-    stageBuild: "Base Stage",
-    power: "None",
-    gates: true,
-    security: false,
-    co2Tanks: 0,
-    cdjs: 0,
-    audio: "QSC Rig",
-    tasks: [
-      { id: "task1", name: "Rendering", completed: false },
-      { id: "task2", name: "Contract", completed: false },
-      { id: "task3", name: "Deposit", completed: false },
-    ],
-    progress: 0,
-  },
-];
-
-const initialEvents: Event[] = [];
-const initialLeads: Lead[] = []; // Initial empty leads array
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useSession(); // Get user from session context
-  const [clients, setClients] = useState<Client[]>(() =>
-    loadStateFromLocalStorage("appClients", initialClients)
-  );
-  const [inquiries, setInquiries] = useState<Inquiry[]>(() =>
-    loadStateFromLocalStorage("appInquiries", initialInquiries)
-  );
-  const [events, setEvents] = useState<Event[]>(() =>
-    loadStateFromLocalStorage("appEvents", initialEvents)
-  );
-  const [leads, setLeads] = useState<Lead[]>(initialLeads); // State for leads
+  const [clients, setClients] = useState<Client[]>([]);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]); // State for leads
   const [googleCalendarEvents, setGoogleCalendarEvents] = useState<GoogleCalendarEvent[]>([]); // State for Google Calendar events
   const [isDocuSignConnected, setIsDocuSignConnected] = useState(false); // New: DocuSign connection status
   const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false); // NEW: Google Calendar connection status
 
-  // Use useEffect to save state whenever it changes
-  useEffect(() => {
-    saveStateToLocalStorage("appClients", clients);
-  }, [clients]);
+  // --- Fetch Clients from Supabase ---
+  const fetchClients = useCallback(async () => {
+    if (!user) {
+      setClients([]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*');
 
-  useEffect(() => {
-    saveStateToLocalStorage("appInquiries", inquiries);
-  }, [inquiries]);
+    if (error) {
+      console.error("Error fetching clients:", error);
+      toast.error("Failed to fetch clients.");
+    } else {
+      setClients(data.map(parseClientFromSupabase));
+    }
+  }, [user]);
 
+  // --- Fetch Inquiries from Supabase ---
+  const fetchInquiries = useCallback(async () => {
+    if (!user) {
+      setInquiries([]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('inquiries')
+      .select('*');
+
+    if (error) {
+      console.error("Error fetching inquiries:", error);
+      toast.error("Failed to fetch inquiries.");
+    } else {
+      setInquiries(data.map(parseInquiryFromSupabase));
+    }
+  }, [user]);
+
+  // --- Fetch Events from Supabase ---
+  const fetchEvents = useCallback(async () => {
+    if (!user) {
+      setEvents([]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('events')
+      .select('*');
+
+    if (error) {
+      console.error("Error fetching events:", error);
+      toast.error("Failed to fetch events.");
+    } else {
+      setEvents(data.map(parseEventFromSupabase));
+    }
+  }, [user]);
+
+  // Fetch data on component mount and when user changes
   useEffect(() => {
-    saveStateToLocalStorage("appEvents", events); // Corrected function name here
-  }, [events]);
+    if (user) {
+      fetchClients();
+      fetchInquiries();
+      fetchEvents();
+    } else {
+      setClients([]);
+      setInquiries([]);
+      setEvents([]);
+    }
+  }, [user, fetchClients, fetchInquiries, fetchEvents]);
 
   // --- Leads Management Functions ---
   const fetchLeads = useCallback(async () => {
@@ -288,22 +212,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (completedTasks / tasks.length) * 100;
   };
 
-  const addInquiry = (newInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => {
-    let targetClientId: string;
-    let clientToUpdate: Client | undefined;
-
-    // First, try to find an existing client by the provided existingClientId
-    if (existingClientId) {
-      clientToUpdate = clients.find(c => c.id === existingClientId);
-      if (clientToUpdate) {
-        targetClientId = existingClientId;
-      } else {
-        console.warn(`Existing client with ID ${existingClientId} not found. Attempting to find by fraternity/school.`);
-      }
+  const addInquiry = async (newInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => {
+    if (!user) {
+      toast.error("You must be logged in to add inquiries.");
+      return;
     }
 
+    let targetClientId: string | null = existingClientId || null;
+    let clientToUpdate: Client | undefined;
+
     // If no client found by ID, or no ID was provided, try to find by fraternity and school
-    if (!clientToUpdate) {
+    if (!targetClientId) {
       clientToUpdate = clients.find(
         c => c.fraternity.toLowerCase() === newInquiryData.fraternity.toLowerCase() &&
              c.school.toLowerCase() === newInquiryData.school.toLowerCase()
@@ -312,39 +231,52 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (clientToUpdate) {
         targetClientId = clientToUpdate.id;
         // Update existing client's contact info with new inquiry's contact
-        setClients(prevClients =>
-          prevClients.map(c =>
-            c.id === clientToUpdate?.id
-              ? {
-                  ...c,
-                  mainContactName: newInquiryData.mainContact,
-                  phoneNumber: newInquiryData.phoneNumber,
-                  // Instagram handle is not part of inquiry form, so keep existing or default
-                  instagramHandle: c.instagramHandle === "N/A" ? "N/A" : c.instagramHandle,
-                }
-              : c
-          )
-        );
-        toast.info(`Client "${clientToUpdate.fraternity} - ${clientToUpdate.school}" contact updated from inquiry.`);
+        const { error: updateClientError } = await supabase
+          .from('clients')
+          .update({
+            main_contact_name: newInquiryData.mainContact,
+            phone_number: newInquiryData.phoneNumber,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', targetClientId);
+
+        if (updateClientError) {
+          console.error("Error updating client contact from inquiry:", updateClientError);
+          toast.error("Failed to update client contact.");
+        } else {
+          toast.info(`Client "${clientToUpdate.fraternity} - ${clientToUpdate.school}" contact updated from inquiry.`);
+          fetchClients(); // Re-fetch clients to update local state
+        }
       } else {
         // If still no client found, create a new one
-        targetClientId = `client-${Date.now()}-from-inq`;
         const initialAverageEventSize = newInquiryData.budget; // First event's budget
         const initialNumberOfEvents = 0; // New client starts with 0 events from this inquiry's perspective
 
-        const newClient: Client = {
-          id: targetClientId,
+        const newClientDataForDb = {
           fraternity: newInquiryData.fraternity,
           school: newInquiryData.school,
-          mainContactName: newInquiryData.mainContact,
-          phoneNumber: newInquiryData.phoneNumber,
-          instagramHandle: "N/A", // Placeholder, as not available in inquiry form
-          averageEventSize: initialAverageEventSize,
-          numberOfEvents: initialNumberOfEvents,
-          clientScore: calculateClientScore(initialNumberOfEvents, initialAverageEventSize),
+          main_contact_name: newInquiryData.mainContact,
+          phone_number: newInquiryData.phoneNumber,
+          instagram_handle: "N/A", // Placeholder, as not available in inquiry form
+          average_event_size: initialAverageEventSize,
+          number_of_events: initialNumberOfEvents,
+          client_score: calculateClientScore(initialNumberOfEvents, initialAverageEventSize),
         };
-        setClients((prevClients) => [...prevClients, newClient]);
-        toast.success(`New client "${newClient.fraternity} - ${newClient.school}" added from inquiry!`);
+
+        const { data: newClientResponse, error: newClientError } = await supabase
+          .from('clients')
+          .insert(newClientDataForDb)
+          .select()
+          .single();
+
+        if (newClientError) {
+          console.error("Error creating new client from inquiry:", newClientError);
+          toast.error("Failed to create new client.");
+          return;
+        }
+        targetClientId = newClientResponse.id;
+        toast.success(`New client "${newClientResponse.fraternity} - ${newClientResponse.school}" added from inquiry!`);
+        fetchClients(); // Re-fetch clients to update local state
       }
     }
 
@@ -354,226 +286,428 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       { id: "task-deposit-" + (Date.now() + 2), name: "Deposit", completed: false },
     ];
 
-    const inquiryWithTasks: Inquiry = {
-      ...newInquiryData,
-      id: `inq-${Date.now()}`,
-      clientId: targetClientId!, // Link to the client (guaranteed to be set by now)
+    const inquiryToInsert = {
+      client_id: targetClientId,
+      school: newInquiryData.school,
+      fraternity: newInquiryData.fraternity,
+      main_contact: newInquiryData.mainContact,
+      phone_number: newInquiryData.phoneNumber,
+      email: newInquiryData.email,
+      address_of_event: newInquiryData.addressOfEvent,
+      capacity: newInquiryData.capacity,
+      budget: newInquiryData.budget,
+      inquiry_date: newInquiryData.inquiryDate.toISOString(),
+      inquiry_time: newInquiryData.inquiryTime,
+      stage_build: newInquiryData.stageBuild,
+      power: newInquiryData.power,
+      gates: newInquiryData.gates,
+      security: newInquiryData.security,
+      co2_tanks: newInquiryData.co2Tanks,
+      cdjs: newInquiryData.cdjs,
+      audio: newInquiryData.audio,
       tasks: defaultTasks,
       progress: 0,
     };
 
-    setInquiries((prev) => [...prev, inquiryWithTasks]);
-    toast.success("New inquiry added!");
+    const { error: insertInquiryError } = await supabase
+      .from('inquiries')
+      .insert(inquiryToInsert);
+
+    if (insertInquiryError) {
+      console.error("Error adding inquiry:", insertInquiryError);
+      toast.error("Failed to add inquiry.");
+    } else {
+      toast.success("New inquiry added!");
+      fetchInquiries(); // Re-fetch inquiries to update local state
+    }
   };
 
-  const updateInquiry = (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => {
-    setInquiries((prevInquiries) =>
-      prevInquiries.map((inq) => {
-        if (inq.id === inquiryId) {
-          // Preserve existing tasks and progress, only update other fields
-          return { ...inq, ...updatedInquiryData };
-        }
-        return inq;
-      })
+  const updateInquiry = async (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => {
+    if (!user) {
+      toast.error("You must be logged in to update inquiries.");
+      return;
+    }
+
+    const inquiryToUpdate = {
+      school: updatedInquiryData.school,
+      fraternity: updatedInquiryData.fraternity,
+      main_contact: updatedInquiryData.mainContact,
+      phone_number: updatedInquiryData.phoneNumber,
+      email: updatedInquiryData.email,
+      address_of_event: updatedInquiryData.addressOfEvent,
+      capacity: updatedInquiryData.capacity,
+      budget: updatedInquiryData.budget,
+      inquiry_date: updatedInquiryData.inquiryDate.toISOString(),
+      inquiry_time: updatedInquiryData.inquiryTime,
+      stage_build: updatedInquiryData.stageBuild,
+      power: updatedInquiryData.power,
+      gates: updatedInquiryData.gates,
+      security: updatedInquiryData.security,
+      co2_tanks: updatedInquiryData.co2Tanks,
+      cdjs: updatedInquiryData.cdjs,
+      audio: updatedInquiryData.audio,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from('inquiries')
+      .update(inquiryToUpdate)
+      .eq('id', inquiryId);
+
+    if (error) {
+      console.error("Error updating inquiry:", error);
+      toast.error("Failed to update inquiry.");
+    } else {
+      toast.success("Inquiry updated successfully!");
+      fetchInquiries(); // Re-fetch inquiries to update local state
+    }
+  };
+
+  const deleteInquiry = async (inquiryId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to delete inquiries.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from('inquiries')
+      .delete()
+      .eq('id', inquiryId);
+
+    if (error) {
+      console.error("Error deleting inquiry:", error);
+      toast.error("Failed to delete inquiry.");
+    } else {
+      toast.success("Inquiry deleted successfully!");
+      fetchInquiries(); // Re-fetch inquiries to update local state
+    }
+  };
+
+  const updateInquiryTask = async (inquiryId: string, taskId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to update inquiry tasks.");
+      return;
+    }
+
+    const inquiry = inquiries.find(inq => inq.id === inquiryId);
+    if (!inquiry) {
+      toast.error("Inquiry not found.");
+      return;
+    }
+
+    const updatedTasks = inquiry.tasks.map((task) =>
+      task.id === taskId ? { ...task, completed: !task.completed } : task
     );
-    toast.success("Inquiry updated successfully!");
-  };
+    const newProgress = calculateProgress(updatedTasks);
 
-  const deleteInquiry = (inquiryId: string) => {
-    setInquiries((prevInquiries) => prevInquiries.filter((inq) => inq.id !== inquiryId));
-    toast.success("Inquiry deleted successfully!");
-  };
+    if (newProgress === 100) {
+      toast.success(`Inquiry "${inquiry.fraternity}" completed! Moving to Events.`);
+      
+      const newEventTasks: EventTask[] = [];
+      
+      // Power: If power is NOT provided by the client (i.e., not "Provided" and not "None"), add a task for sourcing it.
+      if (inquiry.power !== "None" && inquiry.power !== "Provided") {
+          newEventTasks.push({ id: `event-task-power-${Date.now()}`, name: `Source ${inquiry.power}`, completed: false });
+      }
 
-  const updateInquiryTask = (inquiryId: string, taskId: string) => {
-    setInquiries((prevInquiries) =>
-      prevInquiries.map((inq) => {
-        if (inq.id === inquiryId) {
-          const updatedTasks = inq.tasks.map((task) =>
-            task.id === taskId ? { ...task, completed: !task.completed } : task
-          );
-          const newProgress = calculateProgress(updatedTasks);
-          const updatedInquiry = { ...inq, tasks: updatedTasks, progress: newProgress };
+      // Gates: If gates are NOT provided by the client, add a task for sourcing them.
+      if (!inquiry.gates) {
+          newEventTasks.push({ id: `event-task-gates-${Date.now()}`, name: "Source Gates", completed: false });
+      }
 
-          if (newProgress === 100) {
-            toast.success(`Inquiry "${inq.fraternity}" completed! Moving to Events.`);
-            
-            const newEventTasks: EventTask[] = [];
-            
-            // Power: If power is NOT provided by the client (i.e., not "Provided" and not "None"), add a task for sourcing it.
-            if (inq.power !== "None" && inq.power !== "Provided") {
-                newEventTasks.push({ id: `event-task-power-${Date.now()}`, name: `Source ${inq.power}`, completed: false });
-            }
+      // Security: If security is NOT provided by the client, add a task for sourcing it.
+      if (!inquiry.security) {
+          newEventTasks.push({ id: `event-task-security-${Date.now()}`, name: "Source Security", completed: false });
+      }
 
-            // Gates: If gates are NOT provided by the client, add a task for sourcing them.
-            if (!inq.gates) {
-                newEventTasks.push({ id: `event-task-gates-${Date.now()}`, name: "Source Gates", completed: false });
-            }
+      // CO2 Tanks: If CO2 tanks are needed (quantity > 0), add a task for sourcing them.
+      if (inquiry.co2Tanks > 0) {
+          newEventTasks.push({ id: `event-task-co2-${Date.now()}`, name: `Source ${inquiry.co2Tanks} CO2 Tanks`, completed: false });
+      }
 
-            // Security: If security is NOT provided by the client, add a task for sourcing it.
-            if (!inq.security) {
-                newEventTasks.push({ id: `event-task-security-${Date.now()}`, name: "Source Security", completed: false });
-            }
+      // CDJs: If CDJs are needed (quantity > 2), add a task for sourcing them.
+      if (inquiry.cdjs > 2) {
+          newEventTasks.push({ id: `event-task-cdjs-${Date.now()}`, name: `Source ${inquiry.cdjs} CDJs`, completed: false });
+      }
 
-            // CO2 Tanks: If CO2 tanks are needed (quantity > 0), add a task for sourcing them.
-            if (inq.co2Tanks > 0) {
-                newEventTasks.push({ id: `event-task-co2-${Date.now()}`, name: `Source ${inq.co2Tanks} CO2 Tanks`, completed: false });
-            }
+      // Audio: If audio is not "QSC Rig", add a task for sourcing it.
+      if (inquiry.audio !== "QSC Rig") {
+          newEventTasks.push({ id: `event-task-audio-${Date.now()}`, name: `Source ${inquiry.audio} Audio`, completed: false });
+      }
 
-            // CDJs: If CDJs are needed (quantity > 2), add a task for sourcing them.
-            if (inq.cdjs > 2) {
-                newEventTasks.push({ id: `event-task-cdjs-${Date.now()}`, name: `Source ${inq.cdjs} CDJs`, completed: false });
-            }
+      // Add a default task if no specific ones are generated (e.g., if everything is provided)
+      if (newEventTasks.length === 0) {
+          newEventTasks.push({ id: `event-task-default-${Date.now()}`, name: "Event Logistics", completed: false });
+      }
 
-            // Audio: If audio is not "QSC Rig", add a task for sourcing it.
-            if (inq.audio !== "QSC Rig") {
-                newEventTasks.push({ id: `event-task-audio-${Date.now()}`, name: `Source ${inq.audio} Audio`, completed: false });
-            }
-
-            // Add a default task if no specific ones are generated (e.g., if everything is provided)
-            if (newEventTasks.length === 0) {
-                newEventTasks.push({ id: `event-task-default-${Date.now()}`, name: "Event Logistics", completed: false });
-            }
-
-            // Add the "Paid(Full)" task
-            newEventTasks.push({ id: `event-task-final-payment-${Date.now() + 3}`, name: "Paid(Full)", completed: false });
+      // Add the "Paid(Full)" task
+      newEventTasks.push({ id: `event-task-final-payment-${Date.now() + 3}`, name: "Paid(Full)", completed: false });
 
 
-            // Combine inquiry date and time to create the eventDate
-            const [hours, minutes] = inq.inquiryTime.split(':').map(Number);
-            const eventDateTime = new Date(inq.inquiryDate);
-            eventDateTime.setHours(hours, minutes, 0, 0);
+      // Combine inquiry date and time to create the eventDate
+      const [hours, minutes] = inquiry.inquiryTime.split(':').map(Number);
+      const eventDateTime = new Date(inquiry.inquiryDate);
+      eventDateTime.setHours(hours, minutes, 0, 0);
 
-            const newEvent: Event = {
-                id: `event-${Date.now()}`,
-                clientId: inq.clientId, // Link to client using the stored clientId
-                fraternity: inq.fraternity,
-                school: inq.school,
-                eventName: `${inq.fraternity} - ${inq.school}`, // Default event name without "Event"
-                eventDate: eventDateTime, // Use the combined date and time
-                addressOfEvent: inq.addressOfEvent,
-                capacity: inq.capacity,
-                budget: inq.budget,
-                stageBuild: inq.stageBuild, // Transfer stageBuild directly to event
-                status: "Pending", // Default status for new events
-                tasks: newEventTasks,
-                progress: 0,
-            };
+      const newEventDataForDb = {
+          client_id: inquiry.clientId, // Link to client using the stored clientId
+          fraternity: inquiry.fraternity,
+          school: inquiry.school,
+          event_name: `${inquiry.fraternity} - ${inquiry.school}`, // Default event name without "Event"
+          event_date: eventDateTime.toISOString(), // Use the combined date and time
+          address_of_event: inquiry.addressOfEvent,
+          capacity: inquiry.capacity,
+          budget: inquiry.budget,
+          stage_build: inquiry.stageBuild, // Transfer stageBuild directly to event
+          status: "Pending", // Default status for new events
+          tasks: newEventTasks,
+          progress: 0,
+      };
 
-            // Logic to update client based on completed inquiry
-            setClients((prev) => {
-                const existingClient = prev.find(c => c.id === inq.clientId); // Use inq.clientId to find the client
-                if (existingClient) {
-                    const updatedClient = {
-                        ...existingClient,
-                        numberOfEvents: existingClient.numberOfEvents + 1,
-                        averageEventSize: (existingClient.averageEventSize * existingClient.numberOfEvents + inq.budget) / (existingClient.numberOfEvents + 1)
-                    };
-                    updatedClient.clientScore = calculateClientScore(updatedClient.numberOfEvents, updatedClient.averageEventSize);
-                    return prev.map(c => c.id === existingClient.id ? updatedClient : c);
-                } else {
-                    console.error(`Client with ID ${inq.clientId} not found when completing inquiry ${inq.id}. This should not happen if client is added on inquiry creation.`);
-                    return prev; // Return previous state if client not found (should ideally not occur)
-                }
-            });
-            setEvents((prev) => [...prev, newEvent]);
-            
-            // Automatically add to Google Calendar if user is logged in
-            if (user && isGoogleCalendarConnected) { // Check isGoogleCalendarConnected
-              createGoogleCalendarEvent(newEvent);
-            } else if (user && !isGoogleCalendarConnected) {
-              toast.info("Google Calendar not connected. Event not added automatically.");
-            } else {
-              toast.info("Log in to automatically add events to Google Calendar.");
-            }
+      const { data: newEventResponse, error: newEventError } = await supabase
+        .from('events')
+        .insert(newEventDataForDb)
+        .select()
+        .single();
 
-            return null; // Remove inquiry from list
+      if (newEventError) {
+        console.error("Error creating new event from inquiry:", newEventError);
+        toast.error("Failed to create new event.");
+        return;
+      }
+
+      // Logic to update client based on completed inquiry
+      const existingClient = clients.find(c => c.id === inquiry.clientId);
+      if (existingClient) {
+          const updatedNumberOfEvents = existingClient.numberOfEvents + 1;
+          const updatedAverageEventSize = (existingClient.averageEventSize * existingClient.numberOfEvents + inquiry.budget) / updatedNumberOfEvents;
+          const updatedClientScore = calculateClientScore(updatedNumberOfEvents, updatedAverageEventSize);
+
+          const { error: updateClientError } = await supabase
+            .from('clients')
+            .update({
+              number_of_events: updatedNumberOfEvents,
+              average_event_size: updatedAverageEventSize,
+              client_score: updatedClientScore,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingClient.id);
+
+          if (updateClientError) {
+            console.error("Error updating client after inquiry completion:", updateClientError);
+            toast.error("Failed to update client details.");
+          } else {
+            fetchClients(); // Re-fetch clients to update local state
           }
-          return updatedInquiry;
-        }
-        return inq;
-      }).filter(Boolean) as Inquiry[]
-    );
+      } else {
+          console.error(`Client with ID ${inquiry.clientId} not found when completing inquiry ${inquiry.id}. This should not happen if client is added on inquiry creation.`);
+      }
+      
+      // Delete the completed inquiry from Supabase
+      const { error: deleteInquiryError } = await supabase
+        .from('inquiries')
+        .delete()
+        .eq('id', inquiryId);
+
+      if (deleteInquiryError) {
+        console.error("Error deleting completed inquiry:", deleteInquiryError);
+        toast.error("Failed to delete completed inquiry.");
+      } else {
+        fetchInquiries(); // Re-fetch inquiries to update local state
+        fetchEvents(); // Re-fetch events to update local state
+      }
+      
+      // Automatically add to Google Calendar if user is logged in
+      if (user && isGoogleCalendarConnected) { // Check isGoogleCalendarConnected
+        createGoogleCalendarEvent(parseEventFromSupabase(newEventResponse)); // Pass the newly created event
+      } else if (user && !isGoogleCalendarConnected) {
+        toast.info("Google Calendar not connected. Event not added automatically.");
+      } else {
+        toast.info("Log in to automatically add events to Google Calendar.");
+      }
+
+    } else {
+      // If inquiry is not 100% complete, just update its tasks and progress
+      const { error: updateError } = await supabase
+        .from('inquiries')
+        .update({
+          tasks: updatedTasks,
+          progress: newProgress,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', inquiryId);
+
+      if (updateError) {
+        console.error("Error updating inquiry tasks:", updateError);
+        toast.error("Failed to update inquiry tasks.");
+      } else {
+        fetchInquiries(); // Re-fetch inquiries to update local state
+      }
+    }
   };
 
-  const updateEvent = (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => {
-    setEvents((prevEvents) =>
-      prevEvents.map((event) => {
-        if (event.id === eventId) {
-          // Preserve existing tasks, progress, clientId, fraternity, school
-          return { ...event, ...updatedEventData };
-        }
-        return event;
+  const updateEvent = async (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => {
+    if (!user) {
+      toast.error("You must be logged in to update events.");
+      return;
+    }
+
+    const eventToUpdate = {
+      event_name: updatedEventData.eventName,
+      event_date: updatedEventData.eventDate.toISOString(),
+      address_of_event: updatedEventData.addressOfEvent,
+      capacity: updatedEventData.capacity,
+      budget: updatedEventData.budget,
+      stage_build: updatedEventData.stageBuild,
+      status: updatedEventData.status,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from('events')
+      .update(eventToUpdate)
+      .eq('id', eventId);
+
+    if (error) {
+      console.error("Error updating event:", error);
+      toast.error("Failed to update event.");
+    } else {
+      toast.success("Event updated successfully!");
+      fetchEvents(); // Re-fetch events to update local state
+    }
+  };
+
+  const updateEventTask = async (eventId: string, taskId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to update event tasks.");
+      return;
+    }
+
+    const event = events.find(e => e.id === eventId);
+    if (!event) {
+      toast.error("Event not found.");
+      return;
+    }
+
+    const updatedTasks = event.tasks.map((task) =>
+      task.id === taskId ? { ...task, completed: !task.completed } : task
+    );
+    const newProgress = calculateProgress(updatedTasks);
+
+    const { error } = await supabase
+      .from('events')
+      .update({
+        tasks: updatedTasks,
+        progress: newProgress,
+        updated_at: new Date().toISOString(),
       })
-    );
-    toast.success("Event updated successfully!");
+      .eq('id', eventId);
+
+    if (error) {
+      console.error("Error updating event tasks:", error);
+      toast.error("Failed to update event tasks.");
+    } else {
+      fetchEvents(); // Re-fetch events to update local state
+    }
   };
 
-  const updateEventTask = (eventId: string, taskId: string) => {
-    setEvents((prevEvents) =>
-      prevEvents.map((event) => {
-        if (event.id === eventId) {
-          const updatedTasks = event.tasks.map((task) =>
-            task.id === taskId ? { ...task, completed: !task.completed } : task
-          );
-          const newProgress = calculateProgress(updatedTasks);
-          return { ...event, tasks: updatedTasks, progress: newProgress };
-        }
-        return event;
-      })
-    );
+  const updateClient = async (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => {
+    if (!user) {
+      toast.error("You must be logged in to update clients.");
+      return;
+    }
+
+    const existingClient = clients.find(c => c.id === clientId);
+    if (!existingClient) {
+      toast.error("Client not found.");
+      return;
+    }
+
+    // Recalculate clientScore based on potentially updated averageEventSize (though averageEventSize is now derived)
+    const updatedClientScore = calculateClientScore(existingClient.numberOfEvents, existingClient.averageEventSize);
+
+    const clientToUpdate = {
+      fraternity: updatedClientData.fraternity,
+      school: updatedClientData.school,
+      main_contact_name: updatedClientData.mainContactName,
+      phone_number: updatedClientData.phoneNumber,
+      instagram_handle: updatedClientData.instagramHandle,
+      client_score: updatedClientScore, // Update score
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from('clients')
+      .update(clientToUpdate)
+      .eq('id', clientId);
+
+    if (error) {
+      console.error("Error updating client:", error);
+      toast.error("Failed to update client.");
+    } else {
+      toast.success("Client updated successfully!");
+      fetchClients(); // Re-fetch clients to update local state
+    }
   };
 
-  const updateClient = (clientId: string, updatedClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => {
-    setClients((prevClients) =>
-      prevClients.map((client) => {
-        if (client.id === clientId) {
-          const updatedClient = { ...client, ...updatedClientData };
-          // Recalculate clientScore based on potentially updated averageEventSize (though averageEventSize is now derived)
-          updatedClient.clientScore = calculateClientScore(updatedClient.numberOfEvents, updatedClient.averageEventSize);
-          return updatedClient;
-        }
-        return client;
-      })
-    );
-    toast.success("Client updated successfully!");
-  };
+  const addClient = async (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => {
+    if (!user) {
+      toast.error("You must be logged in to add clients.");
+      return;
+    }
 
-  const addClient = (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => {
-    const existingClientIndex = clients.findIndex(
+    const existingClient = clients.find(
       c => c.fraternity.toLowerCase() === newClientData.fraternity.toLowerCase() &&
            c.school.toLowerCase() === newClientData.school.toLowerCase()
     );
 
-    if (existingClientIndex > -1) {
+    if (existingClient) {
       // Update existing client's contact details
-      setClients(prevClients =>
-        prevClients.map((client, index) =>
-          index === existingClientIndex
-            ? {
-                ...client,
-                mainContactName: newClientData.mainContactName,
-                phoneNumber: newClientData.phoneNumber,
-                instagramHandle: newClientData.instagramHandle,
-              }
-            : client
-        )
-      );
-      toast.success(`Client "${newClientData.fraternity} - ${newClientData.school}" contact updated!`);
+      const { error: updateError } = await supabase
+        .from('clients')
+        .update({
+          main_contact_name: newClientData.mainContactName,
+          phone_number: newClientData.phoneNumber,
+          instagram_handle: newClientData.instagramHandle,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingClient.id);
+
+      if (updateError) {
+        console.error("Error updating existing client:", updateError);
+        toast.error("Failed to update existing client.");
+      } else {
+        toast.success(`Client "${newClientData.fraternity} - ${newClientData.school}" contact updated!`);
+        fetchClients(); // Re-fetch clients to update local state
+      }
     } else {
       // Create a new client
       const numberOfEvents = 0; // New clients start with 0 events
       const averageEventSize = 0; // New clients start with 0 average event size
       const clientScore = calculateClientScore(numberOfEvents, averageEventSize);
 
-      const newClient: Client = {
-        ...newClientData,
-        id: `client-${Date.now()}`,
-        numberOfEvents: numberOfEvents,
-        averageEventSize: averageEventSize, // Initialize to 0
-        clientScore: clientScore,
+      const clientToInsert = {
+        fraternity: newClientData.fraternity,
+        school: newClientData.school,
+        main_contact_name: newClientData.mainContactName,
+        phone_number: newClientData.phoneNumber,
+        instagram_handle: newClientData.instagramHandle,
+        number_of_events: numberOfEvents,
+        average_event_size: averageEventSize,
+        client_score: clientScore,
       };
-      setClients((prev) => [...prev, newClient]);
-      toast.success("New client added successfully!");
+
+      const { error: insertError } = await supabase
+        .from('clients')
+        .insert(clientToInsert);
+
+      if (insertError) {
+        console.error("Error adding new client:", insertError);
+        toast.error("Failed to add new client.");
+      } else {
+        toast.success("New client added successfully!");
+        fetchClients(); // Re-fetch clients to update local state
+      }
     }
   };
 
