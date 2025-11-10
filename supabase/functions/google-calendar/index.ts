@@ -47,7 +47,8 @@ serve(async (req) => {
 
   const url = new URL(req.url);
   // Correctly extract the sub-path relative to the function's base URL
-  const path = url.pathname.replace('/functions/v1/google-calendar', ''); 
+  // It seems url.pathname already strips '/functions/v1/' and starts with the function name.
+  const path = url.pathname.replace('/google-calendar', ''); 
   console.log('DEBUG: Received path in Edge Function:', path);
 
   const REDIRECT_URI = `${SUPABASE_URL}/functions/v1/google-calendar/callback`;
