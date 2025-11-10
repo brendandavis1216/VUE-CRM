@@ -45,12 +45,13 @@ serve(async (req) => {
     });
   }
 
+  const url = new URL(req.url);
+  // Correctly extract the sub-path relative to the function's base URL
+  const path = url.pathname.replace('/functions/v1/google-calendar', ''); 
+  console.log('DEBUG: Received path in Edge Function:', path);
+
   const REDIRECT_URI = `${SUPABASE_URL}/functions/v1/google-calendar/callback`;
   console.log('DEBUG: Constructed REDIRECT_URI:', REDIRECT_URI);
-
-  const url = new URL(req.url);
-  const path = url.pathname.replace('/google-calendar', ''); 
-  console.log('DEBUG: Received path in Edge Function:', path);
 
   const authHeader = req.headers.get('Authorization');
   console.log('DEBUG: Authorization Header:', authHeader ? 'Present' : 'Missing');
@@ -463,7 +464,7 @@ serve(async (req) => {
       }
 
       default:
-        return new Response(JSON.stringify({ error: 'Not Found' }), {
+        return new Response(JSON.stringify({ error: 'Google Calendar Function Path Not Found', receivedPath: path, debugInfo: 'The path received by the Edge Function did not match any defined routes.' }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
