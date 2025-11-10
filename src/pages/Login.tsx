@@ -15,7 +15,7 @@ const Login = () => {
         <Auth
           key="supabase-auth-ui"
           supabaseClient={supabase}
-          // Removed providers={['passkey']} to default to email/password
+          providers={[]} // Explicitly set to an empty array to avoid unsupported provider errors
           appearance={{
             theme: ThemeSupa,
             variables: {
