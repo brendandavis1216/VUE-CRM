@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAppContext } from "@/context/AppContext";
 import { Lead, LeadStatus } from "@/types/app";
 import { LeadCSVUpload } from "@/components/LeadCSVUpload";
-import { LeadEditForm } from "@/components/LeadEditForm";
+import { LeadEditForm } => "@/components/LeadEditForm";
 import { formatPhoneNumber } from "@/lib/utils";
 import {
   AlertDialog,
@@ -37,7 +37,7 @@ type SortBy = 'none' | 'name' | 'school' | 'fraternity' | 'status';
 type SortOrder = 'asc' | 'desc';
 
 // Helper functions for localStorage
-const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
+function loadFromLocalStorage<T>(key: string, defaultValue: T): T {
   if (typeof window === 'undefined') return defaultValue;
   try {
     const storedValue = localStorage.getItem(key);
@@ -46,16 +46,16 @@ const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
     console.error(`Error loading ${key} from localStorage:`, error);
     return defaultValue;
   }
-};
+}
 
-const saveToLocalStorage = <T,>(key: string, value: T) => {
+function saveToLocalStorage<T>(key: string, value: T) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
     console.error(`Error saving ${key} to localStorage:`, error);
   }
-};
+}
 
 const LeadsPage = () => {
   const { leads, fetchLeads, updateLead, deleteAllLeads, deleteLead, addInquiry } = useAppContext();
