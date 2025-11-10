@@ -90,8 +90,8 @@ const InquiriesPage = () => {
     setIsEditInquiryDialogOpen(true);
   };
 
-  const handleInquiryUpdate = (inquiryId: string, updatedValues: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => {
-    updateInquiry(inquiryId, updatedValues);
+  const handleInquiryUpdate = (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => {
+    updateInquiry(inquiryId, updatedInquiryData);
     setIsEditInquiryDialogOpen(false);
     setSelectedInquiry(null);
   };
@@ -141,9 +141,9 @@ const InquiriesPage = () => {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl font-bold text-white">Inquiries</h1>
-        <div className="flex gap-2 items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4">
+        <h1 className="text-3xl font-bold text-white text-center sm:text-left">Inquiries</h1>
+        <div className="flex flex-wrap justify-center sm:justify-end gap-2">
           <DocuSignConnectButton /> {/* DocuSign Connect Button */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

@@ -303,9 +303,9 @@ const LeadsPage = () => {
 
   return (
     <div className="p-4 space-y-8">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl font-bold text-white">Leads</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4">
+        <h1 className="text-3xl font-bold text-white text-center sm:text-left">Leads</h1>
+        <div className="flex flex-wrap justify-center sm:justify-end gap-2">
           <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
