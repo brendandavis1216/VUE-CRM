@@ -37,7 +37,7 @@ type SortBy = 'none' | 'name' | 'school' | 'fraternity' | 'status';
 type SortOrder = 'asc' | 'desc';
 
 // Helper functions for localStorage
-const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
+const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
   if (typeof window === 'undefined') return defaultValue;
   try {
     const storedValue = localStorage.getItem(key);
@@ -48,7 +48,7 @@ const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
   }
 };
 
-const saveToLocalStorage = <T>(key: string, value: T) => {
+const saveToLocalStorage = <T,>(key: string, value: T) => {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(key, JSON.stringify(value));
