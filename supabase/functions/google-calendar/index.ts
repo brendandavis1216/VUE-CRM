@@ -63,7 +63,7 @@ serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
   });
 
-  // Client for operations requiring service role (e.g., /callback)
+  // Client for operations requiring service role (e.g., /callback, token refresh, fetching all tokens)
   const supabaseAdminClient = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
 
@@ -98,6 +98,19 @@ serve(async (req) => {
     if (error && error.code !== 'PGRST116') {
       console.error('Error fetching Google tokens:', error);
       return null;
+    }
+    return data;
+  };
+
+  const getAllGoogleTokens = async () => {
+    // Use supabaseAdminClient to fetch all tokens, bypassing RLS
+    const { data, error } = await supabaseAdminClient
+      .from('user_google_tokens')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching all Google tokens:', error);
+      return [];
     }
     return data;
   };
@@ -402,40 +415,26 @@ serve(async (req) => {
         });
       }
 
-      let userTokens = await getUserGoogleTokens(userId);
-      if (!userTokens) {
-        return new Response(JSON.stringify({ error: 'Google account not connected' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      const eventData = await req.json();
+      const allUserTokens = await getAllGoogleTokens();
+      const results = [];
 
-      let currentAccessToken = userTokens.access_token;
-      let currentRefreshToken = userTokens.refresh_token;
-      let currentExpiresAt = new Date(userTokens.expires_at);
-
-      if (currentExpiresAt < new Date() && currentRefreshToken) {
-        try {
-          const refreshed = await refreshAccessToken(currentRefreshToken, userId);
-          currentAccessToken = refreshed.access_token;
-          currentRefreshToken = refreshed.refresh_token;
-          currentExpiresAt = refreshed.expires_at;
-        } catch (refreshError) {
-          console.error('Error refreshing Google access token:', refreshError);
-          return new Response(JSON.stringify({ error: 'Failed to refresh Google access token. Please reconnect.' }), {
-            status: 401,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-      } else if (currentExpiresAt < new Date() && !currentRefreshToken) {
-        return new Response(JSON.stringify({ error: 'Google access token expired and no refresh token available. Please reconnect.' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
+      for (const tokenEntry of allUserTokens) {
+        let currentAccessToken = tokenEntry.access_token;
+        let currentRefreshToken = tokenEntry.refresh_token;
+        let currentExpiresAt = new Date(tokenEntry.expires_at);
+        const tokenOwnerId = tokenEntry.user_id;
 
         try {
-          const eventData = await req.json();
+          if (currentExpiresAt < new Date() && currentRefreshToken) {
+            const refreshed = await refreshAccessToken(currentRefreshToken, tokenOwnerId);
+            currentAccessToken = refreshed.access_token;
+            currentRefreshToken = refreshed.refresh_token;
+            currentExpiresAt = refreshed.expires_at;
+          } else if (currentExpiresAt < new Date() && !currentRefreshToken) {
+            throw new Error('Google access token expired and no refresh token available. Please reconnect.');
+          }
+
           const response = await fetch(GOOGLE_CALENDAR_API_URL, {
             method: 'POST',
             headers: {
@@ -447,25 +446,32 @@ serve(async (req) => {
 
           if (!response.ok) {
             const errorData = await response.json();
-            console.error('Error creating Google Calendar event:', errorData);
-            throw new Error(`Failed to create Google Calendar event: ${errorData.error?.message || response.statusText}`);
+            throw new Error(`Failed to create Google Calendar event for user ${tokenOwnerId}: ${errorData.error?.message || response.statusText}`);
           }
 
           const data = await response.json();
-          return new Response(JSON.stringify(data), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+          results.push({ userId: tokenOwnerId, status: 'success', event: data });
         } catch (error) {
-          console.error('Error creating Google Calendar event:', error);
-          return new Response(JSON.stringify({ error: `Failed to create Google Calendar event: ${error instanceof Error ? error.message : String(error)}` }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+          console.error(`Error creating Google Calendar event for user ${tokenOwnerId}:`, error);
+          results.push({ userId: tokenOwnerId, status: 'failed', error: error instanceof Error ? error.message : String(error) });
         }
       }
 
-      default:
-        return new Response(JSON.stringify({ error: 'Google Calendar Function Path Not Found', receivedPath: path, debugInfo: 'The path received by the Edge Function did not match any defined routes.' }), {
+      const successfulCreations = results.filter(r => r.status === 'success').length;
+      if (successfulCreations > 0) {
+        return new Response(JSON.stringify(results), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else {
+        return new Response(JSON.stringify({ error: 'Failed to create Google Calendar event for any connected user.', details: results }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    default:
+      return new Response(JSON.stringify({ error: 'Google Calendar Function Path Not Found', receivedPath: path, debugInfo: 'The path received by the Edge Function did not match any defined routes.' }), {
           status: 404,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
