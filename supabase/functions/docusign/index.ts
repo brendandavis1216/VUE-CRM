@@ -12,6 +12,9 @@ const DOCUSIGN_TOKEN_URL = 'https://account-d.docusign.com/oauth/token';
 const DOCUSIGN_API_BASE_URL = 'https://demo.docusign.net/restapi/v2.1'; // Use demo for developer account
 
 serve(async (req) => {
+  console.log('DEBUG: Incoming request URL:', req.url);
+  console.log('DEBUG: Request Method:', req.method);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -42,7 +45,10 @@ serve(async (req) => {
   }
 
   const url = new URL(req.url);
-  const path = url.pathname.replace('/docusign', '');
+  // In Supabase Edge Functions, url.pathname is typically relative to the function's base.
+  // So, for a request to /functions/v1/docusign/auth, url.pathname should be /auth.
+  const path = url.pathname; 
+  console.log('DEBUG: Derived path for switch:', path);
 
   const authHeader = req.headers.get('Authorization');
   let userId: string | null = null;
@@ -145,6 +151,13 @@ serve(async (req) => {
 
   switch (path) {
     case '/auth': {
+      if (req.method !== 'POST') {
+        console.error('Method Not Allowed for /auth:', req.method);
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+          status: 405,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       if (!userId) {
         return new Response(JSON.stringify({ error: 'User not authenticated' }), {
           status: 401,
@@ -177,6 +190,13 @@ serve(async (req) => {
     }
 
     case '/callback': {
+      if (req.method !== 'GET') { // Callback is typically a GET request
+        console.error('Method Not Allowed for /callback:', req.method);
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+          status: 405,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const code = url.searchParams.get('code');
       const state = url.searchParams.get('state');
 
@@ -294,6 +314,13 @@ serve(async (req) => {
     }
 
     case '/send-document': {
+      if (req.method !== 'POST') {
+        console.error('Method Not Allowed for /send-document:', req.method);
+        return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+          status: 405,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       if (!userId) {
         return new Response(JSON.stringify({ error: 'User not authenticated' }), {
           status: 401,
@@ -408,6 +435,7 @@ serve(async (req) => {
     }
 
     default:
+      console.log('DEBUG: Default case hit for path:', path);
       return new Response(JSON.stringify({ error: 'Not Found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
