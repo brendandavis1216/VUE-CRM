@@ -696,7 +696,7 @@ const initiateGoogleCalendarAuth = useCallback(async () => {
 
     const url = `${functionsUrl}/google-calendar/auth`;
     console.log("Client Origin:", clientOrigin);
-    console.log("Attempting to fetch Google Calendar auth URL from:", url);
+    console.log("DEBUG: Attempting to fetch Google Calendar auth URL from:", url);
 
     const res = await fetch(url, {
       method: "POST",
