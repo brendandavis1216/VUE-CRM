@@ -19,10 +19,12 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { useAppContext } from "@/context/AppContext";
 import { toast } from "sonner";
 
+// Hardcoded DocuSign Template ID
+const DOCUSIGN_TEMPLATE_ID = "b2a9dca2-bb0e-429c-96f3-f28e6889e6c8";
+
 const formSchema = z.object({
   recipientName: z.string().min(2, { message: "Recipient name must be at least 2 characters." }),
   recipientEmail: z.string().email({ message: "Please enter a valid email address." }),
-  templateId: z.string().min(1, { message: "DocuSign Template ID is required." }), // NEW: Template ID field
   documentName: z.string().min(1, { message: "Document name is required." }),
   subject: z.string().min(1, { message: "Email subject is required." }),
   emailBlurb: z.string().optional(),
@@ -32,12 +34,12 @@ type SendContractFormValues = z.infer<typeof formSchema>;
 
 interface SendContractFormProps {
   defaultRecipientName: string;
-  defaultRecipientEmail: string; // NEW: Default recipient email
+  defaultRecipientEmail: string;
   defaultFraternity: string;
   defaultSchool: string;
-  defaultAddress: string; // NEW: Default address for template fields
-  defaultBudget: number; // NEW: Default budget for template fields
-  defaultEventDate: string; // NEW: Default event date for template fields
+  defaultAddress: string;
+  defaultBudget: number;
+  defaultEventDate: string;
   onClose: () => void;
 }
 
@@ -48,7 +50,7 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
   defaultSchool,
   defaultAddress,
   defaultBudget,
-  defaultEventDate, // Destructure new prop
+  defaultEventDate,
   onClose,
 }) => {
   const { sendDocuSignDocument } = useAppContext();
@@ -58,8 +60,7 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       recipientName: defaultRecipientName,
-      recipientEmail: defaultRecipientEmail, // Autopopulate email
-      templateId: "", // User will need to input this or it can be hardcoded later
+      recipientEmail: defaultRecipientEmail,
       documentName: `${defaultFraternity} - ${defaultSchool} Contract`,
       subject: `Contract for ${defaultFraternity} at ${defaultSchool}`,
       emailBlurb: `Dear ${defaultRecipientName},\n\nPlease find attached the contract for your review and signature.`,
@@ -74,19 +75,19 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
         "Fraternity": defaultFraternity,
         "School": defaultSchool,
         "SchoolFraternity": `${defaultSchool} - ${defaultFraternity}`, // Combined field
-        "MainContactName": defaultRecipientName,
+        "MainContactName": values.recipientName, // Use form value for recipient name
         "MainContactEmail": values.recipientEmail,
-        "EventLocation": defaultAddress, // Changed from "EventAddress" to "EventLocation"
+        "EventLocation": defaultAddress,
         "Budget": defaultBudget.toLocaleString(),
-        "EventDate": defaultEventDate, // Add event date
+        "EventDate": defaultEventDate,
         // Add more fields here as needed, matching your DocuSign template tab labels
       };
 
       await sendDocuSignDocument(
         values.recipientName,
         values.recipientEmail,
-        values.templateId, // Pass templateId
-        templateFieldValues, // Pass templateFieldValues
+        DOCUSIGN_TEMPLATE_ID, // Use the hardcoded template ID
+        templateFieldValues,
         values.documentName,
         values.subject,
         values.emailBlurb || ""
@@ -129,19 +130,7 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="templateId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-white">DocuSign Template ID</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter your DocuSign Template ID" {...field} className="bg-input text-foreground border-border" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Removed the Template ID input field */}
         <FormField
           control={form.control}
           name="documentName"
