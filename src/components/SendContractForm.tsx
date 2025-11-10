@@ -37,6 +37,7 @@ interface SendContractFormProps {
   defaultSchool: string;
   defaultAddress: string; // NEW: Default address for template fields
   defaultBudget: number; // NEW: Default budget for template fields
+  defaultEventDate: string; // NEW: Default event date for template fields
   onClose: () => void;
 }
 
@@ -47,6 +48,7 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
   defaultSchool,
   defaultAddress,
   defaultBudget,
+  defaultEventDate, // Destructure new prop
   onClose,
 }) => {
   const { sendDocuSignDocument } = useAppContext();
@@ -71,10 +73,12 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
       const templateFieldValues: Record<string, string> = {
         "Fraternity": defaultFraternity,
         "School": defaultSchool,
+        "SchoolFraternity": `${defaultSchool} - ${defaultFraternity}`, // Combined field
         "MainContactName": defaultRecipientName,
         "MainContactEmail": values.recipientEmail,
         "EventAddress": defaultAddress,
         "Budget": defaultBudget.toLocaleString(),
+        "EventDate": defaultEventDate, // NEW: Add event date
         // Add more fields here as needed, matching your DocuSign template tab labels
       };
 

@@ -265,6 +265,7 @@ const InquiriesPage = () => {
               defaultSchool={inquiryForContract.school}
               defaultAddress={inquiryForContract.addressOfEvent} // Pass inquiry address
               defaultBudget={inquiryForContract.budget} // Pass inquiry budget
+              defaultEventDate={format(inquiryForContract.inquiryDate, "PPP")} // NEW: Pass formatted inquiry date
               onClose={() => setIsSendContractDialogOpen(false)}
             />
           </DialogContent>
