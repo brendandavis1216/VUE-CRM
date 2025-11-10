@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAppContext } from "@/context/AppContext";
 import { Lead, LeadStatus } from "@/types/app";
 import { LeadCSVUpload } from "@/components/LeadCSVUpload";
-import { LeadEditForm } => "@/components/LeadEditForm";
+import { LeadEditForm } from "@/components/LeadEditForm";
 import { formatPhoneNumber } from "@/lib/utils";
 import {
   AlertDialog,
@@ -37,6 +37,7 @@ type SortBy = 'none' | 'name' | 'school' | 'fraternity' | 'status';
 type SortOrder = 'asc' | 'desc';
 
 // Helper functions for localStorage
+// IMPORTANT: Changed from arrow functions to 'function' declarations to avoid JSX parsing ambiguity.
 function loadFromLocalStorage<T>(key: string, defaultValue: T): T {
   if (typeof window === 'undefined') return defaultValue;
   try {
@@ -72,7 +73,7 @@ const LeadsPage = () => {
   // State for filtering and sorting, initialized from localStorage
   const [filterSchool, setFilterSchool] = useState<string>(() => loadFromLocalStorage('leadsFilterSchool', ''));
   const [filterFraternity, setFilterFraternity] = useState<string>(() => loadFromLocalStorage('leadsFilterFraternity', ''));
-  const [sortBy, setSortBy] = useState<SortBy>(() => loadFromLocalStorage('leadsSortBy', 'none'));
+  const [sortBy, setSortBy] => useState<SortBy>(() => loadFromLocalStorage('leadsSortBy', 'none'));
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => loadFromLocalStorage('leadsSortOrder', 'asc'));
 
   useEffect(() => {
