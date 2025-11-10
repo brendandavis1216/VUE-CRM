@@ -12,6 +12,9 @@ const DOCUSIGN_TOKEN_URL = 'https://account-d.docusign.com/oauth/token';
 const DOCUSIGN_API_BASE_URL = 'https://demo.docusign.net/restapi/v2.1'; // Use demo for developer account
 
 serve(async (req) => {
+  // This log might appear in Supabase logs if the function is invoked.
+  console.log('DEBUG: DocuSign Edge Function received request for URL:', req.url);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -405,7 +408,7 @@ serve(async (req) => {
     }
 
     default:
-      return new Response(JSON.stringify({ error: 'Not Found', receivedFullPath: fullPath }), {
+      return new Response(JSON.stringify({ error: 'DocuSign Function Path Not Found', receivedFullPath: fullPath, debugInfo: 'Please provide this full response body from the Network tab -> Response sub-tab.' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
