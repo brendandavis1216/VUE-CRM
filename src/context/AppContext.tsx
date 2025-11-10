@@ -14,6 +14,7 @@ interface AppContextType {
   leads: Lead[]; // Added leads
   googleCalendarEvents: GoogleCalendarEvent[]; // Added Google Calendar events
   isDocuSignConnected: boolean; // New: DocuSign connection status
+  isGoogleCalendarConnected: boolean; // NEW: Google Calendar connection status
   addInquiry: (newInquiry: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>, existingClientId?: string) => void;
   updateInquiryTask: (inquiryId: string, taskId: string) => void;
   updateEventTask: (eventId: string, taskId: string) => void;
@@ -241,6 +242,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [leads, setLeads] = useState<Lead[]>(initialLeads); // State for leads
   const [googleCalendarEvents, setGoogleCalendarEvents] = useState<GoogleCalendarEvent[]>([]); // State for Google Calendar events
   const [isDocuSignConnected, setIsDocuSignConnected] = useState(false); // New: DocuSign connection status
+  const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false); // NEW: Google Calendar connection status
 
   // Use useEffect to save state whenever it changes
   useEffect(() => {
@@ -476,8 +478,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setEvents((prev) => [...prev, newEvent]);
             
             // Automatically add to Google Calendar if user is logged in
-            if (user) {
+            if (user && isGoogleCalendarConnected) { // Check isGoogleCalendarConnected
               createGoogleCalendarEvent(newEvent);
+            } else if (user && !isGoogleCalendarConnected) {
+              toast.info("Google Calendar not connected. Event not added automatically.");
             } else {
               toast.info("Log in to automatically add events to Google Calendar.");
             }
@@ -673,6 +677,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 // --- Google Calendar Integration ---
+const fetchGoogleCalendarConnectionStatus = useCallback(async () => {
+  if (!user) {
+    setIsGoogleCalendarConnected(false);
+    return;
+  }
+  const { data, error } = await supabase
+    .from('user_google_tokens')
+    .select('id')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 means "no rows found"
+    console.error("Error fetching Google Calendar connection status:", error);
+    setIsGoogleCalendarConnected(false);
+  } else {
+    setIsGoogleCalendarConnected(!!data);
+  }
+}, [user]);
+
+useEffect(() => {
+  fetchGoogleCalendarConnectionStatus();
+}, [user, fetchGoogleCalendarConnectionStatus]);
+
 const initiateGoogleCalendarAuth = useCallback(async () => {
   try {
     console.log("initiateGoogleCalendarAuth called.");
@@ -727,8 +754,8 @@ const initiateGoogleCalendarAuth = useCallback(async () => {
 }, [user]);
 
 const fetchGoogleCalendarEvents = useCallback(async ({ timeMin, timeMax }: { timeMin?: string; timeMax?: string }) => {
-  if (!user) {
-    setGoogleCalendarEvents([]); // Clear events if not logged in
+  if (!user || !isGoogleCalendarConnected) { // Only fetch if connected
+    setGoogleCalendarEvents([]); // Clear events if not logged in or not connected
     return;
   }
 
@@ -767,11 +794,11 @@ const fetchGoogleCalendarEvents = useCallback(async ({ timeMin, timeMax }: { tim
     toast.error(`Failed to fetch Google Calendar events: ${e instanceof Error ? e.message : String(e)}`);
     setGoogleCalendarEvents([]); // Clear events on error
   }
-}, [user]);
+}, [user, isGoogleCalendarConnected]); // Dependency on isGoogleCalendarConnected
 
 const createGoogleCalendarEvent = useCallback(async (event: Event) => {
-  if (!user) {
-    toast.error("You need to be logged in to create Google Calendar events.");
+  if (!user || !isGoogleCalendarConnected) { // Only create if connected
+    toast.error("You need to be logged in and Google Calendar connected to create events.");
     return;
   }
 
@@ -840,7 +867,7 @@ const createGoogleCalendarEvent = useCallback(async (event: Event) => {
     console.error("Error creating Google Calendar event:", e);
     toast.error(`Failed to add event to Google Calendar: ${e instanceof Error ? e.message : String(e)}`);
   }
-}, [user, fetchGoogleCalendarEvents]);
+}, [user, isGoogleCalendarConnected, fetchGoogleCalendarEvents]); // Dependency on isGoogleCalendarConnected and fetchGoogleCalendarEvents
 // --- End Google Calendar Integration ---
 
 // --- DocuSign Integration ---
@@ -984,6 +1011,7 @@ const sendDocuSignDocument = useCallback(async (
         leads, // Provide leads
         googleCalendarEvents, // Provide Google Calendar events
         isDocuSignConnected, // Provide DocuSign connection status
+        isGoogleCalendarConnected, // NEW: Provide Google Calendar connection status
         addInquiry,
         updateInquiryTask,
         updateEventTask,

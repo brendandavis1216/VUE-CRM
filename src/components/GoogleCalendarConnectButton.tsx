@@ -12,12 +12,11 @@ interface GoogleCalendarConnectButtonProps {
 }
 
 export const GoogleCalendarConnectButton: React.FC<GoogleCalendarConnectButtonProps> = ({ onConnectSuccess }) => {
-  const { initiateGoogleCalendarAuth, googleCalendarEvents } = useAppContext();
+  const { initiateGoogleCalendarAuth, isGoogleCalendarConnected } = useAppContext(); // Use isGoogleCalendarConnected
   const { session, isLoading } = useSession();
 
-  // Determine if Google Calendar is considered "connected"
-  // For simplicity, we'll consider it connected if we have successfully fetched any Google Calendar events.
-  const isConnected = googleCalendarEvents.length > 0;
+  // The isConnected logic now directly uses the state from AppContext
+  const isConnected = isGoogleCalendarConnected;
 
   const handleConnect = async () => {
     if (!session) {
