@@ -869,6 +869,8 @@ useEffect(() => {
 
 const initiateDocuSignAuth = useCallback(async () => {
   try {
+    console.log("initiateDocuSignAuth called.");
+
     const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
     if (sessionErr || !sessionData?.session) {
       toast.error("Log in first.");
@@ -876,6 +878,7 @@ const initiateDocuSignAuth = useCallback(async () => {
       return;
     }
     const accessToken = sessionData.session.access_token;
+    console.log("DEBUG (DocuSign Auth): Supabase Access Token:", accessToken ? "Present" : "Missing"); // Log accessToken
     const clientOrigin = window.location.origin;
     const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
     console.log("DEBUG: Value of functionsUrl from import.meta.env (DocuSign):", functionsUrl); // Added debug log
@@ -933,6 +936,7 @@ const sendDocuSignDocument = useCallback(async (
   }
 
   const jwt = data.session.access_token;
+  console.log("DEBUG (DocuSign Send): Supabase JWT:", jwt ? "Present" : "Missing"); // Log JWT
   const functionsUrl = import.meta.env.VITE_SUPABASE_FUNCTIONS_URL;
   if (!functionsUrl) {
     console.error("VITE_SUPABASE_FUNCTIONS_URL is not defined in environment variables.");

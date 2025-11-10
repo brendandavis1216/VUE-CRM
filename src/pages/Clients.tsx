@@ -177,10 +177,6 @@ const ClientsPage = () => {
           <ClientFilterSort onFilterSortChange={handleFilterSortChange} />
         </div>
       </div>
-      {/* Temporary display for VITE_SUPABASE_FUNCTIONS_URL */}
-      <div className="text-sm text-muted-foreground mb-4 p-2 border rounded-md bg-card">
-        **DEBUG:** VITE_SUPABASE_FUNCTIONS_URL: <span className="font-mono text-white">{import.meta.env.VITE_SUPABASE_FUNCTIONS_URL || "NOT SET"}</span>
-      </div>
       {groupedClients.length === 0 ? (
         <p className="text-center text-muted-foreground mt-8">No clients match your current filters.</p>
       ) : (
