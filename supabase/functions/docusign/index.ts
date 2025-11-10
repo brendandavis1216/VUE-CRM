@@ -44,7 +44,9 @@ serve(async (req) => {
   }
 
   const url = new URL(req.url);
-  const fullPath = url.pathname; // Use the full pathname directly
+  // The pathname received by the Edge Function is relative to the function's base path.
+  // For a function named 'docusign', a request to /functions/v1/docusign/auth will have url.pathname as /docusign/auth.
+  const path = url.pathname; 
 
   const authHeader = req.headers.get('Authorization');
   let userId: string | null = null;
@@ -71,8 +73,8 @@ serve(async (req) => {
       });
     }
   } else {
-    // For /functions/v1/docusign/callback, we get userId from state, so it's okay if authHeader is missing initially
-    if (fullPath !== '/functions/v1/docusign/callback') {
+    // For /docusign/callback, we get userId from state, so it's okay if authHeader is missing initially
+    if (path !== '/docusign/callback') {
       return new Response(JSON.stringify({ error: 'Unauthorized: Missing Authorization header' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -139,8 +141,8 @@ serve(async (req) => {
     };
   };
 
-  switch (fullPath) { // Use fullPath directly in the switch
-    case '/functions/v1/docusign/auth': {
+  switch (path) { // Use path directly in the switch
+    case '/docusign/auth': {
       if (req.method !== 'POST') {
         return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
           status: 405,
@@ -178,7 +180,7 @@ serve(async (req) => {
       });
     }
 
-    case '/functions/v1/docusign/callback': {
+    case '/docusign/callback': {
       if (req.method !== 'GET') {
         return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
           status: 405,
@@ -294,7 +296,7 @@ serve(async (req) => {
       }
     }
 
-    case '/functions/v1/docusign/send-document': {
+    case '/docusign/send-document': {
       if (req.method !== 'POST') {
         return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
           status: 405,
@@ -408,7 +410,7 @@ serve(async (req) => {
     }
 
     default:
-      return new Response(JSON.stringify({ error: 'DocuSign Function Path Not Found', receivedFullPath: fullPath, debugInfo: 'Please provide this full response body from the Network tab -> Response sub-tab.' }), {
+      return new Response(JSON.stringify({ error: 'DocuSign Function Path Not Found', receivedPath: path, debugInfo: 'The path received by the Edge Function did not match any defined routes.' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
