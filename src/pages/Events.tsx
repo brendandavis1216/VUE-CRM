@@ -146,11 +146,11 @@ const EventsPage = () => {
             return (
               <Card key={event.id} id={`event-${event.id}`} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={event.id} className="border-none">
-                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
-                    <CardTitle className="text-base font-medium flex-shrink-0"> {/* Changed text-lg to text-base */}
+                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group flex-wrap"> {/* Added flex-wrap */}
+                    <CardTitle className="text-base font-medium flex-grow min-w-0"> {/* Changed flex-shrink-0 to flex-grow and added min-w-0 */}
                       {event.eventName}
                     </CardTitle>
-                    <div className="flex items-center gap-2 flex-grow justify-end">
+                    <div className="flex items-center gap-2 flex-shrink-0"> {/* Changed flex-grow to flex-shrink-0 */}
                       {finalPaymentTask && (
                         <div className="flex items-center space-x-2 mr-2" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
