@@ -187,27 +187,27 @@ const InquiriesPage = () => {
             {filteredInquiries.map((inquiry) => (
               <Card key={inquiry.id} id={`inquiry-${inquiry.id}`} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={inquiry.id} className="border-none">
-                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
-                    <div className="flex items-center gap-3 flex-grow">
-                      <CardTitle className="text-lg font-medium text-card-foreground flex-shrink-0">
+                  <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group flex-wrap"> {/* Added flex-wrap */}
+                    <div className="flex-grow min-w-0 truncate !whitespace-nowrap"> {/* Wrapper div for CardTitle */}
+                      <CardTitle className="text-lg font-medium text-card-foreground">
                         {inquiry.fraternity} - {inquiry.school}
                       </CardTitle>
-                      <div className="flex items-center gap-2 flex-grow justify-end">
-                        <span className="text-sm font-medium text-white">{Math.round(inquiry.progress)}%</span>
-                        <Progress value={inquiry.progress} className="w-24 h-2" />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent accordion from toggling
-                            handleEditClick(inquiry);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4" />
-                          <span className="sr-only">Edit Inquiry</span>
-                        </Button>
-                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0"> {/* Ensured button group shrinks */}
+                      <span className="text-sm font-medium text-white">{Math.round(inquiry.progress)}%</span>
+                      <Progress value={inquiry.progress} className="w-24 h-2" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion from toggling
+                          handleEditClick(inquiry);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Edit Inquiry</span>
+                      </Button>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground">

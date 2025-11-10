@@ -147,7 +147,7 @@ const EventsPage = () => {
               <Card key={event.id} id={`event-${event.id}`} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={event.id} className="border-none">
                   <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group flex-wrap">
-                    <CardTitle className="text-base font-medium flex-grow min-w-0 truncate whitespace-nowrap"> {/* Added truncate and whitespace-nowrap */}
+                    <CardTitle className="text-base font-medium flex-grow min-w-0 truncate !whitespace-nowrap"> {/* Added !whitespace-nowrap */}
                       {event.eventName}
                     </CardTitle>
                     <div className="flex items-center gap-2 flex-shrink-0">
