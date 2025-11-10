@@ -77,11 +77,13 @@ const EventsPage = () => {
   };
 
   const handleDeleteClick = (event: Event) => {
+    console.log("Delete button clicked for event:", event.id);
     setEventToDelete(event);
     setIsDeleteEventDialogOpen(true);
   };
 
   const handleConfirmDelete = () => {
+    console.log("Confirm delete for event:", eventToDelete?.id);
     if (eventToDelete) {
       deleteEvent(eventToDelete.id);
       setIsDeleteEventDialogOpen(false);
@@ -145,7 +147,9 @@ const EventsPage = () => {
               <Card key={event.id} id={`event-${event.id}`} className="mb-4 bg-card text-card-foreground border-border">
                 <AccordionItem value={event.id} className="border-none">
                   <AccordionTrigger className="flex flex-row items-center justify-between space-y-0 p-4 hover:no-underline group">
-                    <CardTitle className="text-lg font-medium flex-shrink-0">{event.eventName}</CardTitle>
+                    <CardTitle className="text-base font-medium flex-shrink-0"> {/* Changed text-lg to text-base */}
+                      {event.eventName}
+                    </CardTitle>
                     <div className="flex items-center gap-2 flex-grow justify-end">
                       {finalPaymentTask && (
                         <div className="flex items-center space-x-2 mr-2" onClick={(e) => e.stopPropagation()}>
@@ -182,7 +186,7 @@ const EventsPage = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive/80" // Added text-destructive for visibility
                         onClick={(e) => {
                           e.stopPropagation(); // Prevent accordion from toggling
                           handleDeleteClick(event);
