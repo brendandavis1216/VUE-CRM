@@ -14,6 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea"; // Added this import
 import { DialogFooter } from "@/components/ui/dialog";
 import { useAppContext } from "@/context/AppContext";
 import { toast } from "sonner";
