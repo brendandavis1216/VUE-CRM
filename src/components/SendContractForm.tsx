@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
   FormControl,
@@ -109,7 +108,7 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
           name="recipientName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Recipient Name</FormLabel>
+              <FormLabel className="text-black dark:text-white">Recipient Name</FormLabel>
               <FormControl>
                 <Input {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -122,7 +121,7 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
           name="recipientEmail"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Recipient Email</FormLabel>
+              <FormLabel className="text-black dark:text-white">Recipient Email</FormLabel>
               <FormControl>
                 <Input {...field} type="email" className="bg-input text-foreground border-border" />
               </FormControl>
@@ -136,7 +135,7 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
           name="documentName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Document Name</FormLabel>
+              <FormLabel className="text-black dark:text-white">Document Name</FormLabel>
               <FormControl>
                 <Input {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -149,7 +148,7 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
           name="subject"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Email Subject</FormLabel>
+              <FormLabel className="text-black dark:text-white">Email Subject</FormLabel>
               <FormControl>
                 <Input {...field} className="bg-input text-foreground border-border" />
               </FormControl>
@@ -162,7 +161,7 @@ export const SendContractForm: React.FC<SendContractFormProps> = ({
           name="emailBlurb"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-white">Email Blurb (Optional)</FormLabel>
+              <FormLabel className="text-black dark:text-white">Email Blurb (Optional)</FormLabel>
               <FormControl>
                 <Textarea {...field} className="bg-input text-foreground border-border" />
               </FormControl>
