@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn, formatTime12Hour } from "@/lib/utils";
 import { InquiryForm } from "@/components/InquiryForm";
 import { InquiryEditForm } from "@/components/InquiryEditForm"; // Import InquiryEditForm
 import { useAppContext } from "@/context/AppContext";
@@ -107,7 +107,7 @@ const InquiriesPage = () => {
         inquiry.addressOfEvent.toLowerCase().includes(lowerCaseSearchTerm) ||
         inquiry.email.toLowerCase().includes(lowerCaseSearchTerm) || // Search by email
         format(inquiry.inquiryDate, "PPP").toLowerCase().includes(lowerCaseSearchTerm) || // Search by formatted date
-        inquiry.inquiryTime.toLowerCase().includes(lowerCaseSearchTerm) // Search by time
+        formatTime12Hour(inquiry.inquiryTime).toLowerCase().includes(lowerCaseSearchTerm) // Search by formatted 12-hour time
     );
   }, [inquiries, searchTerm]);
 
@@ -186,7 +186,7 @@ const InquiriesPage = () => {
                     <p className="text-sm text-muted-foreground">{inquiry.mainContact} ({inquiry.phoneNumber})</p>
                     <p className="text-sm"><strong>Email:</strong> {inquiry.email}</p> {/* Display email */}
                     <p className="text-sm"><strong>Date:</strong> {format(inquiry.inquiryDate, "PPP")}</p>
-                    <p className="text-sm"><strong>Time:</strong> {inquiry.inquiryTime}</p>
+                    <p className="text-sm"><strong>Time:</strong> {formatTime12Hour(inquiry.inquiryTime)}</p>
                     <p className="text-sm"><strong>Event Address:</strong> {inquiry.addressOfEvent}</p>
                     <p className="text-sm"><strong>Capacity:</strong> {inquiry.capacity}</p>
                     <p className="text-sm"><strong>Budget:</strong> ${inquiry.budget.toLocaleString()}</p>

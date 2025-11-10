@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppContext } from "@/context/AppContext";
-import { cn } from "@/lib/utils";
+import { cn, formatTime12Hour } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Event, Inquiry, GoogleCalendarEvent } from "@/types/app";
 import { toast } from "sonner";
@@ -299,7 +299,7 @@ const CalendarPage = () => {
                     >
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3"> {/* Adjusted padding to p-3 */}
                         <CardTitle className="text-base font-medium"> {/* Reduced font size to text-base */}
-                          {'source' in item && item.source === 'google' ? `Google: ${item.summary}` : ('inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school}` : `Event: ${item.eventName || `${(item as Event).fraternity || 'Unknown'} - ${(item as Event).school || 'Unknown'}`}`)}
+                          {'source' in item && item.source === 'google' ? `Google: ${item.summary}` : ('inquiryDate' in item ? `Inquiry: ${item.fraternity} - ${item.school} (${formatTime12Hour(item.inquiryTime)})` : `Event: ${item.eventName || `${(item as Event).fraternity || 'Unknown'} - ${(item as Event).school || 'Unknown'}`}`)}
                         </CardTitle>
                         <Badge className={cn("text-xs", getCalendarItemColor(item))}>
                           {'source' in item && item.source === 'google' ? "Google Event" : ('inquiryDate' in item ? "Inquiry" : item.status)}

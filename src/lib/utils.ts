@@ -33,3 +33,16 @@ export function stringToHslColor(str: string, s: number, l: number): string {
   const h = hash % 360;
   return `hsl(${h}, ${s}%, ${l}%)`;
 }
+
+/**
+ * Formats a 24-hour time string (HH:MM) to 12-hour format (h:mm AM/PM).
+ * @param timeString The time string in HH:MM format (e.g., "18:30").
+ * @returns The formatted time string (e.g., "6:30 PM").
+ */
+export function formatTime12Hour(timeString: string): string {
+  if (!timeString) return "";
+  const [hours, minutes] = timeString.split(':').map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
