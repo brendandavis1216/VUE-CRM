@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { FileSignature, CheckCircle2 } from "lucide-react";
+import { FileSignature } from "lucide-react"; // Removed CheckCircle2 as it's no longer needed
 import { useAppContext } from "@/context/AppContext";
 import { useSession } from "@/components/SessionContextProvider";
 import { toast } from "sonner";
@@ -46,22 +46,19 @@ export const DocuSignConnectButton: React.FC<DocuSignConnectButtonProps> = ({ on
     return null; // Or a loading spinner
   }
 
+  // Only render the button if DocuSign is NOT connected
+  if (isDocuSignConnected) {
+    return null;
+  }
+
   return (
     <Button
       variant="outline"
       onClick={handleConnect}
-      disabled={!session || isDocuSignConnected}
-      className={isDocuSignConnected ? "bg-green-600 text-white hover:bg-green-700" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}
+      disabled={!session} // Only disable if not logged in
+      className="bg-secondary text-secondary-foreground hover:bg-secondary/80" // Always use the "connect" styling
     >
-      {isDocuSignConnected ? (
-        <>
-          <CheckCircle2 className="mr-2 h-4 w-4" /> DocuSign Connected
-        </>
-      ) : (
-        <>
-          <FileSignature className="mr-2 h-4 w-4" /> Connect DocuSign
-        </>
-      )}
+      <FileSignature className="mr-2 h-4 w-4" /> Connect DocuSign
     </Button>
   );
 };
