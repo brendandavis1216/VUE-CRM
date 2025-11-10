@@ -22,6 +22,7 @@ interface AppContextType {
   addClient: (newClientData: Omit<Client, 'id' | 'numberOfEvents' | 'clientScore' | 'averageEventSize'>) => Promise<void>; // Changed to return Promise<void>
   updateInquiry: (inquiryId: string, updatedInquiryData: Omit<Inquiry, 'id' | 'tasks' | 'progress' | 'clientId'>) => Promise<void>; // Changed to return Promise<void>
   updateEvent: (eventId: string, updatedEventData: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => Promise<void>; // Changed to return Promise<void>
+  deleteEvent: (eventId: string) => Promise<void>; // NEW: Function to delete an event
   fetchLeads: () => Promise<void>; // Function to fetch leads
   addLeads: (newLeads: Omit<Lead, 'id' | 'user_id' | 'created_at' | 'updated_at'>[]) => Promise<void>; // Function to add multiple leads
   updateLead: (leadId: string, updatedLeadData: Partial<Omit<Lead, 'id' | 'user_id' | 'created_at'>>) => Promise<void>; // Function to update a lead
@@ -573,6 +574,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       toast.error("Failed to update event.");
     } else {
       toast.success("Event updated successfully!");
+      fetchEvents(); // Re-fetch events to update local state
+    }
+  };
+
+  const deleteEvent = async (eventId: string) => {
+    if (!user) {
+      toast.error("You must be logged in to delete events.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId);
+
+    if (error) {
+      console.error("Error deleting event:", error);
+      toast.error("Failed to delete event.");
+    } else {
+      toast.success("Event deleted successfully!");
       fetchEvents(); // Re-fetch events to update local state
     }
   };
@@ -1153,6 +1174,7 @@ const sendDocuSignDocument = useCallback(async (
         addClient,
         updateInquiry,
         updateEvent,
+        deleteEvent, // NEW: Provide deleteEvent
         fetchLeads, // Provide fetchLeads
         addLeads,   // Provide addLeads
         updateLead, // Provide updateLead

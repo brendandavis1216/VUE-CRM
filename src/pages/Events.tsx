@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAppContext } from "@/context/AppContext";
-import { Search, Pencil, CalendarPlus } from "lucide-react"; // CalendarPlus is no longer used here
+import { Search, Pencil, Trash2 } from "lucide-react"; // Import Trash2 icon
 import {
   Accordion,
   AccordionContent,
@@ -22,9 +22,20 @@ import { Event } from "@/types/app";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSearchParams } from "react-router-dom"; // Import useSearchParams
 import { useSession } from "@/components/SessionContextProvider"; // Import useSession
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"; // Import AlertDialog components
 
 const EventsPage = () => {
-  const { events, updateEventTask, updateEvent, googleCalendarEvents } = useAppContext(); // Removed createGoogleCalendarEvent
+  const { events, updateEventTask, updateEvent, deleteEvent, googleCalendarEvents } = useAppContext(); // Added deleteEvent
   const { session } = useSession(); // Get session to check if user is logged in
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false);
@@ -32,6 +43,10 @@ const EventsPage = () => {
   const [searchParams] = useSearchParams(); // Initialize useSearchParams
   const [activeAccordionItem, setActiveAccordionItem] = useState<string | undefined>(undefined); // State to control accordion
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming"); // State to control active tab
+
+  // State for deleting event
+  const [isDeleteEventDialogOpen, setIsDeleteEventDialogOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
 
   useEffect(() => {
     const eventIdFromUrl = searchParams.get('eventId');
@@ -59,6 +74,19 @@ const EventsPage = () => {
   const handleEditClick = (event: Event) => {
     setSelectedEvent(event);
     setIsEditEventDialogOpen(true);
+  };
+
+  const handleDeleteClick = (event: Event) => {
+    setEventToDelete(event);
+    setIsDeleteEventDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (eventToDelete) {
+      deleteEvent(eventToDelete.id);
+      setIsDeleteEventDialogOpen(false);
+      setEventToDelete(null);
+    }
   };
 
   const handleEventUpdate = (eventId: string, updatedValues: Omit<Event, 'id' | 'tasks' | 'progress' | 'clientId' | 'fraternity' | 'school'>) => {
@@ -151,6 +179,18 @@ const EventsPage = () => {
                         <Pencil className="h-4 w-4" />
                         <span className="sr-only">Edit Event</span>
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent accordion from toggling
+                          handleDeleteClick(event);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete Event</span>
+                      </Button>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="p-4 pt-0 text-sm text-card-foreground space-y-3">
@@ -233,6 +273,28 @@ const EventsPage = () => {
             />
           </DialogContent>
         </Dialog>
+      )}
+
+      {eventToDelete && (
+        <AlertDialog open={isDeleteEventDialogOpen} onOpenChange={setIsDeleteEventDialogOpen}>
+          <AlertDialogContent className="bg-card text-card-foreground border-border">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">Confirm Deletion</AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground">
+                Are you sure you want to delete the event "{eventToDelete.eventName}"? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-secondary text-secondary-foreground hover:bg-secondary/80">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
     </div>
   );
