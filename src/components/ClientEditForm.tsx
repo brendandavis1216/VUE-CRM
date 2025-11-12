@@ -22,7 +22,7 @@ const formSchema = z.object({
   school: z.string().min(2, { message: "School name must be at least 2 characters." }),
   mainContactName: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
   phoneNumber: z.string().regex(/^\d{10}$/, { message: "Phone number must be 10 digits." }), // Updated validation
-  instagramHandle: z.string().optional().or(z.literal("")), // Optional, allow empty string
+  instagramHandle: z.string().optional().transform(e => e === "" ? undefined : e), // Optional, allow empty string, transform to undefined if empty
 });
 
 type ClientFormValues = z.infer<typeof formSchema>;
@@ -41,12 +41,14 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
       school: client.school,
       mainContactName: client.mainContactName,
       phoneNumber: client.phoneNumber.replace(/\D/g, ''), // Ensure default value is raw 10 digits
-      instagramHandle: client.instagramHandle,
+      instagramHandle: client.instagramHandle?.startsWith('@') ? client.instagramHandle.substring(1) : client.instagramHandle || "", // Remove '@' for internal state
     },
   });
 
   function handleSubmit(values: ClientFormValues) {
-    onSubmit(values);
+    // Ensure Instagram handle starts with '@' before submitting
+    const instagramHandle = values.instagramHandle ? (values.instagramHandle.startsWith('@') ? values.instagramHandle : `@${values.instagramHandle}`) : undefined;
+    onSubmit({ ...values, instagramHandle });
     onClose(); // Close dialog after submission
   }
 
@@ -122,7 +124,17 @@ export const ClientEditForm: React.FC<ClientEditFormProps> = ({ client, onSubmit
             <FormItem>
               <FormLabel className="block font-semibold text-black dark:text-white mb-1">Instagram Handle</FormLabel>
               <FormControl>
-                <Input {...field} className="bg-input text-foreground border-border" />
+                <Input
+                  {...field}
+                  value={field.value ? (field.value.startsWith('@') ? field.value : `@${field.value}`) : ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Remove any existing '@' to normalize before adding it back
+                    const cleanedValue = value.startsWith('@') ? value.substring(1) : value;
+                    field.onChange(cleanedValue);
+                  }}
+                  className="bg-input text-foreground border-border"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -21,7 +21,7 @@ const formSchema = z.object({
   school: z.string().min(2, { message: "School name must be at least 2 characters." }),
   mainContactName: z.string().min(2, { message: "Main contact name must be at least 2 characters." }),
   phoneNumber: z.string().regex(/^\d{3}-\d{3}-\d{4}$/, { message: "Phone number must be in XXX-XXX-XXXX format." }),
-  instagramHandle: z.string().optional().or(z.literal("")), // Optional, allow empty string
+  instagramHandle: z.string().optional().transform(e => e === "" ? undefined : e), // Optional, allow empty string, transform to undefined if empty
 });
 
 type ClientFormValues = z.infer<typeof formSchema>;
@@ -44,7 +44,9 @@ export const ClientAddForm: React.FC<ClientAddFormProps> = ({ onSubmit, onClose 
   });
 
   function handleSubmit(values: ClientFormValues) {
-    onSubmit(values);
+    // Ensure Instagram handle starts with '@' before submitting
+    const instagramHandle = values.instagramHandle ? (values.instagramHandle.startsWith('@') ? values.instagramHandle : `@${values.instagramHandle}`) : undefined;
+    onSubmit({ ...values, instagramHandle });
     onClose(); // Close dialog after submission
   }
 
@@ -110,7 +112,18 @@ export const ClientAddForm: React.FC<ClientAddFormProps> = ({ onSubmit, onClose 
             <FormItem>
               <FormLabel className="block font-semibold text-black dark:text-white mb-1">Instagram Handle</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., @abg_stateu" {...field} className="bg-input text-foreground border-border" />
+                <Input
+                  placeholder="e.g., @abg_stateu"
+                  {...field}
+                  value={field.value ? (field.value.startsWith('@') ? field.value : `@${field.value}`) : ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Remove any existing '@' to normalize before adding it back
+                    const cleanedValue = value.startsWith('@') ? value.substring(1) : value;
+                    field.onChange(cleanedValue);
+                  }}
+                  className="bg-input text-foreground border-border"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
